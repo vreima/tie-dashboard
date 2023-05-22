@@ -1,5 +1,8 @@
+import os
+
 from fastapi import FastAPI
 from pydantic import BaseModel
+from pymongo import MongoClient
 
 app = FastAPI()
 
@@ -14,7 +17,7 @@ async def root():
 
 @app.get("/path")
 async def demo_get():
-    return {"message": "This is /path endpoint, use a post request to transform the text to uppercase"}
+    return {"message": f"{os.getenv('MONGO_URL')} {os.getenv('MONGOUSER')} {os.getenv('MONGOHOST')}"}
 
 
 @app.post("/path")
