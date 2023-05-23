@@ -34,7 +34,7 @@ async def demo_get():
     collection.insert_many([item])
 
     
-    return {"message": "<br/>".join(f"{key}: {value}<br/>" for key, value in collection.find()}
+    return {"message": "<br/>".join(f"{key}: {value}<br/>" for key, value in collection.find())}
 
 
 @app.post("/path")
