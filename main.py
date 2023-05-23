@@ -9,6 +9,11 @@ app = FastAPI()
 class Msg(BaseModel):
     msg: str
 
+def get_database_connection():
+    connection_string = f"{os.getenv('MONGO_URL')}/test_atlas"
+    client = MongoClient(connection_string)
+    return client["test_base"]
+
 
 @app.get("/")
 async def root():
