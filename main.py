@@ -10,14 +10,14 @@ class Msg(BaseModel):
     msg: str
 
 def get_database_connection():
-    connection_string = f"{os.getenv('MONGO_URL')}/test_atlas"
+    connection_string = f"{os.getenv('MONGO_URL')}/"
     client = MongoClient(connection_string)
     return client["test_base"]
 
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World. Welcome to FastAPI!"}
+    return {"message": f"Hello World. Welcome to FastAPI! {os.getenv('MONGO_URL')}"}
 
 
 @app.get("/path")
