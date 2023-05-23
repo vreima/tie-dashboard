@@ -31,8 +31,17 @@ async def demo_get():
         "value": 201
     }
 
-    collection.insert_many([item])
+    # collection.insert_many([item])
 
+    res = ""
+    try:
+        items = collection.find()
+        res += str(type(items)) + "\n"
+        res += str(dir(items)) + "\n\n"
+        for item in items:
+            res += str(item) + "\n"
+    finally:
+        return res
     
     return {"message": "<br/>".join(f"{key}: {value}<br/>" for key, value in collection.find())}
 
