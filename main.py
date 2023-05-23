@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from pymongo import MongoClient
 
+import src.severa.fetcher as fetcher
+
 app = FastAPI()
 
 class Msg(BaseModel):
@@ -17,7 +19,7 @@ def get_database_connection():
 
 @app.get("/")
 async def root():
-    return {"message": f"Hello World. Welcome to FastAPI! {os.getenv('MONGO_URL')}"}
+    return {"message": f"Hello World. Welcome to FastAPI!"}
 
 
 @app.get("/path")
@@ -51,6 +53,6 @@ async def demo_post(inp: Msg):
     return {"message": inp.msg.upper()}
 
 
-@app.get("/path/{path_id}")
-async def demo_get_path_id(path_id: int):
-    return {"message": f"This is /path/{path_id} endpoint, use post request to retrieve result"}
+@app.get("/get/{endpoint}")
+async def demo_get_path_id(endpoint: str):
+    return fetcher.fetch()
