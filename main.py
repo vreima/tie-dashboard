@@ -55,4 +55,4 @@ async def demo_post(inp: Msg):
 
 @app.get("/get/{endpoint}")
 async def demo_get_path_id(endpoint: str):
-    return fetcher.fetch()
+    return await fetcher.fetch()
