@@ -22,7 +22,19 @@ async def root():
 
 @app.get("/path")
 async def demo_get():
-    return {"message": f"{os.getenv('MONGO_URL')} {os.getenv('MONGOUSER')} {os.getenv('MONGOHOST')}"}
+    db = get_database_connection()
+    collection = db["test_collection"]
+
+    item = {
+        # "_id": "2000",
+        "name": "hilger01",
+        "value": 201
+    }
+
+    collection.insert_many([item])
+
+    
+    return {"message": "<br/>".join(collection.find())}
 
 
 @app.post("/path")
