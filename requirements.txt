@@ -14,3 +14,7 @@ uvicorn==0.22.0
 watchfiles==0.18.1
 websockets==10.4
 pymongo[srv]
+arrow
+httpx
+workalendar
+loguru
