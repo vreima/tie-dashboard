@@ -8,8 +8,10 @@ import src.severa.fetcher as fetcher
 
 app = FastAPI()
 
+
 class Msg(BaseModel):
     msg: str
+
 
 def get_database_connection():
     connection_string = f"{os.getenv('MONGO_URL')}/"
@@ -19,7 +21,7 @@ def get_database_connection():
 
 @app.get("/")
 async def root():
-    return {"message": f"Hello World. Welcome to FastAPI!"}
+    return {"message": "Hello World. Welcome to FastAPI!"}
 
 
 @app.get("/path")
@@ -30,7 +32,7 @@ async def demo_get():
     item = {
         # "_id": "2000",
         "name": "hilger01",
-        "value": 201
+        "value": 201,
     }
 
     # collection.insert_many([item])
@@ -44,8 +46,12 @@ async def demo_get():
             res += str(item) + "\n"
     finally:
         return res
-    
-    return {"message": "<br/>".join(f"{key}: {value}<br/>" for key, value in collection.find())}
+
+    return {
+        "message": "<br/>".join(
+            f"{key}: {value}<br/>" for key, value in collection.find()
+        )
+    }
 
 
 @app.post("/path")
@@ -55,4 +61,5 @@ async def demo_post(inp: Msg):
 
 @app.get("/get/{endpoint}")
 async def demo_get_path_id(endpoint: str):
+    print(f"/get/{endpoint}")
     return await fetcher.fetch()
