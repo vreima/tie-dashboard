@@ -1,12 +1,16 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from pymongo import MongoClient
 
 import src.severa.fetcher as fetcher
+import json
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 
 class Msg(BaseModel):
@@ -59,7 +63,17 @@ async def demo_post(inp: Msg):
     return {"message": inp.msg.upper()}
 
 
-@app.get("/get/{endpoint}")
-async def demo_get_path_id(endpoint: str):
-    print(f"/get/{endpoint}")
-    return await fetcher.fetch()
+@app.get("/severa/{endpoint}")
+async def demo_get_path_id(endpoint: str, request: Request):
+    templates = Jinja2Templates(directory="src/static")
+
+    async with fetcher.Client() as client:
+        #return json.dumps(await client.get_all(endpoint, params={key: request.query_params.getlist(key) for key in request.query_params.keys()}), indent=4)
+        
+        return templates.TemplateResponse(
+            "pre.html",
+            {
+                "request": request,
+                "text": json.dumps(await client.get_all(endpoint, params={key: request.query_params.getlist(key) for key in request.query_params.keys()}), indent=4)
+            },
+        )

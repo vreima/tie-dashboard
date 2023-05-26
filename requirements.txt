@@ -15,6 +15,7 @@ watchfiles==0.18.1
 websockets==10.4
 pymongo[srv]
 arrow
-httpx
+httpx[http2]
 workalendar
 loguru
+jinja2
