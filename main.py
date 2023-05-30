@@ -72,6 +72,7 @@ async def severa_endpoint(endpoint: str, request: Request):
 @app.get("/panel")
 async def bkapp_page(request: Request):
     logger.debug(f"GET /panel from {request.client.host}:{request.client.port}")
+    logger.debug(f"URL {request.url}")
     # script = server_document("http://127.0.0.1:5000/app")
     script = server_document("https://localhost:5000/app")
     logger.debug(f"Returning {script[:80]}...")
@@ -89,7 +90,7 @@ logger.info(f"Panel version: {pn.__version__}")
 pn.serve(
     {"/app": createApp},
     port=5000,
-    websocket_origin=["127.0.0.1:8000", "localhost", "localhost:8000", "192.168.0.2"],
+    websocket_origin=["127.0.0.1:8000", "localhost", "localhost:8000", "192.168.0.*:*", "*"],
     #address="0.0.0.0",
     show=False,
 )
