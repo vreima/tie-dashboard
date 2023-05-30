@@ -36,10 +36,7 @@ async def load(request: Request):
         "pre.html",
         {
             "request": request,
-            "text": json.dumps(
-                Base("kpi-dev", "allocations").find(),
-                indent=4,
-            ),
+            "text": Base("kpi-dev", "allocations").find().to_string(show_dimension=True),
         },
     )
 

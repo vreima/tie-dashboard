@@ -5,6 +5,7 @@ from loguru import logger
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
+import time
 
 
 class Base:
@@ -28,6 +29,10 @@ class Base:
         if query is None:
             query = {}
 
-        result = list(self._coll.find(query))
-        logger.info(f"Query {query} resulted in {len(result)} results.")
+        t0 = time.monotonic()
+        result = pd.DataFrame(self._coll.find(query, projection={"_id": False}))
+        logger.info(
+            f"Query '{query}' resulted in "
+            f"{len(result)} results in {time.monotonic() - t0:.2f}s."
+        )
         return result
