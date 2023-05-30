@@ -81,7 +81,7 @@ from src.sliders.pn_app import createApp
 pn.serve(
     {"/app": createApp},
     port=5000,
-    allow_websocket_origin=["127.0.0.1:8000"],
-    address="127.0.0.1",
+    websocket_origin=["127.0.0.1:8000"],
+    address="0.0.0.0",
     show=False,
 )
