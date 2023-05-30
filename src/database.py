@@ -14,7 +14,7 @@ class Base:
 
     def __init__(self, base: str, collection: str):
         self._client = MongoClient(f"{os.getenv('MONGO_URL')}/")
-        self._coll = self._client[base][Collection]
+        self._coll = self._client[base][collection]
 
     def insert(self, data: pd.DataFrame):
         result = self._coll.insert_many(data.to_dict(orient="records"), ordered=False)
