@@ -11,6 +11,7 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 
 import src.severa.base_client as base_client
+from src.daterange import DateRange
 from src.severa.fetch import Fetcher
 
 app = FastAPI()
@@ -29,40 +30,10 @@ async def root():
     return {"message": "Hello World. Welcome to FastAPI!"}
 
 
-@app.get("/path")
-async def demo_get():
-    db = get_database_connection()
-    collection = db["test_collection"]
-
-    item = {
-        # "_id": "2000",
-        "name": "hilger01",
-        "value": 201,
-    }
-
-    # collection.insert_many([item])
-
-    res = ""
-    try:
-        items = collection.find()
-        res += str(type(items)) + "\n"
-        res += str(dir(items)) + "\n\n"
-        for item in items:
-            res += str(item) + "\n"
-    finally:
-        return res
-
-    return {
-        "message": "<br/>".join(
-            f"{key}: {value}<br/>" for key, value in collection.find()
-        )
-    }
-
-
 @app.get("/save")
 async def save() -> int:
     async with Fetcher() as fetcher:
-        data = await fetcher.get_resource_allocations()
+        data = await fetcher.get_resource_allocations(DateRange(540))
 
     db = get_database_connection("kpi-dev")
     collection: Collection = db["work"]
