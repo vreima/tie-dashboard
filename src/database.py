@@ -24,7 +24,10 @@ class Base:
 
         return result
 
-    def find(self, query):
+    def find(self, query=None):
+        if query is None:
+            query = {}
+            
         result = self._coll.find(query)
         logger.info(f"Query {query} resulted in {len(result)} results.")
         return result
