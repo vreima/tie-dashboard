@@ -27,7 +27,7 @@ async def save() -> int:
     async with Fetcher() as fetcher:
         data = await fetcher.get_resource_allocations(DateRange(540))
 
-    return len(Base().insert(data).inserted_ids)
+    return len(Base("kpi-dev", "allocations").insert(data).inserted_ids)
 
 
 @app.get("/load")
@@ -37,7 +37,7 @@ async def load(request: Request):
         {
             "request": request,
             "text": json.dumps(
-                list(Base().find()),
+                list(Base("kpi-dev", "allocations").find()),
                 indent=4,
             ),
         },
