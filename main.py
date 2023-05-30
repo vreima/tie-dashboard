@@ -68,12 +68,19 @@ async def demo_get_path_id(endpoint: str, request: Request):
     templates = Jinja2Templates(directory="src/static")
 
     async with fetcher.Client() as client:
-        #return json.dumps(await client.get_all(endpoint, params={key: request.query_params.getlist(key) for key in request.query_params.keys()}), indent=4)
-        
         return templates.TemplateResponse(
             "pre.html",
             {
                 "request": request,
-                "text": json.dumps(await client.get_all(endpoint, params={key: request.query_params.getlist(key) for key in request.query_params.keys()}), indent=4)
+                "text": json.dumps(
+                    await client.get_all(
+                        endpoint,
+                        params={
+                            key: request.query_params.getlist(key)
+                            for key in request.query_params.keys()
+                        },
+                    ),
+                    indent=4,
+                ),
             },
         )

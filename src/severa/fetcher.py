@@ -127,8 +127,10 @@ class Client:
                 raise
             else:
                 logger.success(
-                    f"{response.http_version} GET {endpoint} [{retries}]: {type(response).__name__} "
-                    f"({len(response.json())}) in {response.elapsed.total_seconds():.2f}s."
+                    f"{response.http_version} GET {endpoint} [{retries}]: "
+                    f"{type(response).__name__} "
+                    f"({len(response.json())}) in "
+                    f"{response.elapsed.total_seconds():.2f}s."
                 )
                 return response
 
@@ -163,25 +165,3 @@ class Client:
         async for json in self.get(endpoint, params, **kwargs):
             results += json if isinstance(json, list) else [json]
         return results
-
-
-
-
-async def get_helper(client, result_list, endpoint, params):
-    result_list += [r async for r in client.get(endpoint, params)]
-
-
-async def fetch():
-    lst = []
-
-    async with Client() as client:
-        # async for items in client.get("invoices", {"numbers": [8117, 7635]}):
-        #    for item in items:
-        #        print(item)
-        async with anyio.create_task_group() as tg:
-            for num in range(8):
-                tg.start_soon(get_helper, client, lst, "users", {"rowCount": 6})
-
-    print(f"Finished: {len(lst)}.")
-
-    return "ok"
