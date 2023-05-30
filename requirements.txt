@@ -19,3 +19,5 @@ httpx[http2]
 workalendar
 loguru
 jinja2
+pandas
+panel

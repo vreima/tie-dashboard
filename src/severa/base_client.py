@@ -5,23 +5,17 @@ from types import TracebackType
 import anyio
 import arrow
 import httpx
+from dotenv import load_dotenv
 from loguru import logger
 
 import src.severa.models as models
-
-
-from dotenv import load_dotenv
 
 load_dotenv(r"C:\Users\vireima\tie-dashboard\.env")
 
 
 SEVERA_CLIENT_ID = os.getenv("SEVERA_CLIENT_ID")
 SEVERA_CLIENT_SECRET = os.getenv("SEVERA_CLIENT_SECRET")
-SEVERA_SCOPE = (
-    "customers:read,settings:read,invoices:read,"
-    "projects:read,users:read,resourceallocations:read,"
-    "hours:read"
-)
+SEVERA_SCOPE = os.getenv("SEVERA_CLIENT_SCOPE")
 SEVERA_BASE_URL = "https://api.severa.visma.com/rest-api/v1.0/"
 
 T = typing.TypeVar("T", bound="Client")
@@ -153,7 +147,6 @@ class Client:
 
             response = await self.get_with_retries(endpoint, params, headers)
 
-            # print(response.json())
             yield response.json()
 
             if next_page_available := ("NextPageToken" in response.headers):
