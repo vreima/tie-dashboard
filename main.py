@@ -1,4 +1,5 @@
 import json
+import bokeh
 
 import panel as pn
 from bokeh.embed import server_document
@@ -12,6 +13,9 @@ from src.daterange import DateRange
 from src.severa.fetch import Fetcher
 
 from loguru import logger
+
+from bokeh.settings import settings
+settings.resources = 'inline'
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -78,6 +82,9 @@ async def bkapp_page(request: Request):
 
 
 from src.sliders.pn_app import createApp
+
+logger.info(f"Bokeh version: {bokeh.__version__}")
+logger.info(f"Panel version: {pn.__version__}")
 
 pn.serve(
     {"/app": createApp},
