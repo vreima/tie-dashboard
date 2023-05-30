@@ -89,7 +89,7 @@ logger.info(f"Panel version: {pn.__version__}")
 pn.serve(
     {"/app": createApp},
     port=5000,
-    websocket_origin=["127.0.0.1:8000"],
+    websocket_origin=["127.0.0.1:8000", "localhost", "localhost:8000", "192.168.0.2"],
     #address="0.0.0.0",
     show=False,
 )
