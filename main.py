@@ -11,6 +11,8 @@ from src.database import Base
 from src.daterange import DateRange
 from src.severa.fetch import Fetcher
 
+from loguru import logger
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
@@ -65,7 +67,10 @@ async def severa_endpoint(endpoint: str, request: Request):
 
 @app.get("/panel")
 async def bkapp_page(request: Request):
+    logger.debug(f"GET /panel from {request.client.host}:{request.client.port}")
     script = server_document("http://127.0.0.1:5000/app")
+    logger.debug(f"Returning {script[:80]}...")
+
     return templates.TemplateResponse(
         "base.html", {"request": request, "script": script}
     )
