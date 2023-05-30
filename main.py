@@ -1,5 +1,4 @@
 import json
-import os
 
 import panel as pn
 from bokeh.embed import server_document
@@ -36,7 +35,9 @@ async def load(request: Request):
         "pre.html",
         {
             "request": request,
-            "text": Base("kpi-dev", "allocations").find().to_string(show_dimension=True),
+            "text": Base("kpi-dev", "allocations")
+            .find()
+            .to_string(show_dimensions=True),
         },
     )
 

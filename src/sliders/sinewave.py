@@ -9,6 +9,7 @@ from bokeh.plotting import figure
 from loguru import logger
 from tornado.ioloop import IOLoop
 
+from src.database import Base
 from src.daterange import DateRange
 from src.severa.fetch import Fetcher
 
@@ -31,11 +32,12 @@ class SineWave(param.Parameterized):
     def __init__(self, **params):
         super(SineWave, self).__init__(**params)
         self._data = None
+        self.fetch_data()
         x, y = self.sine()
         self.cds = ColumnDataSource(data=dict(x=x, y=y))
 
-        loop = IOLoop.current()
-        loop.add_callback(self.fetch_data)
+        # loop = IOLoop.current()
+        # loop.add_callback(self.fetch_data)
 
         self.plot = figure(
             height=400,
@@ -63,11 +65,10 @@ class SineWave(param.Parameterized):
         # self.plot.x_range.start, self.plot.x_range.end = self.x_range
         # self.plot.y_range.start, self.plot.y_range.end = self.y_range
 
-    async def fetch_data(self):
-        async with Fetcher() as fetcher:
-            self._data = await fetcher.get_resource_allocations(DateRange(540))
-
-        logger.debug("fetch ready, updating")
+    def fetch_data(self):
+        self._data = Base("kpi-dev", "allocations").find()
+        # async with Fetcher() as fetcher:
+        #    self._data = await fetcher.get_resource_allocations(DateRange(540))
 
     def sine(self):
         if self._data is None:

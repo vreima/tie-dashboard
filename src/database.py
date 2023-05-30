@@ -1,11 +1,9 @@
 import os
+import time
 
 import pandas as pd
 from loguru import logger
 from pymongo import MongoClient
-from pymongo.collection import Collection
-from pymongo.database import Database
-import time
 
 
 class Base:
