@@ -6,23 +6,15 @@ from bokeh.embed import server_document
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pymongo import MongoClient
-from pymongo.collection import Collection
-from pymongo.database import Database
 
 import src.severa.base_client as base_client
+from src.database import Base
 from src.daterange import DateRange
 from src.severa.fetch import Fetcher
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
-
-
-def get_database_connection(base_name: str) -> Database:
-    connection_string = f"{os.getenv('MONGO_URL')}/"
-    client = MongoClient(connection_string)
-    return client[base_name]
 
 
 @app.get("/")
@@ -35,21 +27,17 @@ async def save() -> int:
     async with Fetcher() as fetcher:
         data = await fetcher.get_resource_allocations(DateRange(540))
 
-    db = get_database_connection("kpi-dev")
-    collection: Collection = db["work"]
-    result = collection.insert_many(data.to_dict(orient="records"), ordered=False)
-    return len(result.inserted_ids)
+    return len(Base().insert(data).inserted_ids)
 
 
 @app.get("/load")
 async def load(request: Request):
-    collection: Collection = get_database_connection("kpi-dev")["work"]
     return templates.TemplateResponse(
         "pre.html",
         {
             "request": request,
             "text": json.dumps(
-                list(collection.find()),
+                list(Base().find()),
                 indent=4,
             ),
         },

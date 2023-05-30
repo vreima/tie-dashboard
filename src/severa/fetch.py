@@ -114,6 +114,7 @@ class Fetcher:
                     allocation.derivedStartDate,
                     allocation.derivedEndDate,
                     freq="D",
+                    tz="utc",
                 )
 
                 df = pd.DataFrame(
@@ -127,7 +128,7 @@ class Fetcher:
                         "user": user.guid,
                         "project": allocation.project.guid,
                         "phase": allocation.phase.guid,
-                        "date": arrow.utcnow().date(),
+                        "date": arrow.utcnow().floor("day").datetime,
                         "id": "allocation",
                     },
                 )
@@ -145,4 +146,19 @@ class Fetcher:
 
         logger.info("...done.")
 
-        return pd.concat(dfs)
+        return self.fix_types(pd.concat(dfs))
+
+    def fix_types(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.astype(
+            {
+                "businessunit-user": "string",
+                "is_internal": bool,
+                "value": float,
+                "user": "string",
+                "project": "string",
+                "phase": "string",
+                "date": "datetime64[ns, utc]",
+                "forecast-date": "datetime64[ns, utc]",
+                "id": "string",
+            }
+        )
