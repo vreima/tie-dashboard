@@ -24,10 +24,10 @@ class Base:
 
         return result
 
-    def find(self, query=None):
+    def find(self, query=None) -> list:
         if query is None:
             query = {}
-            
-        result = self._coll.find(query)
+
+        result = list(self._coll.find(query))
         logger.info(f"Query {query} resulted in {len(result)} results.")
         return result

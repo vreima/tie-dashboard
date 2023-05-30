@@ -37,7 +37,7 @@ async def load(request: Request):
         {
             "request": request,
             "text": json.dumps(
-                list(Base("kpi-dev", "allocations").find()),
+                Base("kpi-dev", "allocations").find(),
                 indent=4,
             ),
         },
