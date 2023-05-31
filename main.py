@@ -15,6 +15,8 @@ import src.severa.base_client as base_client
 from src.database import Base
 from src.daterange import DateRange
 from src.severa.fetch import Fetcher
+import panel as pn
+import os
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -221,12 +223,12 @@ async def bkapp_page(request: Request):
     )
 
 
-# from src.sliders.pn_app import createApp
+from src.sliders.pn_app import createApp
 
-# pn.serve(
-#     {"/app": createApp},
-#     port=5000,
-#     # websocket_origin=["127.0.0.1:8000"],
-#     address="0.0.0.0",
-#     show=False,
-# )
+pn.serve(
+    {"/app": createApp},
+    port=os.getenv("PORT"),
+    # websocket_origin=["127.0.0.1:8000"],
+    address="0.0.0.0",
+    show=False,
+)
