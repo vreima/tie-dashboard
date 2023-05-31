@@ -4,7 +4,6 @@ from collections import namedtuple
 from datetime import timedelta
 
 import altair as alt
-import arrow
 import pandas as pd
 from bokeh.embed import server_document
 from fastapi import FastAPI, Request
@@ -203,12 +202,12 @@ async def altair_plot(request: Request, span: int = 30):
     )
 
 
-@app.get("/del")
-def base_del():
-    start, end = arrow.get("2023-05-31").span("day")
-    Base("kpi-dev", "allocations").delete(
-        {"date": {"$lte": end.datetime, "$gte": start.datetime}}
-    )
+# @app.get("/del")
+# def base_del():
+#     start, end = arrow.get("2023-05-31").span("day")
+#     Base(
+#         "kpi-dev", "allocations"
+#     ).delete({"date": {'$lte': end.datetime, '$gte': start.datetime}})
 
 
 @app.get("/panel")
