@@ -227,7 +227,7 @@ from src.sliders.pn_app import createApp
 
 pn.serve(
     {"/app": createApp},
-    port=os.getenv("PORT"),
+    port=int(os.getenv("PORT")),
     # websocket_origin=["127.0.0.1:8000"],
     address="0.0.0.0",
     show=False,
