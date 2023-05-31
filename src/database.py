@@ -19,7 +19,7 @@ class Base:
         result = self._coll.insert_many(data.to_dict(orient="records"), ordered=False)
 
         a, b = len(result.inserted_ids), len(data)
-        (logger.error if a < b else logger.success)(f"Inserted {a}/{b} items.")
+        (logger.error if a < b else logger.success)(f"Inserted {a}/{b} documents.")
 
         return result
 
@@ -34,3 +34,9 @@ class Base:
             f"{len(result)} results in {time.monotonic() - t0:.2f}s."
         )
         return result
+
+    def delete(self, query):
+        result = self._coll.delete_many(query)
+        logger.info(
+            f"Query '{query}' resulted in " f"{result.deleted_count} deleted documents."
+        )

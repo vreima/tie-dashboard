@@ -1,8 +1,11 @@
 import json
+import time
+from collections import namedtuple
 from datetime import timedelta
 
 import altair as alt
-import panel as pn
+import arrow
+import pandas as pd
 from bokeh.embed import server_document
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -25,22 +28,35 @@ async def root():
 
 
 @app.get("/save")
-async def save() -> int:
+async def save() -> None:
+    KPI = namedtuple("KPI", "id base_name collection_name span get")
+    kpis = [
+        KPI(
+            "allocations",
+            "kpi-dev",
+            "allocations",
+            DateRange(540),
+            Fetcher.get_allocations_with_maxes,
+        ),
+        # KPI("allocations, "kpi-dev", "allocations", DateRange(540), Fetcher.get_resource_allocations),
+    ]
     async with Fetcher() as fetcher:
-        data = await fetcher.get_resource_allocations(DateRange(540))
+        for kpi in kpis:
+            t0 = time.monotonic()
+            data = await kpi.get(fetcher, kpi.span)
+            len(Base(kpi.base_name, kpi.collection_name).insert(data).inserted_ids)
+            logger.success(
+                f"KPI '{kpi.id}' fetched and saved in {time.monotonic() - t0:.2f}s."
+            )
 
-    return len(Base("kpi-dev", "allocations").insert(data).inserted_ids)
 
-
-@app.get("/load")
-async def load(request: Request):
+@app.get("/load/{collection}")
+async def load(request: Request, collection: str):
     return templates.TemplateResponse(
         "pre.html",
         {
             "request": request,
-            "text": Base("kpi-dev", "allocations")
-            .find()
-            .to_string(show_dimensions=True),
+            "text": Base("kpi-dev", collection).find().to_string(show_dimensions=True),
         },
     )
 
@@ -67,7 +83,7 @@ async def severa_endpoint(endpoint: str, request: Request):
 
 
 @app.get("/kpi")
-def altair_plot(request: Request, span: int = 30):
+async def altair_plot(request: Request, span: int = 30):
     def treb():
         font = "Trebuchet MS"
 
@@ -85,43 +101,113 @@ def altair_plot(request: Request, span: int = 30):
     alt.renderers.set_embed_options(actions=False)
     alt.data_transformers.disable_max_rows()
 
-    data = Base(
-        "kpi-dev", "allocations"
-    ).find()  # .to_json(orient="records", date_format="iso")
-    # print(data.loc[:,["forecast-date", "value"]].head())
+    data = Base("kpi-dev", "allocations").find()
 
     delta = timedelta(days=span)
+
     grouped = (
         data[data["forecast-date"].between(data["date"], data["date"] + delta)]
-        .groupby(["date", "is_internal"])["value"]
+        .groupby(["date", "type"])["value"]
         .sum()
         .reset_index()
     )
 
-    print(grouped.head())
+    # Pivot - unpivot
+    g = grouped.pivot(columns="type", values="value", index="date").reset_index()
+    g["total"] = g["external"] + g["internal"]
+    g["billing-rate"] = g["external"] / g["total"]
+    g["allocation-rate"] = g["total"] / g["max"]
+    print(g)
+    grouped = g.melt(id_vars=["date"]).convert_dtypes()
+    print(grouped)
+    # grouped["span"] = f'{grouped["date"] + delta:%d.%m.} - {grouped["date"] + delta:%d.%m.}'
 
-    chart = (
-        alt.Chart(grouped)
-        .mark_area(point=alt.OverlayMarkDef(filled=False, fill="white"))
-        .encode(
-            x=alt.X("date(date):T").axis(title="Päiväys"),
-            y=alt.Y("value:Q").axis(title="Allokoitu tuntimäärä (h)"),
-            color=alt.Color("is_internal:N", title="Sisäinen työ"),
-            tooltip=[
-                alt.Tooltip("value", title="Allokoitu tuntimäärä", format=".1f"),
-                alt.Tooltip("is_internal", title="Sisäinen työ"),
-                alt.Tooltip("date", title="Pvm", format="%d.%m.%Y"),
-            ],
-        )
-        .properties(
+    chart_base = alt.Chart(grouped).encode(
+        x=alt.X("date(date):T").axis(title="Päiväys"),
+        y=alt.Y("value:Q").axis(title="Allokoitu tuntimäärä (h)"),
+        color=alt.Color("type:N", title="Sisäinen/projektityö/maksimi"),
+        tooltip=[
+            alt.Tooltip("value", title="Allokoitu tuntimäärä", format=".1f"),
+            alt.Tooltip("total:Q", title="Allokoitu tuntimäärä yhteensä", format=".1f"),
+            alt.Tooltip("type", title="Sisäinen/projektityö/maksimi"),
+            alt.Tooltip("billing-rate:Q", title="Laskutusaste", format=".1%"),
+            alt.Tooltip("allocation-rate:Q", title="Allokointiaste", format=".1%"),
+            alt.Tooltip("date", title="Pvm", format="%d.%m.%Y"),
+            # alt.Tooltip("span", title="Ennustusjakso"),
+        ],
+    )
+
+    chart1 = (
+        (
+            chart_base.mark_area(
+                point=alt.OverlayMarkDef(filled=False, fill="white", size=100)
+            ).transform_filter(
+                (alt.datum.type == "internal") | (alt.datum.type == "external")
+            )
+            + chart_base.mark_line(
+                point=alt.OverlayMarkDef(filled=True, size=100), strokeDash=[4, 4]
+            ).transform_filter(alt.datum.type == "max")
+        ).properties(
             width="container",
             height=260,
         )
+    ).interactive()
+
+    # second
+
+    users = await Fetcher().users()
+    users_df = pd.DataFrame([{"user": u.guid, "name": u.firstName} for u in users])
+
+    source = (
+        data[(data["date"] == data["date"].max()) & (data["type"] != "max")]
+        .groupby(["forecast-date", "user"])["value"]
+        .sum()
+        .reset_index()
+    ).merge(users_df, on="user")
+
+    brush = alt.selection_interval(encodings=["x"])
+
+    base = (
+        alt.Chart(source)
+        .encode(x="forecast-date:T", y="value:Q")
+        .properties(width="container", height=200)
     )
+
+    upper = base.mark_area().encode(
+        x=alt.X("forecast-date:T").scale(domain=brush), color="name:N"
+    )
+
+    lower = (
+        base.mark_area()
+        .encode(y="sum(value):Q")
+        .properties(height=60)
+        .add_params(brush)
+    )
+
+    chart2 = upper & lower
+
+    charts = [chart1, chart2]
+
+    vega_json = {
+        key: json.dumps(chart.to_dict(), indent=2)
+        for key, chart in zip(["chart1", "chart2"], charts)
+    }
 
     return templates.TemplateResponse(
         "vega.html",
-        {"request": request, "vega_json": json.dumps(chart.to_dict(), indent=2)},
+        {
+            "request": request,
+            "chart_ids": list(vega_json.keys()),
+            "vega_json": vega_json,
+        },
+    )
+
+
+@app.get("/del")
+def base_del():
+    start, end = arrow.get("2023-05-31").span("day")
+    Base("kpi-dev", "allocations").delete(
+        {"date": {"$lte": end.datetime, "$gte": start.datetime}}
     )
 
 

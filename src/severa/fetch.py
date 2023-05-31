@@ -6,7 +6,7 @@ from types import TracebackType
 import anyio
 import arrow
 import pandas as pd
-from loguru import logger
+from workalendar.europe import Finland
 
 import src.severa.models as models
 from src.daterange import DateRange
@@ -95,7 +95,7 @@ class Fetcher:
     def businessunits_by_guid(self) -> dict[str, str]:
         return {v: k for k, v in self.businessunits.items()}
 
-    async def get_resource_allocations(self, span: DateRange):
+    async def get_resource_allocations(self, span: DateRange) -> pd.DataFrame:
         async def allocation_helper(user: models.UserOutputModel, json: list):
             allocations = await self._client.get_all(
                 f"users/{user.guid}/resourceallocations/allocations",
@@ -139,26 +139,127 @@ class Fetcher:
 
         # await all the allocations from all the users
         dfs = []
-        logger.info("Starting task group...")
         async with anyio.create_task_group() as tg:
             for user in await self.users():
                 tg.start_soon(allocation_helper, user, dfs, name=user.firstName)
 
-        logger.info("...done.")
+        return pd.concat(dfs).convert_dtypes()
 
-        return self.fix_types(pd.concat(dfs))
+    async def process_user_absences(
+        self, user: models.UserOutputModel, span: DateRange
+    ) -> pd.Series:
+        start = span.start.format("YYYY-MM-DDTHH:mm:ssZZ")
+        end = span.end.format("YYYY-MM-DDTHH:mm:ssZZ")
+        daily_absences = pd.Series(dtype=float)
 
-    def fix_types(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.astype(
+        for activity_json in await self._client.get_all(
+            "activities",
             {
-                "businessunit-user": "string",
-                "is_internal": bool,
-                "value": float,
-                "user": "string",
-                "project": "string",
-                "phase": "string",
-                "date": "datetime64[ns, utc]",
-                "forecast-date": "datetime64[ns, utc]",
-                "id": "string",
-            }
+                "activityCategories": "Absences",
+                "startDateTime": start,
+                "endDateTime": end,
+                "userGuids": [user.guid],
+            },
+        ):
+            activity = models.ActivityModel(**activity_json)
+
+            start_time = arrow.Arrow.fromdatetime(activity.startDateTime)
+            end_time = arrow.Arrow.fromdatetime(activity.endDateTime)
+
+            if activity.isAllDay:
+                absence_span = DateRange(start_time, end_time)
+
+                temp_absences = pd.Series(
+                    user.workContract.dailyHours,
+                    index=pd.date_range(
+                        absence_span.start.date(),
+                        absence_span.end.date(),
+                        freq="D",
+                        tz="utc",
+                    ),
+                )
+            else:
+                temp_absences = pd.Series(dtype=float)
+
+                # Iterating to fill a pd.Series... not good, fix later
+                for s, e in arrow.Arrow.span_range(
+                    "day", activity.startDateTime, activity.endDateTime, exact=True
+                ):
+                    # Save the number of hours for each day in the duration
+                    # of the absence. Most probably these absences are
+                    # short, couple of hours within a single day.
+                    temp_absences[s.date()] = (e - s).seconds / 60.0 / 60.0
+
+            daily_absences = daily_absences.add(temp_absences, fill_value=0.0)
+
+        return daily_absences
+
+    async def get_maximum_allocable_hours(self, span: DateRange):
+        """
+        Return an array containing maximum allocable hours for each day in span.
+        Takes into account 1. persons' workcontracts, 2. weekends and holiday,
+        3. planned abcenses (vacations etc).
+        """
+        cal = Finland()
+        dates_in_span = pd.date_range(
+            span.start.date(), span.end.date(), freq="D", tz="utc"
         )
+        workday_mask = (
+            pd.Series(dates_in_span, index=dates_in_span)
+            .apply(cal.is_working_day)
+            .apply(int)
+        )
+
+        user_allocables = []
+
+        async def user_max_allocable_hours(user: models.UserOutputModel) -> None:
+            hours = workday_mask * user.workContract.dailyHours
+            hours = hours.add(
+                -await self.process_user_absences(user, span), fill_value=0
+            )
+            hours[hours < 0] = 0
+
+            df = pd.DataFrame(
+                index=hours.index,
+                data={
+                    "businessunit-user": self.businessunits_by_guid[
+                        user.businessUnit.guid
+                    ],
+                    "user": user.guid,
+                    "date": arrow.utcnow().floor("day").datetime,
+                    "id": "allocation",
+                },
+            )
+
+            df["value"] = hours
+            user_allocables.append(df)
+
+        async with anyio.create_task_group() as tg:
+            for user in await self.users():
+                tg.start_soon(user_max_allocable_hours, user)
+
+        result = pd.concat(user_allocables).convert_dtypes()
+        result["forecast-date"] = result.index
+        result.reset_index(inplace=True, drop=True)
+        return result
+
+    async def get_allocations_with_maxes(self, span: DateRange):
+        max_hours = await self.get_maximum_allocable_hours(span)
+        allocs = await self.get_resource_allocations(span)
+
+        allocs["type"] = (allocs["is_internal"] is True).transform(
+            lambda x: "internal" if x else "external"
+        )
+        max_hours["type"] = "max"
+        total = (
+            pd.concat(
+                [allocs.drop("is_internal", axis=1), max_hours],
+                ignore_index=True,
+                sort=False,
+            )
+            .convert_dtypes()
+            .astype({"type": "category"})
+        )
+
+        # Drop old forecasts
+        return total[total["forecast-date"] > total["date"]]
