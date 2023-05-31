@@ -21,3 +21,4 @@ loguru
 jinja2
 pandas
 panel
+altair

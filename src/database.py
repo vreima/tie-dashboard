@@ -23,7 +23,7 @@ class Base:
 
         return result
 
-    def find(self, query=None) -> list:
+    def find(self, query=None) -> pd.DataFrame:
         if query is None:
             query = {}
 
