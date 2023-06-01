@@ -5,7 +5,8 @@ from datetime import timedelta
 
 import altair as alt
 import pandas as pd
-from bokeh.embed import server_document
+
+# from bokeh.embed import server_document
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -40,7 +41,8 @@ async def save() -> None:
             DateRange(540),
             Fetcher.get_allocations_with_maxes,
         ),
-        # KPI("allocations, "kpi-dev", "allocations", DateRange(540), Fetcher.get_resource_allocations),
+        # KPI("allocations, "kpi-dev", "allocations",
+        # DateRange(540), Fetcher.get_resource_allocations),
     ]
     async with Fetcher() as fetcher:
         for kpi in kpis:
@@ -122,7 +124,6 @@ async def altair_plot(request: Request, span: int = 30):
     print(g)
     grouped = g.melt(id_vars=["date"]).convert_dtypes()
     print(grouped)
-    # grouped["span"] = f'{grouped["date"] + delta:%d.%m.} - {grouped["date"] + delta:%d.%m.}'
 
     chart_base = alt.Chart(grouped).encode(
         x=alt.X("date(date):T").axis(title="Päiväys"),
@@ -213,23 +214,23 @@ async def altair_plot(request: Request, span: int = 30):
 #     ).delete({"date": {'$lte': end.datetime, '$gte': start.datetime}})
 
 
-@app.get("/panel")
-async def bkapp_page(request: Request):
-    logger.debug(f"GET /panel from {request.client.host}:{request.client.port}")
-    script = server_document("http://https://tie-dashboard.up.railway.app:5000/app")
-    logger.debug(f"Returning {script[:80]}...")
+# @app.get("/panel")
+# async def bkapp_page(request: Request):
+#     logger.debug(f"GET /panel from {request.client.host}:{request.client.port}")
+#     script = server_document("http://https://tie-dashboard.up.railway.app:5000/app")
+#     logger.debug(f"Returning {script[:80]}...")
 
-    return templates.TemplateResponse(
-        "base.html", {"request": request, "script": script}
-    )
+#     return templates.TemplateResponse(
+#         "base.html", {"request": request, "script": script}
+#     )
 
 
-from src.sliders.pn_app import createApp
+# from src.sliders.pn_app import createApp
 
-pn.serve(
-    {"/app": createApp},
-    port=int(os.getenv("PORT")),
-    # websocket_origin=["127.0.0.1:8000"],
-    address="0.0.0.0",
-    show=False,
-)
+# pn.serve(
+#     {"/app": createApp},
+#     port=int(os.getenv("PORT")),
+#     # websocket_origin=["127.0.0.1:8000"],
+#     address="0.0.0.0",
+#     show=False,
+# )
