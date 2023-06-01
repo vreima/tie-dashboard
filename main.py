@@ -30,14 +30,14 @@ async def root():
     return {"message": "Hello World. Welcome to FastAPI!"}
 
 
-@app.get("/save")
+@app.get("/save/")
 async def save() -> None:
     KPI = namedtuple("KPI", "id base_name collection_name span get")
     kpis = [
         KPI(
             "allocations",
             "kpi-dev",
-            "allocations",
+            "allocations-dev",
             DateRange(540),
             Fetcher.get_allocations_with_maxes,
         ),

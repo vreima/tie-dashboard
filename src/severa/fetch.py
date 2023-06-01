@@ -247,7 +247,7 @@ class Fetcher:
         max_hours = await self.get_maximum_allocable_hours(span)
         allocs = await self.get_resource_allocations(span)
 
-        allocs["type"] = (allocs["is_internal"] is True).transform(
+        allocs["type"] = (allocs["is_internal"] == True).transform(
             lambda x: "internal" if x else "external"
         )
         max_hours["type"] = "max"
