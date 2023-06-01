@@ -15,8 +15,9 @@ import src.severa.base_client as base_client
 from src.database import Base
 from src.daterange import DateRange
 from src.severa.fetch import Fetcher
-import panel as pn
-import os
+
+# import panel as pn
+# import os
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
