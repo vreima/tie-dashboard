@@ -37,7 +37,7 @@ async def save() -> None:
         KPI(
             "allocations",
             "kpi-dev",
-            "allocations-dev",
+            "allocations",
             DateRange(540),
             Fetcher.get_allocations_with_maxes,
         ),
@@ -126,7 +126,7 @@ async def altair_plot(request: Request, span: int = 30):
     print(grouped)
 
     chart_base = alt.Chart(grouped).encode(
-        x=alt.X("date(date):T").axis(title="Päiväys"),
+        x=alt.X("date:T").axis(title="Päiväys"),
         y=alt.Y("value:Q").axis(title="Allokoitu tuntimäärä (h)"),
         color=alt.Color("type:N", title="Sisäinen/projektityö/maksimi"),
         tooltip=[
