@@ -14,7 +14,7 @@ class ChartGroup:
         alt.renderers.set_embed_options(actions=False)
         alt.data_transformers.disable_max_rows()
 
-    def treb():
+    def treb(self):
         font = "Trebuchet MS"
 
         return {
@@ -152,17 +152,12 @@ class ChartGroup:
         )
 
         return (
-            (
                 (allocations_per_type + maximum_allocations).properties(
                     height=260,
-                )
-                & (normalized_allocations_per_type + rule + rule_text).properties(
+                ) & (normalized_allocations_per_type + rule + rule_text).properties(
                     height=80
                 )
-            )
-            .add_params(op_span)
-            .interactive()
-        )
+            ).add_params(op_span).interactive()
 
     async def user_allocations(self, data: pd.DataFrame) -> alt.Chart:
         users = await Fetcher().users()

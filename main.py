@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
-import visualization
+import src.visualization
 from src.database import Base
 from src.daterange import DateRange
 from src.severa import base_client
@@ -85,9 +85,9 @@ async def severa_endpoint(endpoint: str, request: Request):
 
 @app.get("/kpi")
 async def altair_plot(request: Request, span: int = 30):
-    charts = await visualization.ChartGroup(span).charts()
+    charts = await src.visualization.ChartGroup(span).get_charts()
 
-    vega_json = {f"chart-{n}": chart for n, chart in enumerate(charts)}
+    vega_json = {f"chart{n}": chart for n, chart in enumerate(charts)}
 
     return templates.TemplateResponse(
         "vega.html",
