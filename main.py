@@ -87,7 +87,7 @@ async def severa_endpoint(endpoint: str, request: Request):
 async def altair_plot(request: Request, span: int = 30):
     charts = await src.visualization.ChartGroup(span).get_charts()
 
-    vega_json = {f"chart{n}": chart for n, chart in enumerate(charts)}
+    vega_json = {f"chart{n}": chart.to_json() for n, chart in enumerate(charts)}
 
     return templates.TemplateResponse(
         "vega.html",
