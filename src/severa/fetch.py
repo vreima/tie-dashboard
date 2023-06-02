@@ -8,8 +8,8 @@ import arrow
 import pandas as pd
 from workalendar.europe import Finland
 
-import src.severa.models as models
 from src.daterange import DateRange
+from src.severa import models
 from src.severa.base_client import Client
 
 T = typing.TypeVar("T", bound="Client")
@@ -30,7 +30,8 @@ def group_sum(
     """
     grouped = df.groupby(grouping)
     return pd.DataFrame(
-        {column_to_sum: combine_series(v[column_to_sum])} | dict(zip(grouping, k))
+        {column_to_sum: combine_series(v[column_to_sum])}
+        | dict(zip(grouping, k, strict=True))
         for k, v in grouped
     )
 
@@ -61,9 +62,9 @@ class Fetcher:
 
     async def __aexit__(
         self,
-        exc_type: typing.Optional[typing.Type[BaseException]] = None,
-        exc_value: typing.Optional[BaseException] = None,
-        traceback: typing.Optional[TracebackType] = None,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
     ) -> None:
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
@@ -117,7 +118,7 @@ class Fetcher:
                     tz="utc",
                 )
 
-                df = pd.DataFrame(
+                allocation_df = pd.DataFrame(
                     index=index,
                     data={
                         "businessunit-user": self.businessunits_by_guid[
@@ -133,9 +134,9 @@ class Fetcher:
                     },
                 )
 
-                df["forecast-date"] = index
-                df.reset_index(inplace=True, drop=True)
-                json.append(df)
+                allocation_df["forecast-date"] = index
+                allocation_df = allocation_df.reset_index(drop=True)
+                json.append(allocation_df)
 
         # await all the allocations from all the users
         dfs = []
@@ -219,7 +220,7 @@ class Fetcher:
             )
             hours[hours < 0] = 0
 
-            df = pd.DataFrame(
+            user_max_hours_df = pd.DataFrame(
                 index=hours.index,
                 data={
                     "businessunit-user": self.businessunits_by_guid[
@@ -231,8 +232,8 @@ class Fetcher:
                 },
             )
 
-            df["value"] = hours
-            user_allocables.append(df)
+            user_max_hours_df["value"] = hours
+            user_allocables.append(user_max_hours_df)
 
         async with anyio.create_task_group() as tg:
             for user in await self.users():
@@ -240,7 +241,7 @@ class Fetcher:
 
         result = pd.concat(user_allocables).convert_dtypes()
         result["forecast-date"] = result.index
-        result.reset_index(inplace=True, drop=True)
+        result = result.reset_index(drop=True)
         return result
 
     async def get_allocations_with_maxes(self, span: DateRange):

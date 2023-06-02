@@ -1,10 +1,6 @@
 import json
 import time
 from collections import namedtuple
-from datetime import timedelta
-
-import altair as alt
-import pandas as pd
 
 # from bokeh.embed import server_document
 from fastapi import FastAPI, Request
@@ -12,9 +8,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
-import src.severa.base_client as base_client
+import visualization
 from src.database import Base
 from src.daterange import DateRange
+from src.severa import base_client
 from src.severa.fetch import Fetcher
 
 # import panel as pn
@@ -77,7 +74,7 @@ async def severa_endpoint(endpoint: str, request: Request):
                         endpoint,
                         params={
                             key: request.query_params.getlist(key)
-                            for key in request.query_params.keys()
+                            for key in request.query_params
                         },
                     ),
                     indent=4,
@@ -88,113 +85,9 @@ async def severa_endpoint(endpoint: str, request: Request):
 
 @app.get("/kpi")
 async def altair_plot(request: Request, span: int = 30):
-    def treb():
-        font = "Trebuchet MS"
+    charts = await visualization.ChartGroup(span).charts()
 
-        return {
-            "config": {
-                "title": {"font": font, "subtitleFont": font},
-                "axis": {"labelFont": font, "titleFont": font},
-                "header": {"labelFont": font, "titleFont": font},
-                "legend": {"labelFont": font, "titleFont": font},
-            }
-        }
-
-    alt.themes.register("treb", treb)
-    alt.themes.enable("treb")
-    alt.renderers.set_embed_options(actions=False)
-    alt.data_transformers.disable_max_rows()
-
-    data = Base("kpi-dev", "allocations").find()
-
-    delta = timedelta(days=span)
-
-    grouped = (
-        data[data["forecast-date"].between(data["date"], data["date"] + delta)]
-        .groupby(["date", "type"])["value"]
-        .sum()
-        .reset_index()
-    )
-
-    # Pivot - unpivot
-    g = grouped.pivot(columns="type", values="value", index="date").reset_index()
-    g["total"] = g["external"] + g["internal"]
-    g["billing-rate"] = g["external"] / g["total"]
-    g["allocation-rate"] = g["total"] / g["max"]
-    print(g)
-    grouped = g.melt(id_vars=["date"]).convert_dtypes()
-    print(grouped)
-
-    chart_base = alt.Chart(grouped).encode(
-        x=alt.X("date:T").axis(title="Päiväys"),
-        y=alt.Y("value:Q").axis(title="Allokoitu tuntimäärä (h)"),
-        color=alt.Color("type:N", title="Sisäinen/projektityö/maksimi"),
-        tooltip=[
-            alt.Tooltip("value", title="Allokoitu tuntimäärä", format=".1f"),
-            alt.Tooltip("total:Q", title="Allokoitu tuntimäärä yhteensä", format=".1f"),
-            alt.Tooltip("type", title="Sisäinen/projektityö/maksimi"),
-            alt.Tooltip("billing-rate:Q", title="Laskutusaste", format=".1%"),
-            alt.Tooltip("allocation-rate:Q", title="Allokointiaste", format=".1%"),
-            alt.Tooltip("date", title="Pvm", format="%d.%m.%Y"),
-            # alt.Tooltip("span", title="Ennustusjakso"),
-        ],
-    )
-
-    chart1 = (
-        (
-            chart_base.mark_area(
-                point=alt.OverlayMarkDef(filled=False, fill="white", size=100)
-            ).transform_filter(
-                (alt.datum.type == "internal") | (alt.datum.type == "external")
-            )
-            + chart_base.mark_line(
-                point=alt.OverlayMarkDef(filled=True, size=100), strokeDash=[4, 4]
-            ).transform_filter(alt.datum.type == "max")
-        ).properties(
-            width="container",
-            height=260,
-        )
-    ).interactive()
-
-    # second
-
-    users = await Fetcher().users()
-    users_df = pd.DataFrame([{"user": u.guid, "name": u.firstName} for u in users])
-
-    source = (
-        data[(data["date"] == data["date"].max()) & (data["type"] != "max")]
-        .groupby(["forecast-date", "user"])["value"]
-        .sum()
-        .reset_index()
-    ).merge(users_df, on="user")
-
-    brush = alt.selection_interval(encodings=["x"])
-
-    base = (
-        alt.Chart(source)
-        .encode(x="forecast-date:T", y="value:Q")
-        .properties(width="container", height=200)
-    )
-
-    upper = base.mark_area().encode(
-        x=alt.X("forecast-date:T").scale(domain=brush), color="name:N"
-    )
-
-    lower = (
-        base.mark_area()
-        .encode(y="sum(value):Q")
-        .properties(height=60)
-        .add_params(brush)
-    )
-
-    chart2 = upper & lower
-
-    charts = [chart1, chart2]
-
-    vega_json = {
-        key: json.dumps(chart.to_dict(), indent=2)
-        for key, chart in zip(["chart1", "chart2"], charts)
-    }
+    vega_json = {f"chart-{n}": chart for n, chart in enumerate(charts)}
 
     return templates.TemplateResponse(
         "vega.html",

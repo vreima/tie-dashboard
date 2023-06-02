@@ -1,13 +1,11 @@
-from typing import Optional, Union
-
 import arrow
 
 
 class DateRange:
     def __init__(
         self,
-        start: Optional[Union[arrow.Arrow, int]] = None,
-        end: Optional[Union[arrow.Arrow, int]] = None,
+        start: arrow.Arrow | int | None = None,
+        end: arrow.Arrow | int | None = None,
     ):
         if start is None:
             # Empty range

@@ -38,5 +38,5 @@ class Base:
     def delete(self, query):
         result = self._coll.delete_many(query)
         logger.info(
-            f"Query '{query}' resulted in " f"{result.deleted_count} deleted documents."
+            f"Query '{query}' resulted in {result.deleted_count} deleted documents."
         )

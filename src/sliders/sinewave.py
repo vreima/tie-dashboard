@@ -30,7 +30,7 @@ class SineWave(param.Parameterized):
     y_range = param.Range(default=(-1, 30), bounds=(-10, 40))
 
     def __init__(self, **params):
-        super(SineWave, self).__init__(**params)
+        super().__init__(**params)
         self._data = None
         self.fetch_data()
         x, y = self.sine()
@@ -111,7 +111,7 @@ class Allocations(param.Parameterized):
     )
 
     def __init__(self, **params):
-        super(Allocations, self).__init__(**params)
+        super().__init__(**params)
         self._data = None
         loop = IOLoop.current()
         loop.add_callback(self.fetch_data)

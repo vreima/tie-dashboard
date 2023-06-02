@@ -8,7 +8,7 @@ import httpx
 from dotenv import load_dotenv
 from loguru import logger
 
-import src.severa.models as models
+from src.severa import models
 
 load_dotenv(r"C:\Users\vireima\tie-dashboard\.env")
 
@@ -23,13 +23,16 @@ JSON = dict[str, typing.Any] | list[dict[str, typing.Any]]
 
 
 class Client:
+    MAX_RETRIES = 6
+    HTTP_ERROR_429 = 429
+
     def __init__(self: T) -> None:
         self._client_id = SEVERA_CLIENT_ID
         self._client_secret = SEVERA_CLIENT_SECRET
         self._client_scope = SEVERA_SCOPE
 
         self._client = httpx.AsyncClient(base_url=SEVERA_BASE_URL, http2=True)
-        self._auth: typing.Optional[models.PublicAuthenticationOutputModel] = None
+        self._auth: models.PublicAuthenticationOutputModel | None = None
         self._request_limit = anyio.Semaphore(5)
 
     async def _authenticate(self) -> None:
@@ -86,16 +89,16 @@ class Client:
 
     async def __aexit__(
         self,
-        exc_type: typing.Optional[typing.Type[BaseException]] = None,
-        exc_value: typing.Optional[BaseException] = None,
-        traceback: typing.Optional[TracebackType] = None,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
     ) -> None:
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
     async def get_with_retries(self, endpoint: str, params, headers):
         retries = 0
 
-        while retries < 6:
+        while retries < Client.MAX_RETRIES:
             async with self._request_limit:
                 response: httpx.Response = await self._client.get(
                     endpoint, params=params, headers=headers
@@ -104,7 +107,7 @@ class Client:
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError as exc:
-                if exc.response.status_code == 429:
+                if exc.response.status_code == Client.HTTP_ERROR_429:
                     # Too Many Requests
 
                     logger.warning("Got 429, sleeping 2s.")
