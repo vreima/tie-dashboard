@@ -4,6 +4,17 @@ import pandas as pd
 from src.database import Base
 from src.severa.fetch import Fetcher
 
+FI_LOCALE_JSON = {
+  "dateTime": "%A, %-d. %Bta %Y klo %X",
+  "date": "%-d.%-m.%Y",
+  "time": "%H:%M:%S",
+  "periods": ["a.m.", "p.m."],
+  "days": ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"],
+  "shortDays": ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+  "months": ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu"],
+  "shortMonths": ["Tammi", "Helmi", "Maalis", "Huhti", "Touko", "Kesä", "Heinä", "Elo", "Syys", "Loka", "Marras", "Joulu"]
+}
+
 
 class ChartGroup:
     def __init__(self, span: int):
@@ -11,7 +22,7 @@ class ChartGroup:
 
         alt.themes.register("treb", self.treb)
         alt.themes.enable("treb")
-        alt.renderers.set_embed_options(actions=False)
+        alt.renderers.set_embed_options(actions=False, timeFormatLocale=FI_LOCALE_JSON)
         alt.data_transformers.disable_max_rows()
 
     def treb(self):
@@ -194,4 +205,4 @@ class ChartGroup:
     async def get_charts(self):
         data = Base("kpi-dev", "allocations").find()
 
-        return [await self.allocated_hours(data), await self.user_allocations(data)]
+        return [await self.allocated_hours(data), await self.user_allocations(data)], len(data)

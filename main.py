@@ -85,7 +85,8 @@ async def severa_endpoint(endpoint: str, request: Request):
 
 @app.get("/kpi")
 async def altair_plot(request: Request, span: int = 30):
-    charts = await src.visualization.ChartGroup(span).get_charts()
+    t0 = time.monotonic()
+    charts, n_rows = await src.visualization.ChartGroup(span).get_charts()
 
     vega_json = {f"chart{n}": chart.to_json() for n, chart in enumerate(charts)}
 
@@ -95,6 +96,8 @@ async def altair_plot(request: Request, span: int = 30):
             "request": request,
             "chart_ids": list(vega_json.keys()),
             "vega_json": vega_json,
+            "n_rows": n_rows,
+            "time": f"{time.monotonic() - t0:.1f}s"
         },
     )
 
