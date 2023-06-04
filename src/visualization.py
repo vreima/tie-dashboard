@@ -189,8 +189,10 @@ class ChartGroup:
         normalized_allocations_per_type = (
             chart_base.mark_area()
             .encode(
-                y=alt.Y("sum(value):Q", title="Allokointi (%)").stack("normalize")
-            )  # noqa: PD013
+                y=alt.Y("sum(value):Q", title="Allokointi (%)").stack(
+                    "normalize"
+                )  # noqa: PD013
+            )
             .transform_filter(
                 alt.FieldOneOfPredicate("type", ["Projektityö", "Sisäinen työ"])
             )
