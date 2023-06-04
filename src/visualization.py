@@ -5,14 +5,48 @@ from src.database import Base
 from src.severa.fetch import Fetcher
 
 FI_LOCALE_JSON = {
-  "dateTime": "%A, %-d. %Bta %Y klo %X",
-  "date": "%-d.%-m.%Y",
-  "time": "%H:%M:%S",
-  "periods": ["a.m.", "p.m."],
-  "days": ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"],
-  "shortDays": ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
-  "months": ["tammikuu", "helmikuu", "maaliskuu", "huhtikuu", "toukokuu", "kesäkuu", "heinäkuu", "elokuu", "syyskuu", "lokakuu", "marraskuu", "joulukuu"],
-  "shortMonths": ["Tammi", "Helmi", "Maalis", "Huhti", "Touko", "Kesä", "Heinä", "Elo", "Syys", "Loka", "Marras", "Joulu"]
+    "dateTime": "%A, %-d. %Bta %Y klo %X",
+    "date": "%-d.%-m.%Y",
+    "time": "%H:%M:%S",
+    "periods": ["a.m.", "p.m."],
+    "days": [
+        "sunnuntai",
+        "maanantai",
+        "tiistai",
+        "keskiviikko",
+        "torstai",
+        "perjantai",
+        "lauantai",
+    ],
+    "shortDays": ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+    "months": [
+        "tammikuu",
+        "helmikuu",
+        "maaliskuu",
+        "huhtikuu",
+        "toukokuu",
+        "kesäkuu",
+        "heinäkuu",
+        "elokuu",
+        "syyskuu",
+        "lokakuu",
+        "marraskuu",
+        "joulukuu",
+    ],
+    "shortMonths": [
+        "Tammi",
+        "Helmi",
+        "Maalis",
+        "Huhti",
+        "Touko",
+        "Kesä",
+        "Heinä",
+        "Elo",
+        "Syys",
+        "Loka",
+        "Marras",
+        "Joulu",
+    ],
 }
 
 
@@ -163,12 +197,17 @@ class ChartGroup:
         )
 
         return (
+            (
                 (allocations_per_type + maximum_allocations).properties(
                     height=260,
-                ) & (normalized_allocations_per_type + rule + rule_text).properties(
+                )
+                & (normalized_allocations_per_type + rule + rule_text).properties(
                     height=80
                 )
-            ).add_params(op_span).interactive()
+            )
+            .add_params(op_span)
+            .interactive()
+        )
 
     async def user_allocations(self, data: pd.DataFrame) -> alt.Chart:
         users = await Fetcher().users()
@@ -205,4 +244,7 @@ class ChartGroup:
     async def get_charts(self):
         data = Base("kpi-dev", "allocations").find()
 
-        return [await self.allocated_hours(data), await self.user_allocations(data)], len(data)
+        return [
+            await self.allocated_hours(data),
+            await self.user_allocations(data),
+        ], len(data)

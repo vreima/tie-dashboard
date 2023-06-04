@@ -3,7 +3,7 @@ import time
 from collections import namedtuple
 
 # from bokeh.embed import server_document
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
@@ -14,8 +14,15 @@ from src.daterange import DateRange
 from src.severa import base_client
 from src.severa.fetch import Fetcher
 
+import anyio
+import arrow
+import croniter
+import datetime
+import httpx
+import asyncio
+
 # import panel as pn
-# import os
+import os
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -83,6 +90,11 @@ async def severa_endpoint(endpoint: str, request: Request):
         )
 
 
+@app.get("/ping")
+async def ping():
+    logger.debug("Got PING request.")
+
+
 @app.get("/kpi")
 async def altair_plot(request: Request, span: int = 30):
     t0 = time.monotonic()
@@ -97,8 +109,78 @@ async def altair_plot(request: Request, span: int = 30):
             "chart_ids": list(vega_json.keys()),
             "vega_json": vega_json,
             "n_rows": n_rows,
-            "time": f"{time.monotonic() - t0:.1f}s"
+            "time": f"{time.monotonic() - t0:.1f}s",
         },
+    )
+
+
+class Cronjob:
+    def __init__(self, endpoint: str, cron: str):
+        self.endpoint = endpoint
+        self.cron = croniter.croniter(cron, arrow.utcnow().datetime)
+
+    def next(self) -> arrow.Arrow:
+        return arrow.get(self.cron.get_next(float))
+
+    def time_to_next(self) -> datetime.timedelta:
+        return self.next() - arrow.utcnow()
+
+
+async def run_cronjob(timing: Cronjob):
+    while True:
+        delay = timing.time_to_next().seconds
+        logger.debug(
+            f"{timing.endpoint}: sleeping until {timing.next()} ({delay} seconds)."
+        )
+        await anyio.sleep(delay)
+        logger.debug(f"{timing.endpoint}: waking up.")
+
+        async with httpx.AsyncClient(
+            app=app, base_url=os.getenv("PUBLIC_URL"), http2=True
+        ) as client:
+            try:
+                response = await client.get(timing.endpoint)
+                logger.debug(f"{timing.endpoint}: response {response.status_code}.")
+            except (httpx.HTTPStatusError, httpx.HTTPError) as e:
+                logger.exception(e)
+            except Exception as e:
+                logger.exception(e)
+
+
+async def start_all_cronjobs():
+    logger.debug("Starting all cronjobs")
+    cronjobs = [
+        Cronjob(*params)
+        for params in [("/ping", "0/2 * * * *"), ("/save", "0 2 * * *")]
+    ]
+
+    async with anyio.create_task_group() as tg:
+        for cj in cronjobs:
+            logger.debug(f"Starting {cj.endpoint}.")
+            tg.start_soon(run_cronjob, cj, name=cj.endpoint)
+
+    logger.debug("Starting finished.")
+
+
+global_background = []
+
+
+@app.get("/start")
+async def start(background_tasks: BackgroundTasks):
+    func = start_all_cronjobs
+
+    if func.__name__ not in global_background:
+        background_tasks.add_task(start_all_cronjobs)
+        global_background.append(func.__name__)
+        return "OK - Stated bg tasks."
+    else:
+        return "Bg tasks already started."
+
+
+@app.get("/status")
+async def status(background_tasks: BackgroundTasks):
+    return f"Currently running {len(global_background)} tasks" + "\n".join(
+        taskname for taskname in global_background
     )
 
 
