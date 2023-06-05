@@ -122,10 +122,14 @@ class ChartGroup:
             )
         )
 
+        grouped_merged["end"] = grouped_merged["date"] + grouped_merged["span"].map(
+            lambda s: timedelta(days=s)
+        )
+
         return grouped_merged
 
     async def allocated_hours(self, data: pd.DataFrame) -> alt.Chart:
-        spanmin = 7
+        spanmin = 1
         spanmax = 360
 
         slider = alt.binding_range(
@@ -141,30 +145,45 @@ class ChartGroup:
             base.transform_calculate(
                 order="{'Projekityö':0, 'Sisäinen työ':1, 'Maksimi':3, 'Allokoimaton':2}[datum.variable]"
             )
+            .transform_aggregate(
+                value="sum(value)",
+                total="sum(total)",
+                unallocated="sum(unallocated)",
+                max="sum(max)",
+                date="min(date)",
+                end="max(end)",
+                billingrate="mean(billing-rate)",
+                allocationrate="mean(allocation-rate)",
+                groupby=["type", "date"],
+            )
             .encode(
-                x=alt.X("monthdate(date):T").axis(title="Päiväys"),
-                y=alt.Y("sum(value):Q").axis(title="Allokoitu tuntimäärä (h)"),
+                x=alt.X("end:T").axis(title=None),
+                y=alt.Y("value:Q").axis(title="Allokoitu tuntimäärä (h)"),
                 color=alt.Color("type:N", title="Tuntilaji").scale(
                     scheme="category20c"
                 ),
                 order="order:O",
                 tooltip=[
+                    alt.Tooltip(
+                        "monthdate(date):Q", title="Jakson alku", format="%-d.%-m."
+                    ),
+                    alt.Tooltip(
+                        "monthdate(end):Q", title="Jakson loppu", format="%-d.%-m."
+                    ),
                     alt.Tooltip("sum(value):Q", title="Tuntimäärä (h)", format=".1f"),
                     alt.Tooltip("type:N", title="Tyyppi"),
                     alt.Tooltip(
-                        "sum(total):Q", title="Allokoinnit yhteensä (h)", format=".1f"
+                        "total:Q", title="Allokoinnit yhteensä (h)", format=".1f"
                     ),
                     alt.Tooltip(
-                        "sum(unallocated):Q", title="Allokoimatonta (h)", format=".1f"
+                        "unallocated:Q", title="Allokoimatonta (h)", format=".1f"
                     ),
                     alt.Tooltip(
-                        "sum(max):Q", title="Allokoinnit korkeintaan (h)", format=".1f"
+                        "max:Q", title="Allokointien yläraja (h)", format=".1f"
                     ),
+                    alt.Tooltip("billingrate:Q", title="Laskutusaste", format=".1%"),
                     alt.Tooltip(
-                        "mean(billing-rate):Q", title="Laskutusaste", format=".1%"
-                    ),
-                    alt.Tooltip(
-                        "mean(allocation-rate):Q", title="Resursointiaste", format=".1%"
+                        "allocationrate:Q", title="Resursointiaste", format=".1%"
                     ),
                 ],
             )
@@ -179,7 +198,7 @@ class ChartGroup:
             .transform_filter(
                 (alt.datum.type == "Sisäinen työ") | (alt.datum.type == "Projektityö")
             )
-            .properties(title="Tuorein resursointiennuste henkilöittäin")
+            .properties(title="Tuleva työmäärä resursoinnin mukaan")
         )
 
         maximum_allocations = chart_base.mark_line(
@@ -189,7 +208,9 @@ class ChartGroup:
         normalized_allocations_per_type = (
             chart_base.mark_area()
             .encode(
-                y=alt.Y("sum(value):Q", title="Allokointi (%)").stack(  # noqa: PD013
+                y=alt.Y(
+                    "value:Q", title="Allokointi (%)", scale=alt.Scale(domain=[0, 1.0])
+                ).stack(  # noqa: PD013
                     "normalize"
                 )
             )
@@ -204,11 +225,11 @@ class ChartGroup:
             .encode(y=alt.datum(0.7))
         )
         rule_text = (
-            base.transform_aggregate(mindate="min(date):T")
+            base.transform_aggregate(mindate="min(end):T")
             .mark_text(baseline="top", dy=5, dx=5, align="left", color="white")
             .encode(
                 y=alt.datum(0.7),
-                x="monthdate(mindate):T",
+                x=alt.datum(1),  # "monthdate(mindate):T",
                 text=alt.datum("Laskutusastetavoite 70%"),
             )
         )
@@ -223,7 +244,7 @@ class ChartGroup:
                 )
             )
             .add_params(op_span)
-            .interactive()
+            .interactive(bind_y=False)
         )
 
     async def user_allocations(self, data: pd.DataFrame) -> alt.Chart:
@@ -233,7 +254,7 @@ class ChartGroup:
         today = data["date"].max()
         most_recent = data[(data["date"] == today)]
         most_recent = most_recent[
-            most_recent["forecast-date"] < today + timedelta(days=540)
+            most_recent["forecast-date"] < today + timedelta(days=539)
         ]
 
         source = (
