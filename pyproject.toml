@@ -16,6 +16,9 @@ uvicorn = "^0.18.3"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
+
 [tool.ruff]
 target-version = "py311"
 select = [

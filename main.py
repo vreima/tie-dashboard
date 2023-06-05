@@ -1,5 +1,6 @@
 import datetime
 import json
+
 # import panel as pn
 import os
 import time
@@ -10,6 +11,7 @@ import anyio
 import arrow
 import croniter
 import httpx
+
 # from bokeh.embed import server_document
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -200,42 +202,7 @@ async def start(background_tasks: BackgroundTasks, request: Request):
     jobs = get_cronjobs()
 
     if not jobs.started:
-        jobs.add_jobs(
-            [
-                Cronjob(*params)
-                for params in [(ping, "0/1 * * * *"), (save, "0 2 * * *")]
-            ]
-        )
+        jobs.add_jobs([Cronjob(*params) for params in [(save, "0 2 * * *")]])
         background_tasks.add_task(jobs.start)
 
     return pre(jobs.status(), request)
-
-
-# @app.get("/del")
-# def base_del():
-#     start, end = arrow.get("2023-05-31").span("day")
-#     Base(
-#         "kpi-dev", "allocations"
-#     ).delete({"date": {'$lte': end.datetime, '$gte': start.datetime}})
-
-
-# @app.get("/panel")
-# async def bkapp_page(request: Request):
-#     logger.debug(f"GET /panel from {request.client.host}:{request.client.port}")
-#     script = server_document("http://https://tie-dashboard.up.railway.app:5000/app")
-#     logger.debug(f"Returning {script[:80]}...")
-
-#     return templates.TemplateResponse(
-#         "base.html", {"request": request, "script": script}
-#     )
-
-
-# from src.sliders.pn_app import createApp
-
-# pn.serve(
-#     {"/app": createApp},
-#     port=int(os.getenv("PORT")),
-#     # websocket_origin=["127.0.0.1:8000"],
-#     address="0.0.0.0",
-#     show=False,
-# )
