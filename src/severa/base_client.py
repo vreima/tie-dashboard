@@ -31,7 +31,9 @@ class Client:
         self._client_secret = SEVERA_CLIENT_SECRET
         self._client_scope = SEVERA_SCOPE
 
-        self._client = httpx.AsyncClient(base_url=SEVERA_BASE_URL, http2=True)
+        self._client = httpx.AsyncClient(
+            base_url=SEVERA_BASE_URL, http2=True, timeout=120.0
+        )
         self._auth: models.PublicAuthenticationOutputModel | None = None
         self._request_limit = anyio.Semaphore(5)
 

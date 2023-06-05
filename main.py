@@ -107,9 +107,12 @@ async def read_ping():
 
 
 @app.get("/kpi")
-async def altair_plot(request: Request, span: int = 30):
+async def altair_plot(request: Request, chart_num: int | None = None):
     t0 = time.monotonic()
-    charts, n_rows = await src.visualization.ChartGroup(span).get_charts()
+    charts, n_rows = await src.visualization.ChartGroup().get_charts()
+
+    if chart_num is not None:
+        charts = [charts[chart_num]]
 
     vega_json = {f"chart{n}": chart.to_json() for n, chart in enumerate(charts)}
 

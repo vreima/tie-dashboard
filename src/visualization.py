@@ -51,13 +51,11 @@ FI_LOCALE_JSON = {
 
 
 class ChartGroup:
-    def __init__(self, span: int):
-        self._span = span
-
+    def __init__(self):
         alt.themes.register("treb", self.treb)
         alt.themes.enable("treb")
-        alt.renderers.set_embed_options(actions=False, timeFormatLocale=FI_LOCALE_JSON)
         alt.data_transformers.disable_max_rows()
+        alt.renderers.set_embed_options(actions=False, timeFormatLocale=FI_LOCALE_JSON)
 
     def treb(self):
         font = "Trebuchet MS"
@@ -71,7 +69,9 @@ class ChartGroup:
             }
         }
 
-    async def allocated_hours(self, data: pd.DataFrame) -> alt.Chart:
+    def prepare_allocation_data(
+        self, data: pd.DataFrame, spanmin: int, spanmax: int
+    ) -> pd.DataFrame:
         grouped = (
             data.groupby(["date", "forecast-date", "type"])["value"].sum().reset_index()
         )
@@ -79,7 +79,9 @@ class ChartGroup:
             lambda x: x.days
         )
 
-        grouped_pivoted = grouped[grouped["span"] > 0]
+        grouped_pivoted = grouped[
+            (grouped["span"] >= spanmin) & (grouped["span"] <= spanmax)
+        ]
         grouped_pivoted = grouped_pivoted.pivot_table(
             columns="type", values="value", index=["date", "forecast-date", "span"]
         ).reset_index()
@@ -118,29 +120,20 @@ class ChartGroup:
             )
         )
 
+        return grouped_merged
+
+    async def allocated_hours(self, data: pd.DataFrame) -> alt.Chart:
+        spanmin = 7
+        spanmax = 360
+
         slider = alt.binding_range(
-            min=7, max=360, step=1, name="Ennusteen pituus (vrk):  "
+            min=spanmin, max=spanmax, step=1, name="Ennusteen pituus (vrk):  "
         )
         op_span = alt.param(value=30, bind=slider)
 
-        base = alt.Chart(grouped_merged).transform_filter(
-            (alt.datum.span >= 0) & (alt.datum.span <= op_span)
-        )
-
-        rule = (
-            alt.Chart()
-            .mark_rule(color="white", strokeDash=[4, 4])
-            .encode(y=alt.datum(0.7))
-        )
-        rule_text = (
-            base.transform_aggregate(mindate="min(date)")
-            .mark_text(baseline="top", dy=5, dx=5, align="left", color="white")
-            .encode(
-                y=alt.datum(0.7),
-                x="monthdate(mindate):T",
-                text=alt.datum("Laskutusastetavoite 70%"),
-            )
-        )
+        base = alt.Chart(
+            self.prepare_allocation_data(data, spanmin, spanmax)
+        ).transform_filter((alt.datum.span >= 0) & (alt.datum.span <= op_span))
 
         chart_base = (
             base.transform_calculate(
@@ -176,10 +169,15 @@ class ChartGroup:
             .properties(width="container")
         )
 
-        allocations_per_type = chart_base.mark_area(
-            opacity=1.0, point=alt.OverlayMarkDef(filled=False, fill="white", size=100)
-        ).transform_filter(
-            (alt.datum.type == "Sisäinen työ") | (alt.datum.type == "Projektityö")
+        allocations_per_type = (
+            chart_base.mark_area(
+                opacity=1.0,
+                point=alt.OverlayMarkDef(filled=False, fill="white", size=100),
+            )
+            .transform_filter(
+                (alt.datum.type == "Sisäinen työ") | (alt.datum.type == "Projektityö")
+            )
+            .properties(title="Tuorein resursointiennuste henkilöittäin")
         )
 
         maximum_allocations = chart_base.mark_line(
@@ -195,6 +193,21 @@ class ChartGroup:
             )
             .transform_filter(
                 alt.FieldOneOfPredicate("type", ["Projektityö", "Sisäinen työ"])
+            )
+        )
+
+        rule = (
+            alt.Chart()
+            .mark_rule(color="white", strokeDash=[4, 4])
+            .encode(y=alt.datum(0.7))
+        )
+        rule_text = (
+            base.transform_aggregate(mindate="min(date):T")
+            .mark_text(baseline="top", dy=5, dx=5, align="left", color="white")
+            .encode(
+                y=alt.datum(0.7),
+                x="monthdate(mindate):T",
+                text=alt.datum("Laskutusastetavoite 70%"),
             )
         )
 
@@ -217,7 +230,7 @@ class ChartGroup:
 
         most_recent = data[(data["date"] == data["date"].max())]
         source = (
-            data[(data["type"] != "max")]
+            most_recent[(most_recent["type"] != "max")]
             .groupby(["forecast-date", "user"])["value"]
             .sum()
             .reset_index()
@@ -241,47 +254,53 @@ class ChartGroup:
         brush = alt.selection_interval(encodings=["x"])
         selected_user = alt.selection_point(encodings=["color"], on="mouseover")
 
-        base = alt.Chart(source).properties(width="container", height=200)
+        base = alt.Chart(source.convert_dtypes()).properties(
+            width="container", height=200
+        )
 
         upper = (
-            base.transform_joinaggregate(
-                date="min(forecast-date)",
-                weekvalue="sum(value)",
-                weekmax="sum(max)",
+            base.transform_aggregate(
+                date="min(forecast-date):T",
+                weekvalue="sum(value):Q",
+                weekmax="sum(max):Q",
+                name="min(name):N",
                 groupby=["week", "year", "name"],
             )
             .transform_joinaggregate(
-                monthvalue="sum(value)",
-                monthmax="sum(max)",
-                month="min(forecast-date)",
+                monthvalue="sum(weekvalue):Q",
+                monthmax="sum(weekmax):Q",
+                month="min(date):T",
                 groupby=["year", "month", "name"],
             )
             .mark_area(interpolate="step-after")
             .encode(
-                x=alt.X("forecast-date:T").scale(domain=brush),
-                y="weekvalue:Q",
-                color="name:N",
+                x=alt.X("date:T").scale(domain=brush).axis(title="Päiväys"),
+                y=alt.Y("weekvalue:Q", scale=alt.Scale(domain=[0, 350])).axis(
+                    title="Allokoitu tuntimäärä (h/vko)"
+                ),
+                color=alt.Color("name:N", title="Nimi"),
                 opacity=alt.condition(selected_user, alt.value(1), alt.value(0.5)),
                 tooltip=[
+                    alt.Tooltip("name:N", title="Nimi"),
                     alt.Tooltip(
-                        "forecast-date",
+                        "date:T",
                         title="Päiväys",
                         format="vko %V / %Y (%-d.%-m.%Y)",
                     ),
-                    alt.Tooltip("name", title="Nimi"),
-                    alt.Tooltip("month:T", title="KK", format="%B"),
-                    alt.Tooltip("monthvalue:Q", title="h/kk", format=".1f"),
                     alt.Tooltip("weekmax:Q", title="Maksimi", format=".1f"),
                     alt.Tooltip("weekvalue:Q", title="h/vko", format=".1f"),
-                    alt.Tooltip("sum(value)", title="h/vrk", format=".1f"),
+                    alt.Tooltip("date:T", title="KK", format="%B"),
+                    alt.Tooltip("monthvalue:Q", title="h/kk", format=".1f"),
                 ],
             )
             .add_params(selected_user)
-        )
+        ).properties(title="Tuorein resursointiennuste henkilöittäin")
 
         max_line = (
             base.transform_aggregate(
-                date="min(forecast-date)", weekmax="sum(max)", groupby=["week", "year"]
+                date="min(forecast-date):T",
+                weekmax="sum(max):Q",
+                groupby=["week", "year"],
             )
             .mark_line(interpolate="step-after", strokeDash=[4, 4])
             .encode(x=alt.X("date:T").scale(domain=brush), y="weekmax:Q")
@@ -289,7 +308,10 @@ class ChartGroup:
 
         lower = (
             base.mark_area(interpolate="step-after")
-            .encode(x="forecast-date:T", y="sum(value):Q")
+            .encode(
+                x=alt.X("forecast-date:T").axis(title="Päiväys"),
+                y=alt.Y("sum(value):Q").axis(title="Allokoitu tuntimäärä (h/vrk)"),
+            )
             .properties(height=60)
             .add_params(brush)
         )
