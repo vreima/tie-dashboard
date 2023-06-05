@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import altair as alt
 import pandas as pd
 
@@ -228,13 +230,18 @@ class ChartGroup:
         users = await Fetcher().users()
         users_df = pd.DataFrame([{"user": u.guid, "name": u.firstName} for u in users])
 
-        most_recent = data[(data["date"] == data["date"].max())]
+        today = data["date"].max()
+        most_recent = data[(data["date"] == today)]
+        most_recent = most_recent[
+            most_recent["forecast-date"] < today + timedelta(days=540)
+        ]
+
         source = (
             most_recent[(most_recent["type"] != "max")]
             .groupby(["forecast-date", "user"])["value"]
             .sum()
             .reset_index()
-        ).merge(users_df, on="user")
+        )
 
         max_hours = (
             most_recent[most_recent["type"] == "max"]
@@ -245,7 +252,7 @@ class ChartGroup:
         max_hours["max"] = max_hours["value"]
         source = source.merge(
             max_hours.drop("value", axis=1), on=["forecast-date", "user"], how="outer"
-        )
+        ).merge(users_df, on="user")
 
         source["week"] = source["forecast-date"].dt.isocalendar().week
         source["month"] = source["forecast-date"].dt.month
@@ -255,7 +262,7 @@ class ChartGroup:
         selected_user = alt.selection_point(encodings=["color"], on="mouseover")
 
         base = alt.Chart(source.convert_dtypes()).properties(
-            width="container", height=200
+            width="container", height=300
         )
 
         upper = (
