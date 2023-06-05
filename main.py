@@ -1,6 +1,5 @@
 import datetime
 import json
-
 # import panel as pn
 import os
 import time
@@ -11,7 +10,6 @@ import anyio
 import arrow
 import croniter
 import httpx
-
 # from bokeh.embed import server_document
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -41,8 +39,7 @@ async def root():
     return {"message": "Hello World. Welcome to FastAPI!"}
 
 
-@app.get("/save/")
-async def save() -> None:
+async def save():
     KPI = namedtuple("KPI", "id base_name collection_name span get")
     kpis = [
         KPI(
@@ -55,6 +52,8 @@ async def save() -> None:
         # KPI("allocations, "kpi-dev", "allocations",
         # DateRange(540), Fetcher.get_resource_allocations),
     ]
+
+    logger.debug("/save: Fetching and saving kpis.")
     async with Fetcher() as fetcher:
         for kpi in kpis:
             t0 = time.monotonic()
@@ -65,8 +64,14 @@ async def save() -> None:
             )
 
 
+@app.get("/save/")
+async def read_save(request: Request) -> None:
+    logger.debug(f"/save request from {request.client.host}")
+    await save()
+
+
 @app.get("/load/{collection}")
-async def load(request: Request, collection: str):
+async def read_load(request: Request, collection: str):
     return pre(
         Base("kpi-dev", collection).find().to_string(show_dimensions=True), request
     )
@@ -90,9 +95,13 @@ async def severa_endpoint(endpoint: str, request: Request):
         )
 
 
-@app.get("/ping")
 async def ping():
     logger.debug("Got PING request.")
+
+
+@app.get("/ping")
+async def read_ping():
+    await ping()
 
 
 @app.get("/kpi")
@@ -115,17 +124,19 @@ async def altair_plot(request: Request, span: int = 30):
 
 
 class Cronjob:
-    def __init__(self, endpoint: str, cron: str):
+    def __init__(self, endpoint: str | typing.Awaitable, cron: str):
         self.endpoint = endpoint
-        self.cron = cron
+        self.cronstring = cron
+        self.croniter = croniter.croniter(cron, arrow.utcnow().datetime)
 
-    def next_run(self) -> arrow.Arrow:
-        return arrow.get(
-            croniter.croniter(self.cron, arrow.utcnow().datetime).get_next(float)
-        )
+        self.next_run: arrow.Arrow = arrow.Arrow(1900, 1, 1)
+
+    def advance(self) -> arrow.Arrow:
+        self.next_run = arrow.get(self.croniter.get_next(float))
+        return self.next_run
 
     def time_to_next(self) -> datetime.timedelta:
-        return self.next_run() - arrow.utcnow()
+        return self.next_run - arrow.utcnow()
 
 
 class CronjobManager:
@@ -141,11 +152,10 @@ class CronjobManager:
             "Service is running.\n" if self.started else "Service is not running.\n"
         )
         result += f"{len(self.jobs)} in queue:\n" + "\n".join(
-            f'   {job.endpoint} running next {job.next_run().humanize()} at {job.next_run().to("Europe/Helsinki").format("HH:mm DD.MM.YYYY")}'
+            f'   {job.endpoint} running next {job.next_run.humanize()} at {job.next_run.to("Europe/Helsinki").format("HH:mm DD.MM.YYYY")}'
             for job in self.jobs
         )
 
-        logger.warning(result)
         return result
 
     async def start(self):
@@ -163,28 +173,39 @@ def get_cronjobs(manager: CronjobManager = CronjobManager()):  # noqa: B008
 
 async def run_cronjob(timing: Cronjob):
     while True:
+        timing.advance()
         delay = timing.time_to_next().seconds
         await anyio.sleep(delay)
 
-        async with httpx.AsyncClient(
-            app=app, base_url=os.getenv("PUBLIC_URL"), http2=True
-        ) as client:
-            try:
-                response = await client.get(timing.endpoint)
-                logger.debug(f"{timing.endpoint}: response {response.status_code}.")
-            except (httpx.HTTPStatusError, httpx.HTTPError) as e:
-                logger.exception(e)
-            except Exception as e:
-                logger.exception(e)
+        if isinstance(timing.endpoint, str):
+            async with httpx.AsyncClient(
+                app=app,
+                base_url=os.getenv("PUBLIC_URL"),
+                http2=True,
+                follow_redirects=True,
+            ) as client:
+                try:
+                    response = await client.get(timing.endpoint)
+                    logger.debug(f"{timing.endpoint}: response {response.status_code}.")
+                except (httpx.HTTPStatusError, httpx.HTTPError) as e:
+                    logger.exception(e)
+                except Exception as e:
+                    logger.exception(e)
+        else:
+            await timing.endpoint()
 
 
 @app.get("/start")
 async def start(background_tasks: BackgroundTasks, request: Request):
-    print(f"A {get_cronjobs().started=}")
     jobs = get_cronjobs()
 
     if not jobs.started:
-        jobs.add_jobs([Cronjob(*params) for params in [("/save", "0 2 * * *")]])
+        jobs.add_jobs(
+            [
+                Cronjob(*params)
+                for params in [(ping, "0/1 * * * *"), (save, "0 2 * * *")]
+            ]
+        )
         background_tasks.add_task(jobs.start)
 
     return pre(jobs.status(), request)

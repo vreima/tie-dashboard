@@ -189,9 +189,9 @@ class ChartGroup:
         normalized_allocations_per_type = (
             chart_base.mark_area()
             .encode(
-                y=alt.Y("sum(value):Q", title="Allokointi (%)").stack(
+                y=alt.Y("sum(value):Q", title="Allokointi (%)").stack(  # noqa: PD013
                     "normalize"
-                )  # noqa: PD013
+                )
             )
             .transform_filter(
                 alt.FieldOneOfPredicate("type", ["Projektityö", "Sisäinen työ"])
@@ -215,33 +215,86 @@ class ChartGroup:
         users = await Fetcher().users()
         users_df = pd.DataFrame([{"user": u.guid, "name": u.firstName} for u in users])
 
+        most_recent = data[(data["date"] == data["date"].max())]
         source = (
-            data[(data["date"] == data["date"].max()) & (data["type"] != "max")]
+            data[(data["type"] != "max")]
             .groupby(["forecast-date", "user"])["value"]
             .sum()
             .reset_index()
         ).merge(users_df, on="user")
 
-        brush = alt.selection_interval(encodings=["x"])
-
-        base = (
-            alt.Chart(source)
-            .encode(x="forecast-date:T", y="value:Q")
-            .properties(width="container", height=200)
+        max_hours = (
+            most_recent[most_recent["type"] == "max"]
+            .groupby(["forecast-date", "user"])["value"]
+            .sum()
+            .reset_index()
+        )
+        max_hours["max"] = max_hours["value"]
+        source = source.merge(
+            max_hours.drop("value", axis=1), on=["forecast-date", "user"]
         )
 
-        upper = base.mark_area().encode(
-            x=alt.X("forecast-date:T").scale(domain=brush), color="name:N"
+        source["week"] = source["forecast-date"].dt.isocalendar().week
+        source["month"] = source["forecast-date"].dt.month
+        source["year"] = source["forecast-date"].dt.isocalendar().year
+
+        brush = alt.selection_interval(encodings=["x"])
+        selected_user = alt.selection_point(encodings=["color"], on="mouseover")
+
+        base = alt.Chart(source).properties(width="container", height=200)
+
+        upper = (
+            base.transform_joinaggregate(
+                date="min(forecast-date)",
+                weekvalue="sum(value)",
+                weekmax="sum(max)",
+                groupby=["week", "year", "name"],
+            )
+            .transform_joinaggregate(
+                monthvalue="sum(value)",
+                monthmax="sum(max)",
+                month="min(forecast-date)",
+                groupby=["year", "month", "name"],
+            )
+            .mark_area(interpolate="step-after")
+            .encode(
+                x=alt.X("forecast-date:T").scale(domain=brush),
+                y="weekvalue:Q",
+                color="name:N",
+                opacity=alt.condition(selected_user, alt.value(1), alt.value(0.5)),
+                tooltip=[
+                    alt.Tooltip(
+                        "forecast-date",
+                        title="Päiväys",
+                        format="vko %V / %Y (%-d.%-m.%Y)",
+                    ),
+                    alt.Tooltip("name", title="Nimi"),
+                    alt.Tooltip("month:T", title="KK", format="%B"),
+                    alt.Tooltip("monthvalue:Q", title="h/kk", format=".1f"),
+                    alt.Tooltip("weekmax:Q", title="Maksimi", format=".1f"),
+                    alt.Tooltip("weekvalue:Q", title="h/vko", format=".1f"),
+                    alt.Tooltip("sum(value)", title="h/vrk", format=".1f"),
+                ],
+            )
+            .add_params(selected_user)
+        )
+
+        max_line = (
+            base.transform_aggregate(
+                date="min(forecast-date)", weekmax="sum(max)", groupby=["week", "year"]
+            )
+            .mark_line(interpolate="step-after", strokeDash=[4, 4])
+            .encode(x=alt.X("date:T").scale(domain=brush), y="weekmax:Q")
         )
 
         lower = (
-            base.mark_area()
-            .encode(y="sum(value):Q")
+            base.mark_area(interpolate="step-after")
+            .encode(x="forecast-date:T", y="sum(value):Q")
             .properties(height=60)
             .add_params(brush)
         )
 
-        return upper & lower
+        return (upper + max_line) & lower
 
     async def get_charts(self):
         data = Base("kpi-dev", "allocations").find()
