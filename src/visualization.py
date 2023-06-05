@@ -244,7 +244,7 @@ class ChartGroup:
         )
         max_hours["max"] = max_hours["value"]
         source = source.merge(
-            max_hours.drop("value", axis=1), on=["forecast-date", "user"]
+            max_hours.drop("value", axis=1), on=["forecast-date", "user"], how="outer"
         )
 
         source["week"] = source["forecast-date"].dt.isocalendar().week
@@ -310,7 +310,9 @@ class ChartGroup:
             base.mark_area(interpolate="step-after")
             .encode(
                 x=alt.X("forecast-date:T").axis(title="Päiväys"),
-                y=alt.Y("sum(value):Q").axis(title="Allokoitu tuntimäärä (h/vrk)"),
+                y=alt.Y("sum(value):Q", scale=alt.Scale(domain=[0, 30])).axis(
+                    title="Allokoitu tuntimäärä (h/vrk)"
+                ),
             )
             .properties(height=60)
             .add_params(brush)
