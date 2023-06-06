@@ -51,6 +51,20 @@ async def save():
             DateRange(540),
             Fetcher.get_allocations_with_maxes,
         ),
+        KPI(
+            "sales-value",
+            "kpi-dev",
+            "sales-value",
+            DateRange(540),
+            Fetcher.get_sales_value,
+        ),
+        KPI(
+            "sales-work",
+            "kpi-dev",
+            "sales-work",
+            DateRange(540),
+            Fetcher.get_sales_work,
+        )
         # KPI("allocations, "kpi-dev", "allocations",
         # DateRange(540), Fetcher.get_resource_allocations),
     ]
@@ -64,6 +78,10 @@ async def save():
             logger.success(
                 f"KPI '{kpi.id}' fetched and saved in {time.monotonic() - t0:.2f}s."
             )
+
+        inv_collection = Base(kpi.base_name, "invalid")
+        inv_collection.create_index(23 * 60 * 60)
+        inv_collection.insert(fetcher.invalid_sales())
 
 
 @app.get("/save/")

@@ -6,6 +6,7 @@ from types import TracebackType
 import anyio
 import arrow
 import pandas as pd
+from loguru import logger
 from workalendar.europe import Finland
 
 from src.daterange import DateRange
@@ -36,10 +37,24 @@ def group_sum(
     )
 
 
+async def gather(f, args_list: typing.Iterable) -> list:
+    async def save_result(result: list, f, *args) -> None:
+        result.append(await f(*args))
+
+    results = []
+    async with anyio.create_task_group() as tg:
+        for args in args_list:
+            tg.start_soon(save_result, results, f, *args)
+
+    return results
+
+
 class Fetcher:
     def __init__(self):
         self._client = Client()
         self._users: list[models.UserOutputModel] = []
+
+        self._sales_cache = None
 
     async def users(self) -> list[models.UserOutputModel]:
         if self._users:
@@ -95,6 +110,10 @@ class Fetcher:
     @property
     def businessunits_by_guid(self) -> dict[str, str]:
         return {v: k for k, v in self.businessunits.items()}
+
+    #
+    # Allocations
+    #
 
     async def get_resource_allocations(self, span: DateRange) -> pd.DataFrame:
         async def allocation_helper(user: models.UserOutputModel, json: list):
@@ -264,3 +283,204 @@ class Fetcher:
 
         # Drop old forecasts
         return total[total["forecast-date"] > total["date"]]
+
+    #
+    # Sales
+    #
+
+    async def process_single_sale(self, sale: models.ProjectOutputModel):
+        can_calculate_value = True
+        # First, expected value
+        # order_date_offset = 0
+        if sale.expectedOrderDate is None:
+            self._invalid_sales["Arvioitu tilauspäivä puuttuu"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
+            can_calculate_value = False
+        # else:
+        # order_date = arrow.get(sale.expectedOrderDate.isoformat())
+        # order_date_offset = (order_date - span.start).days
+
+        # expected_value = np.zeros(len(span))
+        if sale.expectedValue is None:
+            self._invalid_sales["Myynnin arvo puuttuu"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
+            can_calculate_value = False
+
+        expected_value = (
+            pd.Series(
+                [sale.expectedValue.amount * sale.probability / 100.0],
+                index=[pd.Timestamp(sale.expectedOrderDate)],
+            )
+            if can_calculate_value
+            else pd.Series(dtype=float)
+        )
+
+        phases = [
+            models.PhaseModelWithHierarchyInfo(**phase_json)
+            for phase_json in await self._client.get_all(
+                f"projects/{sale.guid}/phaseswithhierarchy"
+            )
+        ]
+
+        expected_work_hours = pd.Series(dtype=float)
+
+        if not phases:
+            self._invalid_sales["Vaihe puuttuu"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
+        else:
+            for phase in phases:
+                if (phase.workHoursEstimate is not None) and (
+                    phase.workHoursEstimate > 0
+                ):
+                    start = arrow.get(phase.startDate.isoformat())
+                    end = arrow.get(phase.deadline.isoformat())
+                    phase_range = DateRange(start, end)
+
+                    work_hour_estimate = (
+                        phase.workHoursEstimate * sale.probability / 100.0
+                    )
+                    daily_work = work_hour_estimate / len(phase_range)
+
+                    expected_work_hours = pd.Series(
+                        daily_work,
+                        index=pd.date_range(phase.startDate, phase.deadline, freq="D"),
+                    )
+                elif not phase.hasChildren:
+                    # only report problems in leaf phases
+                    self._invalid_sales["Vaiheen työmääräarvio puuttuu"].append(
+                        {
+                            "name": f"{sale.name} / {phase.name}",
+                            "phase": phase.name,
+                            "soldby": sale.salesPerson.firstName,
+                            "owner": sale.projectOwner.firstName,
+                            "guid": sale.guid,
+                        }
+                    )
+                    logger.error(f"Phase with no workHoursEstimate: {phase.name}")
+
+                MINIMUM_SUM_EPSILON = 0.5
+                if sum(expected_work_hours) < MINIMUM_SUM_EPSILON:
+                    self._invalid_sales["Työmääräarvio puuttuu"].append(
+                        {
+                            "name": sale.name,
+                            "soldby": sale.salesPerson.firstName,
+                            "owner": sale.projectOwner.firstName,
+                            "guid": sale.guid,
+                        }
+                    )
+
+        expected_value_df = pd.DataFrame(
+            index=expected_value.index,
+            data={
+                "businessunit": self.businessunits_by_guid[sale.businessUnit.guid],
+                "id": "sales-value",
+                "project": sale.guid,
+                "customer": sale.customer.guid,
+            },
+        )
+        expected_value_df["value"] = expected_value
+        expected_value_df["date"] = expected_value.index
+
+        expected_work_df = pd.DataFrame(
+            index=expected_work_hours.index,
+            data={
+                "businessunit": self.businessunits_by_guid[sale.businessUnit.guid],
+                "id": "sales-work",
+                "project": sale.guid,
+                "customer": sale.customer.guid,
+            },
+        )
+        expected_work_df["value"] = expected_work_hours
+        expected_work_df["date"] = expected_work_hours.index
+
+        return pd.concat([expected_value_df, expected_work_df], ignore_index=True)
+
+        return pd.DataFrame(
+            {
+                "expected-work": expected_work_hours,
+                "expected-value": expected_value,
+                "businessunit": self.businessunits_by_guid[sale.businessUnit.guid],
+            }
+        )
+
+    def invalid_sales(self) -> pd.DataFrame:
+        result = pd.DataFrame(
+            [{**v, "id": k} for k, lst in self._invalid_sales.items() for v in lst]
+        )
+        result["inserted"] = pd.Timestamp(arrow.utcnow().datetime)
+        return result.convert_dtypes()
+
+    async def process_businessunit_sales(
+        self, businessunit_guid: str
+    ) -> list[pd.DataFrame]:
+        """ """
+        sales = await self._client.get_all(
+            "salescases",
+            {
+                "businessUnitGuids": [businessunit_guid],
+                "isClosed": False,
+                "salesStatusTypeGuids": self.SalesStatus.TARJOUS.value,
+            },
+        )
+
+        return await gather(
+            self.process_single_sale,
+            (models.ProjectOutputModel(**sale) for sale in sales),
+        )
+
+    async def get_sales_information(
+        self, span: DateRange # noqa: ARG002
+    ) -> pd.DataFrame:  
+        """
+        Return future sales values (€) and work (hours) for span.
+        """
+        if self._sales_cache is not None:
+            return self._sales_cache
+
+        self._invalid_sales = {
+            "Arvioitu tilauspäivä puuttuu": [],
+            "Myynnin arvo puuttuu": [],
+            "Deadline puuttuu": [],
+            "Työmääräarvio puuttuu": [],
+            "Vaiheen työmääräarvio puuttuu": [],
+            "Vaihe puuttuu": [],
+        }
+
+        all_expected_sales = await gather(
+            self.process_businessunit_sales,
+            (businessunit for businessunit in self.businessunits.values()),
+        )
+
+        # flatten list for one level, not actually sum anything
+        all_expected_sales = sum(all_expected_sales, start=[])
+
+        self._sales_cache = pd.concat(
+            all_expected_sales, ignore_index=True
+        ).convert_dtypes()
+        return self._sales_cache
+
+    async def get_sales_value(self, span: DateRange) -> pd.DataFrame:
+        sales = await self.get_sales_information(span)
+        return sales[sales["id"] == "sales-value"]
+
+    async def get_sales_work(self, span: DateRange) -> pd.DataFrame:
+        sales = await self.get_sales_information(span)
+        return sales[sales["id"] == "sales-work"]
