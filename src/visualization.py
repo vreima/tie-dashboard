@@ -292,6 +292,8 @@ class ChartGroup:
                 weekvalue="sum(value):Q",
                 weekmax="sum(max):Q",
                 name="min(name):N",
+                year="min(year)",
+                month="min(month)",
                 groupby=["week", "year", "name"],
             )
             .transform_joinaggregate(
