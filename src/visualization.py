@@ -157,7 +157,7 @@ class ChartGroup:
                 groupby=["type", "date"],
             )
             .encode(
-                x=alt.X("end:T").axis(title=None),
+                x=alt.X("yearmonthdate(end):T").axis(title=None),
                 y=alt.Y("value:Q").axis(title="Allokoitu tuntimäärä (h)"),
                 color=alt.Color("type:N", title="Tuntilaji").scale(
                     scheme="category20c"
