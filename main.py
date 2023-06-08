@@ -73,11 +73,18 @@ async def save():
     async with Fetcher() as fetcher:
         for kpi in kpis:
             t0 = time.monotonic()
-            data = await kpi.get(fetcher, kpi.span)
-            len(Base(kpi.base_name, kpi.collection_name).insert(data).inserted_ids)
-            logger.success(
-                f"KPI '{kpi.id}' fetched and saved in {time.monotonic() - t0:.2f}s."
-            )
+
+            try:
+                data = await kpi.get(fetcher, kpi.span)
+            except Exception as e:
+                logger.exception(e)
+            else:
+                inserted = len(
+                    Base(kpi.base_name, kpi.collection_name).insert(data).inserted_ids
+                )
+                logger.success(
+                    f"{inserted} documents for KPI '{kpi.id}' fetched and saved in {time.monotonic() - t0:.2f}s."
+                )
 
         inv_collection = Base(kpi.base_name, "invalid")
         inv_collection.create_index(23 * 60 * 60)

@@ -70,6 +70,9 @@ class Fetcher:
         ]
         return self._users
 
+    async def users_by_guid(self, guid: str) -> models.UserOutputModel:
+        return next(user for user in await self.users() if user.guid == guid)
+
     async def __aenter__(self: T) -> T:
         await self._client.__aenter__()
 
@@ -390,26 +393,41 @@ class Fetcher:
         expected_value_df = pd.DataFrame(
             index=expected_value.index,
             data={
-                "businessunit": self.businessunits_by_guid[sale.businessUnit.guid],
+                "businessunit-project": self.businessunits_by_guid[
+                    sale.businessUnit.guid
+                ],
+                "businessunit-user": self.businessunits_by_guid[
+                    self.users_by_guid(sale.projectOwner.guid)
+                ],
+                "user": sale.projectOwner.guid,
                 "id": "sales-value",
                 "project": sale.guid,
                 "customer": sale.customer.guid,
+                "date": pd.Timestamp(arrow.utcnow().datetime),
             },
         )
         expected_value_df["value"] = expected_value
-        expected_value_df["date"] = expected_value.index
+        expected_value_df["forecast-date"] = expected_value.index
 
         expected_work_df = pd.DataFrame(
             index=expected_work_hours.index,
             data={
-                "businessunit": self.businessunits_by_guid[sale.businessUnit.guid],
+                "businessunit-project": self.businessunits_by_guid[
+                    sale.businessUnit.guid
+                ],
+                "businessunit-user": self.businessunits_by_guid[
+                    self.users_by_guid(sale.projectOwner.guid)
+                ],
+                "user": sale.projectOwner.guid,
                 "id": "sales-work",
                 "project": sale.guid,
                 "customer": sale.customer.guid,
+                "type": "sales-estimate",
+                "date": pd.Timestamp(arrow.utcnow().datetime),
             },
         )
         expected_work_df["value"] = expected_work_hours
-        expected_work_df["date"] = expected_work_hours.index
+        expected_work_df["forecast-date"] = expected_work_hours.index
 
         return pd.concat([expected_value_df, expected_work_df], ignore_index=True)
 
@@ -443,12 +461,12 @@ class Fetcher:
 
         return await gather(
             self.process_single_sale,
-            (models.ProjectOutputModel(**sale) for sale in sales),
+            ((models.ProjectOutputModel(**sale),) for sale in sales),
         )
 
     async def get_sales_information(
-        self, span: DateRange # noqa: ARG002
-    ) -> pd.DataFrame:  
+        self, span: DateRange  # noqa: ARG002
+    ) -> pd.DataFrame:
         """
         Return future sales values (€) and work (hours) for span.
         """
@@ -466,7 +484,7 @@ class Fetcher:
 
         all_expected_sales = await gather(
             self.process_businessunit_sales,
-            (businessunit for businessunit in self.businessunits.values()),
+            ((businessunit,) for businessunit in self.businessunits.values()),
         )
 
         # flatten list for one level, not actually sum anything

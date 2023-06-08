@@ -104,7 +104,7 @@ class ChartGroup:
         )
         grouped_melted = grouped_pivoted.melt(
             id_vars=["date", "span"],
-            value_vars=["external", "internal", "max", "unallocated"],
+            value_vars=["external", "internal", "max", "unallocated", "sales-estimate"],
         )
         grouped_merged = grouped_melted.merge(
             grouped_pivoted.drop(["external", "internal"], axis=1), on=["date", "span"]
@@ -118,6 +118,7 @@ class ChartGroup:
                     "internal": "Sisäinen työ",
                     "max": "Maksimi",
                     "unallocated": "Allokoimaton",
+                    "sales-estimate": "Ennuste",
                 }
             )
         )
@@ -129,7 +130,7 @@ class ChartGroup:
         return grouped_merged
 
     async def allocated_hours(self, data: pd.DataFrame) -> alt.Chart:
-        spanmin = 1
+        spanmin = 0
         spanmax = 360
 
         slider = alt.binding_range(
@@ -196,7 +197,9 @@ class ChartGroup:
                 point=alt.OverlayMarkDef(filled=False, fill="white", size=100),
             )
             .transform_filter(
-                (alt.datum.type == "Sisäinen työ") | (alt.datum.type == "Projektityö")
+                (alt.datum.type == "Sisäinen työ")
+                | (alt.datum.type == "Projektityö")
+                | (alt.datum.type == "Ennuste")
             )
             .properties(title="Tuleva työmäärä resursoinnin mukaan")
         )
