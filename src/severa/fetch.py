@@ -331,6 +331,26 @@ class Fetcher:
             else pd.Series(dtype=float)
         )
 
+        if sale.deadline is None:
+            self._invalid_sales["Deadline puuttuu"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
+
+        if sale.keywords is None:
+            self._invalid_sales["Avainsanat puuttuvat"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
+
         phases = [
             models.PhaseModelWithHierarchyInfo(**phase_json)
             for phase_json in await self._client.get_all(
@@ -363,10 +383,10 @@ class Fetcher:
                     )
                     daily_work = work_hour_estimate / len(phase_range)
 
-                    expected_work_hours = pd.Series(
+                    expected_work_hours = expected_work_hours.add(pd.Series(
                         daily_work,
                         index=pd.date_range(phase.startDate, phase.deadline, freq="D"),
-                    )
+                    ), fill_value=0)
                 elif not phase.hasChildren:
                     # only report problems in leaf phases
                     self._invalid_sales["Vaiheen työmääräarvio puuttuu"].append(
@@ -380,16 +400,16 @@ class Fetcher:
                     )
                     logger.error(f"Phase with no workHoursEstimate: {phase.name}")
 
-                MINIMUM_SUM_EPSILON = 0.5
-                if sum(expected_work_hours) < MINIMUM_SUM_EPSILON:
-                    self._invalid_sales["Työmääräarvio puuttuu"].append(
-                        {
-                            "name": sale.name,
-                            "soldby": sale.salesPerson.firstName,
-                            "owner": sale.projectOwner.firstName,
-                            "guid": sale.guid,
-                        }
-                    )
+        MINIMUM_SUM_EPSILON = 0.5
+        if sum(expected_work_hours) < MINIMUM_SUM_EPSILON:
+            self._invalid_sales["Työmääräarvio puuttuu"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
 
         user = (await self.users_by_guid).get(sale.projectOwner.guid, None)
         user_businessunit = (
@@ -474,6 +494,7 @@ class Fetcher:
             "Työmääräarvio puuttuu": [],
             "Vaiheen työmääräarvio puuttuu": [],
             "Vaihe puuttuu": [],
+            "Avainsanat puuttuvat": []
         }
 
         all_expected_sales = await gather(

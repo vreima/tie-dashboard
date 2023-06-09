@@ -40,6 +40,18 @@ def pre(text: str, request: Request):
 async def root():
     return {"message": "Hello World. Welcome to FastAPI!"}
 
+async def save_only_invalid_salescase_info():
+    async with Fetcher() as fetcher:
+        try:
+            data = await fetcher.get_sales_work(DateRange(540))
+        except Exception as e:
+            logger.exception(e)
+
+        inv_collection = Base("kpi-dev", "invalid")
+        inv_collection.create_index(23 * 60 * 60)
+        inv_collection.insert(fetcher.invalid_sales())
+
+    return "ok"
 
 async def save():
     KPI = namedtuple("KPI", "id base_name collection_name span get")
@@ -95,6 +107,11 @@ async def save():
 async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
     await save()
+
+@app.get("/save_invalid")
+async def read_save(request: Request) -> None:
+    logger.debug(f"/save_invalid request from {request.client.host}")
+    await save_only_invalid_salescase_info()
 
 
 @app.get("/load/{collection}")
