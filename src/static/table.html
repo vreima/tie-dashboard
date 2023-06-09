@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Panel in FastAPI: sliders</title>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" />
+    </head>
+    <body>
+        <div id="example" style="width: 80%"></div>
+        <script type="text/javascript">
+            fetch('http://127.0.0.1:8000/read/users')
+            .then(res => res.json())
+            .then((out) => {
+                const container = document.querySelector('#example');
+
+                const hot = new Handsontable(container, {
+                    data: [...out, {firstName: "", isActive: false, title: "", workContract: {hourCost:  {amount: 0 }}}],
+                    columns: [{title: "Name", type: "text", data: "firstName"},{title: "Active", type: "checkbox", data: "isActive"},{title: "Title", type: "text", data: "title"},
+                    {title: "Cost", type: "numeric", data: "workContract.hourCost.amount"}],
+                    rowHeaders: true,
+                    colHeaders: true,
+                    width: '100%',
+                    height: 'auto',
+                    filters: true,
+                    dropdownMenu: true,
+                    columnSorting: true,
+                    manualColumnResize: true,
+                    contextMenu: true,
+                    hiddenColumns: { indicators: true },
+                    manualColumnMove: true,
+                    columnSummary: [
+                        {sourceColumn: 3, reversedRowCoords: true,
+                        type: 'sum',
+                    destinationRow: 0, destinationColumn: 3}
+                    ],
+                    licenseKey: 'non-commercial-and-evaluation' // for non-commercial use only
+                });
+            }).catch(err => console.error(err));
+        </script>
+    </body>
+</html>

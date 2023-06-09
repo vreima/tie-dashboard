@@ -104,7 +104,12 @@ async def read_load(request: Request, collection: str):
     )
 
 
-@app.get("/severa/{endpoint}")
+@app.get("/invalid_salescases")
+async def invalid_salescases():
+    return Base("kpi-dev", "invalid").find().to_dict(orient="records")
+
+
+@app.get("/severa/{endpoint:path}")
 async def severa_endpoint(endpoint: str, request: Request):
     async with base_client.Client() as client:
         return pre(
@@ -119,6 +124,27 @@ async def severa_endpoint(endpoint: str, request: Request):
                 indent=4,
             ),
             request,
+        )
+
+
+@app.get("/table")
+async def tabulate(request: Request):
+    return templates.TemplateResponse("table.html", {"request": request})
+
+
+@app.get("/salescases")
+async def salescases(request: Request):
+    return templates.TemplateResponse("salescases.html", {"request": request})
+
+
+@app.get("/read/{endpoint}")
+async def read(endpoint: str, request: Request):
+    async with base_client.Client() as client:
+        return await client.get_all(
+            endpoint,
+            params={
+                key: request.query_params.getlist(key) for key in request.query_params
+            },
         )
 
 

@@ -70,9 +70,6 @@ class Fetcher:
         ]
         return self._users
 
-    async def users_by_guid(self, guid: str) -> models.UserOutputModel:
-        return next(user for user in await self.users() if user.guid == guid)
-
     async def __aenter__(self: T) -> T:
         await self._client.__aenter__()
 
@@ -113,6 +110,10 @@ class Fetcher:
     @property
     def businessunits_by_guid(self) -> dict[str, str]:
         return {v: k for k, v in self.businessunits.items()}
+
+    @property
+    async def users_by_guid(self) -> dict[str, models.UserOutputModel]:
+        return {user.guid: user for user in await self.users()}
 
     #
     # Allocations
@@ -390,15 +391,18 @@ class Fetcher:
                         }
                     )
 
+        user = (await self.users_by_guid).get(sale.projectOwner.guid, None)
+        user_businessunit = (
+            "Muu" if not user else self.businessunits_by_guid[user.businessUnit.guid]
+        )
+
         expected_value_df = pd.DataFrame(
             index=expected_value.index,
             data={
                 "businessunit-project": self.businessunits_by_guid[
                     sale.businessUnit.guid
                 ],
-                "businessunit-user": self.businessunits_by_guid[
-                    self.users_by_guid(sale.projectOwner.guid)
-                ],
+                "businessunit-user": user_businessunit,
                 "user": sale.projectOwner.guid,
                 "id": "sales-value",
                 "project": sale.guid,
@@ -415,9 +419,7 @@ class Fetcher:
                 "businessunit-project": self.businessunits_by_guid[
                     sale.businessUnit.guid
                 ],
-                "businessunit-user": self.businessunits_by_guid[
-                    self.users_by_guid(sale.projectOwner.guid)
-                ],
+                "businessunit-user": user_businessunit,
                 "user": sale.projectOwner.guid,
                 "id": "sales-work",
                 "project": sale.guid,
@@ -430,14 +432,6 @@ class Fetcher:
         expected_work_df["forecast-date"] = expected_work_hours.index
 
         return pd.concat([expected_value_df, expected_work_df], ignore_index=True)
-
-        return pd.DataFrame(
-            {
-                "expected-work": expected_work_hours,
-                "expected-value": expected_value,
-                "businessunit": self.businessunits_by_guid[sale.businessUnit.guid],
-            }
-        )
 
     def invalid_sales(self) -> pd.DataFrame:
         result = pd.DataFrame(

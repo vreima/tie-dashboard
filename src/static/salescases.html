@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TIE Salescases</title>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+  </head>
+  <body>
+    <div id="example" style="width: 80%"></div>
+    <script type="text/javascript">
+      fetch("https://tie-dashboard.up.railway.app/invalid_salescases")
+        .then((res) => res.json())
+        .then((out) => {
+          out.forEach((element) => {
+            element.link = `<a href="https://severa.visma.com/project/${element.guid}">https://severa.visma.com/project/${element.guid}</a>`;
+            element.inserted = moment(element.inserted).format("ddd D.M.YYYY h:mm:ss")
+          });
+
+          const container = document.querySelector("#example");
+
+          const hot = new Handsontable(container, {
+            data: [...out],
+            columns: [
+              { title: "Ongelma", type: "text", data: "id" },
+              { title: "Projekti", type: "text", data: "name" },
+              { title: "Myyjä", type: "text", data: "soldby" },
+              { title: "Projektipäällikkö", type: "text", data: "owner" },
+              { title: "Vaihe", type: "text", data: "phase" },
+              { title: "Aikaleima", type: "time", data: "inserted", timeFormat: 'h:mm' },
+              { title: "Severa", renderer: "html", data: "link" },
+            ],
+            rowHeaders: true,
+            colHeaders: true,
+            width: "100%",
+            height: "auto",
+            filters: true,
+            dropdownMenu: true,
+            columnSorting: true,
+            manualColumnResize: true,
+            contextMenu: true,
+            hiddenColumns: { indicators: true },
+            manualColumnMove: true,
+            columnSummary: [
+              {
+                sourceColumn: 3,
+                reversedRowCoords: true,
+                type: "sum",
+                destinationRow: 0,
+                destinationColumn: 3,
+              },
+            ],
+            licenseKey: "non-commercial-and-evaluation", // for non-commercial use only
+          });
+        })
+        .catch((err) => console.error(err));
+    </script>
+  </body>
+</html>
