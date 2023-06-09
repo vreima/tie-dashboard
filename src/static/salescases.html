@@ -20,7 +20,7 @@
         .then((out) => {
           out.forEach((element) => {
             element.link = `<a href="https://severa.visma.com/project/${element.guid}">https://severa.visma.com/project/${element.guid}</a>`;
-            element.inserted = moment(element.inserted).format("ddd D.M.YYYY h:mm:ss")
+            element.inserted = moment.utc(element.inserted).tz('Europe/Helsinki').format("ddd D.M.YYYY h:mm:ss")
           });
 
           const container = document.querySelector("#example");
