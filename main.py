@@ -40,6 +40,7 @@ def pre(text: str, request: Request):
 async def root():
     return {"message": "Hello World. Welcome to FastAPI!"}
 
+
 async def save_only_invalid_salescase_info():
     async with Fetcher() as fetcher:
         try:
@@ -53,7 +54,11 @@ async def save_only_invalid_salescase_info():
 
     return "ok"
 
-async def save():
+
+async def save(only_kpis=None):
+    if not only_kpis:
+        only_kpis = None
+
     KPI = namedtuple("KPI", "id base_name collection_name span get")
     kpis = [
         KPI(
@@ -84,6 +89,9 @@ async def save():
     logger.debug("/save: Fetching and saving kpis.")
     async with Fetcher() as fetcher:
         for kpi in kpis:
+            if only_kpis is not None and kpi.id not in only_kpis:
+                break
+
             t0 = time.monotonic()
 
             try:
@@ -103,10 +111,11 @@ async def save():
         inv_collection.insert(fetcher.invalid_sales())
 
 
-@app.get("/save/")
+@app.get("/save//")
 async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
-    await save()
+    await save(request.query_params.getlist("kpi"))
+
 
 @app.get("/save_invalid")
 async def read_save(request: Request) -> None:
@@ -119,6 +128,13 @@ async def read_load(request: Request, collection: str):
     return pre(
         Base("kpi-dev", collection).find().to_string(show_dimensions=True), request
     )
+
+
+@app.get("/debug")
+async def read_debug(request: Request):
+    async with Fetcher() as f:
+        data = await f.get_billing_forecast(DateRange(540))
+    return pre(data.to_string(show_dimensions=True), request)
 
 
 @app.get("/invalid_salescases")

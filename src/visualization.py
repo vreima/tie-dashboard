@@ -104,7 +104,7 @@ class ChartGroup:
         )
         grouped_melted = grouped_pivoted.melt(
             id_vars=["date", "span"],
-            value_vars=["external", "internal", "max", "unallocated", "sales-estimate"],
+            value_vars=["external", "internal", "max", "unallocated"],
         )
         grouped_merged = grouped_melted.merge(
             grouped_pivoted.drop(["external", "internal"], axis=1), on=["date", "span"]

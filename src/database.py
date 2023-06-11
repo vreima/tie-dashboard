@@ -38,7 +38,7 @@ class Base:
             f"[{self._coll.name}] Query '{query}' resulted in "
             f"{len(result)} results in {time.monotonic() - t0:.2f}s."
         )
-        return result
+        return result.convert_dtypes()
 
     def delete(self, query):
         result = self._coll.delete_many(query)

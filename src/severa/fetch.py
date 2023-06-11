@@ -115,6 +115,20 @@ class Fetcher:
     async def users_by_guid(self) -> dict[str, models.UserOutputModel]:
         return {user.guid: user for user in await self.users()}
 
+    async def force_get_user(self, guid: str) -> models.UserOutputModel:
+        if guid in await self.users_by_guid:
+            return await self.users_by_guid
+
+        return models.UserOutputModel(**(await self._client.get_all(f"users/{guid}")))
+
+    async def force_get_business_unit(self, guid: str) -> str:
+        if guid in self.businessunits_by_guid:
+            return self.businessunits_by_guid[guid]
+
+        return models.BusinessUnitModel(
+            **(await self._client.get_all(f"businessunits/{guid}"))
+        ).name
+
     #
     # Allocations
     #
@@ -383,10 +397,15 @@ class Fetcher:
                     )
                     daily_work = work_hour_estimate / len(phase_range)
 
-                    expected_work_hours = expected_work_hours.add(pd.Series(
-                        daily_work,
-                        index=pd.date_range(phase.startDate, phase.deadline, freq="D"),
-                    ), fill_value=0)
+                    expected_work_hours = expected_work_hours.add(
+                        pd.Series(
+                            daily_work,
+                            index=pd.date_range(
+                                phase.startDate, phase.deadline, freq="D"
+                            ),
+                        ),
+                        fill_value=0,
+                    )
                 elif not phase.hasChildren:
                     # only report problems in leaf phases
                     self._invalid_sales["Vaiheen työmääräarvio puuttuu"].append(
@@ -494,7 +513,7 @@ class Fetcher:
             "Työmääräarvio puuttuu": [],
             "Vaiheen työmääräarvio puuttuu": [],
             "Vaihe puuttuu": [],
-            "Avainsanat puuttuvat": []
+            "Avainsanat puuttuvat": [],
         }
 
         all_expected_sales = await gather(
@@ -517,3 +536,223 @@ class Fetcher:
     async def get_sales_work(self, span: DateRange) -> pd.DataFrame:
         sales = await self.get_sales_information(span)
         return sales[sales["id"] == "sales-work"]
+
+    async def get_project_forecasts(self, project: models.ProjectOutputModel):
+        """
+        Get all the forecasts in span for one project.
+        """
+        return [
+            models.ProjectForecastOutputModel(**forecast_json)
+            for forecast_json in await self._client.get_all(
+                f"projects/{project.guid}/projectforecasts"
+            )
+        ]
+
+    async def get_project_forecast_json(self, project: models.ProjectOutputModel):
+        today = arrow.utcnow().floor("day").isoformat()
+        return [
+            {
+                "forecast-year": forecast.year,
+                "forecast-month": forecast.month,
+                "date": today,
+                "billing": forecast.billingForecast.amount
+                if forecast.billingForecast is not None
+                else 0,
+                "expense": forecast.expenseForecast.amount
+                if forecast.expenseForecast is not None
+                else 0,
+                "revenue": forecast.revenueForecast.amount
+                if forecast.revenueForecast is not None
+                else 0,
+                "laborExpense": forecast.laborExpenseForecast.amount
+                if forecast.laborExpenseForecast is not None
+                else 0,
+                "project": project.guid,
+                "businessunit": project.businessUnit.guid,
+                "user": project.projectOwner.guid,
+                "customer": project.customer.guid,
+            }
+            for forecast in await self.get_project_forecasts(project)
+        ]
+
+    async def get_billing_forecast(self, span: DateRange):
+        all_projects = (
+            models.ProjectOutputModel(**project_json)
+            for project_json in await self._client.get_all(
+                "projects",
+                {
+                    "businessUnitGuids": list(self.businessunits.values()),
+                    "internal": False,
+                    "isClosed": False,
+                    "changedSince": arrow.utcnow().shift(years=-3).format("YYYY-MM-DD"),
+                    "salesStatusTypeGuid": self.SalesStatus.TILAUS.value,
+                },
+            )
+        )
+
+        forecasts = pd.DataFrame(
+            sum(
+                await gather(
+                    self.get_project_forecast_json, ((proj,) for proj in all_projects)
+                ),
+                [],
+            )
+        )
+
+        return forecasts[
+            forecasts[["billing", "expense", "revenue", "laborExpense"]].sum(axis=1) > 0
+        ]
+
+    async def get_realized_user_hours(
+        self, user: models.UserOutputModel, span: DateRange
+    ) -> pd.DataFrame:
+        hours = (
+            models.WorkHourOutputModel(**json)
+            for json in await self._client.get_all(
+                f"users/{user.guid}/workhours",
+                {**span},
+            )
+        )
+
+        return pd.DataFrame(
+            [
+                {
+                    "user": user.guid,
+                    "value": hour.quantity,
+                    "date": pd.Timestamp(hour.eventDate),
+                    "project": hour.project.guid,
+                    "cost": hour.unitCost.amount,
+                    # "businessunit-project": self.businessunits_by_guid[hour.project],
+                    "businessunit-user": self.businessunits_by_guid[
+                        user.businessUnit.guid
+                    ],
+                }
+                for hour in hours
+            ]
+        )
+
+    async def get_realized_hours(self, span: DateRange) -> pd.DataFrame:
+        return pd.concat(
+            await gather(
+                self.get_realized_user_hours,
+                [(user, span) for user in await self.users()],
+            )
+        ).convert_dtypes()
+
+    async def get_realized_project_invoices(
+        self, project: models.ProjectOutputModel, span: DateRange
+    ) -> pd.DataFrame:
+        invoices = (
+            models.InvoiceOutputModel(**json)
+            for json in await self._client.get_all(
+                f"invoices",
+                {**span, "projectGuids": project.guid},
+            )
+        )
+
+        return pd.DataFrame(
+            [
+                {
+                    "guid": invoice.guid,
+                    "user": project.projectOwner.guid,
+                    "status": invoice.status.guid,
+                    "date": pd.Timestamp(invoice.date),
+                    "entrydate": pd.Timestamp(invoice.entryDate),
+                    "customer": invoice.customer.guid,
+                    "project": invoice.projects[0].guid,
+                    "value": invoice.totalExcludingTax.amount,
+                    "businessunit-user": await self.force_get_business_unit(
+                        await self.force_get_user(project.projectOwner.guid)
+                    ),
+                    "businessunit_project": await self.force_get_business_unit(
+                        project.businessUnit.guid
+                    ),
+                }
+                for invoice in invoices
+            ]
+        )
+
+    async def get_realized_invoices(self, span: DateRange) -> pd.DataFrame:
+        all_projects = pd.DataFrame(
+            await self._client.get_all(
+                "projects",
+                {
+                    "businessUnitGuids": list(self.businessunits.values()),
+                    "changedSince": arrow.utcnow().shift(years=-3).format("YYYY-MM-DD"),
+                },
+            )
+        )
+
+        all_invoices = pd.DataFrame(
+            await self._client.get_all(
+                f"invoices",
+                {**span, "projectBusinessUnitGuids": list(self.businessunits.values())},
+            )
+        )
+
+        all_invoices["invoice-guid"] = all_invoices.guid
+        all_invoices["date"] = pd.to_datetime(all_invoices["date"])
+        all_invoices["status"] = all_invoices.status.map(lambda x: x["name"])
+        all_invoices["project-guid"] = all_invoices.projects.map(lambda x: x[0]["guid"])
+        all_invoices["value"] = all_invoices.totalExcludingTax.map(
+            lambda x: x["amount"]
+        )
+        all_invoices["customer-guid"] = all_invoices.customer.map(lambda x: x["guid"])
+        filtered_invoices = all_invoices[
+            [
+                "invoice-guid",
+                "status",
+                "project-guid",
+                "date",
+                "value",
+                "customer-guid",
+            ]
+        ]
+
+        all_projects["project-guid"] = all_projects.guid
+        all_projects["user"] = all_projects.projectOwner.map(lambda x: x["guid"])
+        all_projects["businessunit-project-guid"] = all_projects.businessUnit.map(
+            lambda x: x["guid"]
+        )
+        filtered_projects = all_projects[
+            ["project-guid", "user", "businessunit-project-guid"]
+        ]
+
+        businessunits = pd.DataFrame(
+            [
+                {
+                    "businessunit-project-guid": json["guid"],
+                    "businessunit-project": json["name"]
+                    if json["guid"] not in self.businessunits_by_guid
+                    else self.businessunits_by_guid[json["guid"]],
+                }
+                for json in await self._client.get_all(f"businessunits")
+            ]
+        )
+
+        users = pd.DataFrame(
+            [
+                {
+                    "user": json["guid"],
+                    "user-name": json["firstName"],
+                    "businessunit-user": json["businessUnit"]["name"]
+                    if json["businessUnit"]["guid"] not in self.businessunits_by_guid
+                    else self.businessunits_by_guid[json["businessUnit"]["guid"]],
+                }
+                for json in await self._client.get_all(f"users")
+            ]
+        )
+
+
+        resulting_invoices = filtered_invoices.merge(
+            filtered_projects, on="project-guid"
+        )
+
+
+        resulting_invoices = resulting_invoices.merge(businessunits, on="businessunit-project-guid")
+
+        resulting_invoices = resulting_invoices.merge(users, on="user")
+
+        return resulting_invoices.drop("businessunit-project-guid", axis=1).convert_dtypes()
+
+        # return pd.concat(await gather(self.get_realized_project_invoices, [(project, span) for project in all_projects]))
