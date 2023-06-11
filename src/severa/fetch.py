@@ -743,16 +743,18 @@ class Fetcher:
             ]
         )
 
-
         resulting_invoices = filtered_invoices.merge(
             filtered_projects, on="project-guid"
         )
 
-
-        resulting_invoices = resulting_invoices.merge(businessunits, on="businessunit-project-guid")
+        resulting_invoices = resulting_invoices.merge(
+            businessunits, on="businessunit-project-guid"
+        )
 
         resulting_invoices = resulting_invoices.merge(users, on="user")
 
-        return resulting_invoices.drop("businessunit-project-guid", axis=1).convert_dtypes()
+        return resulting_invoices.drop(
+            "businessunit-project-guid", axis=1
+        ).convert_dtypes()
 
         # return pd.concat(await gather(self.get_realized_project_invoices, [(project, span) for project in all_projects]))

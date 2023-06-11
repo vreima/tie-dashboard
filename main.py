@@ -81,7 +81,14 @@ async def save(only_kpis=None):
             "sales-work",
             DateRange(540),
             Fetcher.get_sales_work,
-        )
+        ),
+        KPI(
+            "billing",
+            "kpi-dev",
+            "billing",
+            DateRange(540),
+            Fetcher.get_billing_forecast,
+        ),
         # KPI("allocations, "kpi-dev", "allocations",
         # DateRange(540), Fetcher.get_resource_allocations),
     ]
