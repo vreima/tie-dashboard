@@ -575,7 +575,7 @@ class Fetcher:
             for forecast in await self.get_project_forecasts(project)
         ]
 
-    async def get_billing_forecast(self, span: DateRange):
+    async def get_billing_forecast(self, span: DateRange):  # noqa: ARG002
         all_projects = (
             models.ProjectOutputModel(**project_json)
             for project_json in await self._client.get_all(
@@ -645,7 +645,7 @@ class Fetcher:
         invoices = (
             models.InvoiceOutputModel(**json)
             for json in await self._client.get_all(
-                f"invoices",
+                "invoices",
                 {**span, "projectGuids": project.guid},
             )
         )
@@ -685,7 +685,7 @@ class Fetcher:
 
         all_invoices = pd.DataFrame(
             await self._client.get_all(
-                f"invoices",
+                "invoices",
                 {**span, "projectBusinessUnitGuids": list(self.businessunits.values())},
             )
         )
@@ -726,7 +726,7 @@ class Fetcher:
                     if json["guid"] not in self.businessunits_by_guid
                     else self.businessunits_by_guid[json["guid"]],
                 }
-                for json in await self._client.get_all(f"businessunits")
+                for json in await self._client.get_all("businessunits")
             ]
         )
 
@@ -739,7 +739,7 @@ class Fetcher:
                     if json["businessUnit"]["guid"] not in self.businessunits_by_guid
                     else self.businessunits_by_guid[json["businessUnit"]["guid"]],
                 }
-                for json in await self._client.get_all(f"users")
+                for json in await self._client.get_all("users")
             ]
         )
 

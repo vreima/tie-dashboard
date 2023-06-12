@@ -44,7 +44,7 @@ async def root():
 async def save_only_invalid_salescase_info():
     async with Fetcher() as fetcher:
         try:
-            data = await fetcher.get_sales_work(DateRange(540))
+            data = await fetcher.get_sales_work(DateRange(540))  # noqa: F841
         except Exception as e:
             logger.exception(e)
 
@@ -118,14 +118,14 @@ async def save(only_kpis=None):
         inv_collection.insert(fetcher.invalid_sales())
 
 
-@app.get("/save//")
+@app.get("/save")
 async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
     await save(request.query_params.getlist("kpi"))
 
 
 @app.get("/save_invalid")
-async def read_save(request: Request) -> None:
+async def read_save_invalid(request: Request) -> None:
     logger.debug(f"/save_invalid request from {request.client.host}")
     await save_only_invalid_salescase_info()
 
@@ -200,7 +200,9 @@ async def read_ping():
 @app.get("/kpi")
 async def altair_plot(request: Request, chart_num: int | None = None):
     t0 = time.monotonic()
+    logger.debug(f"/kpi request from {request.client.host}.")
     charts, n_rows = await src.visualization.ChartGroup().get_charts()
+    logger.debug(f"/kpi ({request.client.host}): charts OK.")
 
     if chart_num is not None:
         charts = [charts[chart_num]]
