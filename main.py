@@ -167,6 +167,11 @@ async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
     await save(request.query_params.getlist("kpi"))
 
+@app.get("/save_sparse")
+async def read_save(request: Request) -> None:
+    logger.debug(f"/save request from {request.client.host}")
+    await save_sparse()
+
 
 @app.get("/save_invalid")
 async def read_save_invalid(request: Request) -> None:
