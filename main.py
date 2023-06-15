@@ -14,6 +14,7 @@ import httpx
 
 # from bokeh.embed import server_document
 from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
@@ -23,6 +24,7 @@ from src.database import Base
 from src.daterange import DateRange
 from src.severa import base_client
 from src.severa.fetch import Fetcher
+from src.severa.client import Client
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -34,6 +36,11 @@ def pre(text: str, request: Request):
         "pre.html",
         {"request": request, "text": text},
     )
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("favicon.ico")
 
 
 @app.get("/")
@@ -118,6 +125,43 @@ async def save(only_kpis=None):
         inv_collection.insert(fetcher.invalid_sales())
 
 
+async def save_sparse():
+    BASE = "kpi-dev-02"
+    KPI = namedtuple("KPI", "id base_name collection_name span get")
+    kpis = [
+        KPI(
+            "hours",
+            BASE,
+            "hours",
+            DateRange(540),
+            Client.fetch_hours,
+        )
+    ]
+
+    logger.debug("/save: Fetching and saving kpis.")
+    async with Client() as client:
+        for kpi in kpis:
+            t0 = time.monotonic()
+
+            try:
+                data = await kpi.get(client, kpi.span)
+            except Exception as e:
+                logger.exception(e)
+            else:
+                inserted = len(
+                    Base(kpi.base_name, kpi.collection_name)
+                    .insert(data, sparsify=True)
+                    .inserted_ids
+                )
+                logger.success(
+                    f"{inserted} documents for KPI '{kpi.id}' fetched and saved in {time.monotonic() - t0:.2f}s."
+                )
+
+        inv_collection = Base(BASE, "invalid")
+        inv_collection.create_index(23 * 60 * 60)
+        inv_collection.insert(client.get_invalid_sales())
+
+
 @app.get("/save")
 async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
@@ -130,11 +174,9 @@ async def read_save_invalid(request: Request) -> None:
     await save_only_invalid_salescase_info()
 
 
-@app.get("/load/{collection}")
-async def read_load(request: Request, collection: str):
-    return pre(
-        Base("kpi-dev", collection).find().to_string(show_dimensions=True), request
-    )
+@app.get("/load/{base}/{collection}")
+async def read_load(request: Request, base: str, collection: str):
+    return pre(Base(base, collection).find().to_string(show_dimensions=True), request)
 
 
 @app.get("/debug")
@@ -298,7 +340,12 @@ async def start(background_tasks: BackgroundTasks, request: Request):
     jobs = get_cronjobs()
 
     if not jobs.started:
-        jobs.add_jobs([Cronjob(*params) for params in [(save, "0 2 * * *")]])
+        jobs.add_jobs(
+            [
+                Cronjob(*params)
+                for params in [(save, "0 2 * * *"), (save_sparse, "0 2 * * *")]
+            ]
+        )
         background_tasks.add_task(jobs.start)
 
     return pre(jobs.status(), request)

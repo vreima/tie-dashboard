@@ -40,3 +40,8 @@ ignore = [
     "E712",
     "E501"
 ]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

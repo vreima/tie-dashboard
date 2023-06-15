@@ -603,6 +603,56 @@ class Fetcher:
             forecasts[["billing", "expense", "revenue", "laborExpense"]].sum(axis=1) > 0
         ]
 
+    async def get_realized_user_absences(
+        self, user: models.UserOutputModel, span: DateRange
+    ) -> pd.DataFrame:
+        start = span.start.format("YYYY-MM-DDTHH:mm:ssZZ")
+        end = span.end.format("YYYY-MM-DDTHH:mm:ssZZ")
+
+        absences = (
+            models.ActivityModel(**json)
+            for json in await self._client.get_all(
+                "activities",
+                {
+                    "activityCategories": "Absences",
+                    "startDateTime": start,
+                    "endDateTime": end,
+                    "userGuids": [user.guid],
+                },
+            )
+        )
+
+        # for a in absences:
+        #    print(f"{user.firstName} [{a.startDateTime} .. {a.endDateTime}] ({(a.endDateTime - a.startDateTime).total_seconds() / 60 / 60}) {a.name} {a.hasDuration=} {a.hasHours=} {a.isAllDay=}")
+
+        result = pd.DataFrame(
+            [
+                {
+                    "user": user.guid,
+                    "value": (
+                        absence.endDateTime - absence.startDateTime
+                    ).total_seconds()
+                    / 60
+                    / 60,
+                    "date": pd.Timestamp(absence.startDateTime),
+                    "isAllDay": absence.isAllDay,
+                    "businessunit-user": self.businessunits_by_guid[
+                        user.businessUnit.guid
+                    ],
+                }
+                for absence in absences
+            ]
+        )
+
+        if not result.empty:
+            result.loc[result["isAllDay"], "value"] = user.workContract.dailyHours
+
+            cal = Finland()
+            working_days = result.date.map(cal.is_working_day)
+            result = result[working_days]
+
+        return result
+
     async def get_realized_user_hours(
         self, user: models.UserOutputModel, span: DateRange
     ) -> pd.DataFrame:
@@ -622,6 +672,7 @@ class Fetcher:
                     "date": pd.Timestamp(hour.eventDate),
                     "project": hour.project.guid,
                     "cost": hour.unitCost.amount,
+                    "productive": hour.isProductive,
                     # "businessunit-project": self.businessunits_by_guid[hour.project],
                     "businessunit-user": self.businessunits_by_guid[
                         user.businessUnit.guid
@@ -635,6 +686,14 @@ class Fetcher:
         return pd.concat(
             await gather(
                 self.get_realized_user_hours,
+                [(user, span) for user in await self.users()],
+            )
+        ).convert_dtypes()
+
+    async def get_realized_absences(self, span: DateRange) -> pd.DataFrame:
+        return pd.concat(
+            await gather(
+                self.get_realized_user_absences,
                 [(user, span) for user in await self.users()],
             )
         ).convert_dtypes()
@@ -757,4 +816,57 @@ class Fetcher:
             "businessunit-project-guid", axis=1
         ).convert_dtypes()
 
-        # return pd.concat(await gather(self.get_realized_project_invoices, [(project, span) for project in all_projects]))
+    async def get_sales_margin(self, span: DateRange):
+        # Users
+        users = await self.users()
+        hour_cost = pd.DataFrame(
+            [
+                {"user": user.guid, "cost": user.workContract.hourCost.amount}
+                for user in users
+            ]
+        )
+        hour_cost = hour_cost.set_index("user")["cost"].rename("Tuntikulu")
+
+        # Billing
+        invoices = await self.get_realized_invoices(span)
+        billing = invoices.groupby(["user"])["value"].sum().rename("Laskutus")
+
+        # Hours
+        # TODO: poissaolot yms.
+        hours = await self.get_realized_hours(span)
+        hours = (
+            hours.groupby(["user", "productive"])["value"]
+            .sum()
+            .reset_index(level=1)
+            .fillna(value=0)
+        )
+        internal_hours = hours[~hours.productive]["value"].rename("Sisäiset tunnit")
+        external_hours = hours[hours.productive]["value"].rename("Projektitunnit")
+
+        # Absences
+        all_absences = await self.get_realized_absences(span)
+        absences = all_absences.groupby(["user"])["value"].sum().rename("Poissaolot")
+        total_hours = (
+            internal_hours.add(external_hours, fill_value=0).add(absences, fill_value=0)
+        ).rename("Tunnit yhteensä")
+
+        # Total
+        result = pd.concat(
+            [
+                invoices.groupby(["user"])["user-name"].first(),
+                billing,
+                internal_hours,
+                external_hours,
+                total_hours,
+                absences,
+                hour_cost,
+            ],
+            axis=1,
+        ).fillna(value=0)
+        result["Kulu"] = result["Tuntikulu"] * result["Tunnit yhteensä"]
+        result["Kate"] = result["Laskutus"] - result["Kulu"]
+        result["Kate/projektitunti"] = result["Kate"] / result["Projektitunnit"]
+        result["Kate/tunti"] = result["Kate"] / result["Tunnit yhteensä"]
+        result["Laskutusaste"] = result["Projektitunnit"] / result["Tunnit yhteensä"]
+
+        return result.sort_values(by=["Kate"])

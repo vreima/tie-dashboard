@@ -98,6 +98,15 @@ class DateRange:
     def contains(self, date: arrow.Arrow) -> bool:
         return bool(self) and (self.start <= date <= self.end)
 
+    def cut(self, date: arrow.Arrow) -> tuple["DateRange", "DateRange"]:
+        if date < self.start:
+            return DateRange(), self
+
+        if date.ceil("day") >= self.end:
+            return self, DateRange()
+
+        return DateRange(self.start, date), DateRange(date.shift(days=1), self.end)
+
     def __and__(self, other: "DateRange") -> "DateRange":
         # Intersection of two ranges
         return self.intersection(other)

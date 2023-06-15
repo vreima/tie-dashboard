@@ -355,7 +355,7 @@ class FileKeywordModel(BaseModel):
     lastUpdatedDateTime: Optional[datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
-    category: Optional[KeywordCategory] = "File"
+    category: Optional[KeywordCategory] = KeywordCategory.File
 
 
 class UserKeywordModel(BaseModel):
@@ -366,7 +366,7 @@ class UserKeywordModel(BaseModel):
     lastUpdatedDateTime: Optional[datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
-    category: Optional[KeywordCategory] = "User"
+    category: Optional[KeywordCategory] = KeywordCategory.User
     userGuid: Optional[str] = None
 
 

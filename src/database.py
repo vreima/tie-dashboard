@@ -6,6 +6,17 @@ from loguru import logger
 from pymongo import MongoClient
 
 
+class NotNanDict(dict):
+    @staticmethod
+    def is_nan(v):
+        if isinstance(v, dict):
+            return False
+        return pd.isna(v)
+
+    def __new__(self, a):
+        return {k: v for k, v in a if not self.is_nan(v)}
+
+
 class Base:
     """
     Small wrapper to pymongo database.
@@ -18,8 +29,15 @@ class Base:
     def create_index(self, expiration: float):
         self._coll.create_index("inserted", expireAfterSeconds=expiration)
 
-    def insert(self, data: pd.DataFrame):
-        result = self._coll.insert_many(data.to_dict(orient="records"), ordered=False)
+    def insert(self, data: pd.DataFrame, sparsify: bool = False):
+        if sparsify:
+            result = self._coll.insert_many(
+                data.to_dict(orient="records", into=NotNanDict), ordered=False
+            )
+        else:
+            result = self._coll.insert_many(
+                data.to_dict(orient="records"), ordered=False
+            )
 
         a, b = len(result.inserted_ids), len(data)
         (logger.error if a < b else logger.success)(

@@ -13,13 +13,13 @@ from src.severa import models
 load_dotenv(r"C:\Users\vireima\tie-dashboard\.env")
 
 
-SEVERA_CLIENT_ID = os.getenv("SEVERA_CLIENT_ID")
-SEVERA_CLIENT_SECRET = os.getenv("SEVERA_CLIENT_SECRET")
-SEVERA_SCOPE = os.getenv("SEVERA_CLIENT_SCOPE")
+SEVERA_CLIENT_ID = os.environ["SEVERA_CLIENT_ID"]
+SEVERA_CLIENT_SECRET = os.environ["SEVERA_CLIENT_SECRET"]
+SEVERA_SCOPE = os.environ["SEVERA_CLIENT_SCOPE"]
 SEVERA_BASE_URL = "https://api.severa.visma.com/rest-api/v1.0/"
 
 T = typing.TypeVar("T", bound="Client")
-JSON = dict[str, typing.Any] | list[dict[str, typing.Any]]
+JSON = dict[str, typing.Any]
 
 
 class Client:
@@ -27,9 +27,9 @@ class Client:
     HTTP_ERROR_429 = 429
 
     def __init__(self: T) -> None:
-        self._client_id = SEVERA_CLIENT_ID
-        self._client_secret = SEVERA_CLIENT_SECRET
-        self._client_scope = SEVERA_SCOPE
+        self._client_id: str = SEVERA_CLIENT_ID
+        self._client_secret: str = SEVERA_CLIENT_SECRET
+        self._client_scope: str = SEVERA_SCOPE
 
         self._client = httpx.AsyncClient(
             base_url=SEVERA_BASE_URL, http2=True, timeout=120.0
@@ -50,6 +50,8 @@ class Client:
         self._auth = models.PublicAuthenticationOutputModel(**response.json())
 
     async def _reauthenticate(self: T) -> None:
+        assert self._auth is not None
+
         response = await self._client.post(
             "refreshtoken",
             headers={"client_Id": self._client_id},
@@ -138,7 +140,7 @@ class Client:
         logger.error("Retry limit reached.")
         raise httpx.RequestError("Retry limit reached.")
 
-    async def get(self, endpoint: str, params=None, **kwargs) -> JSON:
+    async def get(self, endpoint: str, params=None, **kwargs):
         next_page_available = True
         headers = {}
 
