@@ -140,7 +140,7 @@ class Client:
         start = span.start.format("YYYY-MM-DDTHH:mm:ssZZ")
         end = span.end.format("YYYY-MM-DDTHH:mm:ssZZ")
 
-        absences = (
+        absences = [
             models.ActivityModel(**json)
             for json in await self._client.get_all(
                 "activities",
@@ -151,7 +151,16 @@ class Client:
                     "userGuids": [user.guid for user in await self.users()],
                 },
             )
-        )
+        ]
+
+        if not absences:
+            return pd.DataFrame({
+                "user": pd.Series(dtype=str),
+                "value": pd.Series(dtype=float),
+                "date": pd.Series(dtype='datetime64[ns, utc]'),
+                "activity_type": pd.Series(dtype=str),
+                "id": pd.Series(dtype=str),
+            })
 
         result = pd.DataFrame(
             [

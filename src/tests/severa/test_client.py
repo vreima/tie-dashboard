@@ -11,12 +11,8 @@ class TestClient:
         span = DateRange(4)
 
         async with Client() as client:
-            assert isinstance(await client.fetch_realized_maximum(span), pd.DataFrame)
-            assert isinstance(await client.fetch_forecasted_maximum(span), pd.DataFrame)
-            assert isinstance(await client.fetch_realized_absences(span), pd.DataFrame)
-            assert isinstance(
-                await client.fetch_forecasted_absences(span), pd.DataFrame
-            )
+            assert isinstance(await client.fetch_maximums(), pd.DataFrame)
+            assert isinstance(await client.fetch_absences(span), pd.DataFrame)
             assert isinstance(await client.fetch_realized_workhours(span), pd.DataFrame)
             assert isinstance(
                 await client.fetch_forecasted_workhours(span), pd.DataFrame
@@ -24,8 +20,7 @@ class TestClient:
             assert isinstance(
                 await client.fetch_forecasted_saleshours(span), pd.DataFrame
             )
-            assert isinstance(await client.fetch_realized_hours(span), pd.DataFrame)
-            assert isinstance(await client.fetch_forecasted_hours(span), pd.DataFrame)
+            assert isinstance(await client.fetch_hours(span), pd.DataFrame)
 
     @pytest.mark.asyncio
     async def test_billing_return_types(self):
