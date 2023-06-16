@@ -138,7 +138,7 @@ async def save_sparse():
         )
     ]
 
-    logger.debug("/save: Fetching and saving kpis.")
+    logger.debug("/save_sparse: Fetching and saving kpis.")
     async with Client() as client:
         for kpi in kpis:
             t0 = time.monotonic()
@@ -167,9 +167,10 @@ async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
     await save(request.query_params.getlist("kpi"))
 
+
 @app.get("/save_sparse")
 async def read_save(request: Request) -> None:
-    logger.debug(f"/save request from {request.client.host}")
+    logger.debug(f"/save_sparse request from {request.client.host}")
     await save_sparse()
 
 
@@ -193,7 +194,7 @@ async def read_debug(request: Request):
 
 @app.get("/invalid_salescases")
 async def invalid_salescases():
-    return Base("kpi-dev", "invalid").find().to_dict(orient="records")
+    return Base("kpi-dev-02", "invalid").find().to_dict(orient="records")
 
 
 @app.get("/severa/{endpoint:path}")

@@ -154,13 +154,15 @@ class Client:
         ]
 
         if not absences:
-            return pd.DataFrame({
-                "user": pd.Series(dtype=str),
-                "value": pd.Series(dtype=float),
-                "date": pd.Series(dtype='datetime64[ns, utc]'),
-                "activity_type": pd.Series(dtype=str),
-                "id": pd.Series(dtype=str),
-            })
+            return pd.DataFrame(
+                {
+                    "user": pd.Series(dtype=str),
+                    "value": pd.Series(dtype=float),
+                    "date": pd.Series(dtype="datetime64[ns, utc]"),
+                    "activity_type": pd.Series(dtype=str),
+                    "id": pd.Series(dtype=str),
+                }
+            )
 
         result = pd.DataFrame(
             [
