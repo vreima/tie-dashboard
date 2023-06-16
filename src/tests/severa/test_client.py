@@ -1,8 +1,8 @@
-from src.severa.client import Client
-from src.daterange import DateRange
-
 import pandas as pd
 import pytest
+
+from src.daterange import DateRange
+from src.severa.client import Client
 
 
 class TestClient:

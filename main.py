@@ -11,6 +11,7 @@ import anyio
 import arrow
 import croniter
 import httpx
+import pandas as pd
 
 # from bokeh.embed import server_document
 from fastapi import BackgroundTasks, FastAPI, Request
@@ -23,9 +24,8 @@ import src.visualization
 from src.database import Base
 from src.daterange import DateRange
 from src.severa import base_client
-from src.severa.fetch import Fetcher
 from src.severa.client import Client
-import pandas as pd
+from src.severa.fetch import Fetcher
 from src.stable_hash import get_hash
 
 app = FastAPI()
@@ -171,7 +171,7 @@ async def read_save(request: Request) -> None:
 
 
 @app.get("/save_sparse")
-async def read_save(request: Request) -> None:
+async def read_save_sparse(request: Request) -> None:
     logger.debug(f"/save_sparse request from {request.client.host}")
     await save_sparse()
 
@@ -184,11 +184,13 @@ async def read_save_invalid(request: Request) -> None:
 
 @app.get("/load/{base}/{collection}")
 async def read_load(request: Request, base: str, collection: str):
-    return pre(Base(base, collection).find().to_string(show_dimensions=True), request)
+    return pre(
+        Base(base, collection).find(ids=True).to_string(show_dimensions=True), request
+    )
 
 
 @app.get("/save_test")
-async def read_load(request: Request):
+async def read_save_test(request: Request):
     item = dict(request.query_params.multi_items())
     item["_id"] = get_hash(item.get("id"))
     Base("test", "test").upsert(pd.DataFrame([item]))

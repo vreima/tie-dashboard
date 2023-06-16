@@ -3,7 +3,7 @@ import time
 
 import pandas as pd
 from loguru import logger
-from pymongo import MongoClient, UpdateOne, ReplaceOne, InsertOne
+from pymongo import InsertOne, MongoClient, ReplaceOne
 
 
 class NotNanDict(dict):
@@ -70,19 +70,23 @@ class Base:
             matched = result.matched_count
             ups = result.upserted_count
             mod = result.modified_count
-            
+
             logger.success(
                 f"[{self._coll.name}] Inserted {ins}, matched {matched}, modified {mod}, upserted {ups} documents of {len(data)}."
             )
         else:
             logger.error(f"[{self._coll.name}] Bulk write unacknowledged.")
 
-    def find(self, query=None) -> pd.DataFrame:
+    def find(self, query=None, ids=False) -> pd.DataFrame:
         if query is None:
             query = {}
 
         t0 = time.monotonic()
-        result = pd.DataFrame(self._coll.find(query, projection={"_id": False}))
+        result = pd.DataFrame(
+            self._coll.find(query, projection={"_id": False})
+            if not ids
+            else self._coll.find(query)
+        )
         logger.info(
             f"[{self._coll.name}] Query '{query}' resulted in "
             f"{len(result)} results in {time.monotonic() - t0:.2f}s."

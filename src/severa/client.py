@@ -1,8 +1,7 @@
+import time
 import typing
 from enum import Enum
 from types import TracebackType
-
-import time
 
 import anyio
 import arrow
@@ -12,7 +11,6 @@ from workalendar.europe import Finland
 from src.daterange import DateRange
 from src.severa import models
 from src.severa.base_client import Client as BaseClient
-
 from src.stable_hash import get_hash
 
 T = typing.TypeVar("T", bound="Client")
@@ -497,7 +495,9 @@ class Client:
         result = pd.DataFrame(
             [{**v, "id": k} for k, lst in self._invalid_sales.items() for v in lst]
         )
-        result["_id"] = result.apply(lambda x: get_hash((x["id"], x["guid"], x["phase"])), axis=1)
+        result["_id"] = result.apply(
+            lambda x: get_hash((x["id"], x["guid"], x["phase"])), axis=1
+        )
         result["inserted"] = pd.Timestamp(arrow.utcnow().datetime)
         return result.convert_dtypes()
 
