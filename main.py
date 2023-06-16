@@ -25,6 +25,8 @@ from src.daterange import DateRange
 from src.severa import base_client
 from src.severa.fetch import Fetcher
 from src.severa.client import Client
+import pandas as pd
+from src.stable_hash import get_hash
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -45,7 +47,7 @@ async def favicon():
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World. Welcome to FastAPI!"}
+    return {"message": "Hello World."}
 
 
 async def save_only_invalid_salescase_info():
@@ -159,7 +161,7 @@ async def save_sparse():
 
         inv_collection = Base(BASE, "invalid")
         inv_collection.create_index(23 * 60 * 60)
-        inv_collection.insert(client.get_invalid_sales())
+        inv_collection.upsert(client.get_invalid_sales())
 
 
 @app.get("/save")
@@ -183,6 +185,15 @@ async def read_save_invalid(request: Request) -> None:
 @app.get("/load/{base}/{collection}")
 async def read_load(request: Request, base: str, collection: str):
     return pre(Base(base, collection).find().to_string(show_dimensions=True), request)
+
+
+@app.get("/save_test")
+async def read_load(request: Request):
+    item = dict(request.query_params.multi_items())
+    item["_id"] = get_hash(item.get("id"))
+    Base("test", "test").upsert(pd.DataFrame([item]))
+
+    return pre(Base("test", "test").find().to_string(show_dimensions=True), request)
 
 
 @app.get("/debug")

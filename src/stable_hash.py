@@ -40,12 +40,12 @@ from typing import Dict
 # it did not allow objects to cache the hash.
 
 _VERSION = 0
-_EXCLUDE = '_hash_exclude_'
+_EXCLUDE = "_hash_exclude_"
 
 
 def get_hash(thing: object) -> bytes:
-    prefix = _VERSION.to_bytes(1, 'big')
-    digest = hashlib.md5(_json_dumps(thing).encode('utf-8')).digest()
+    prefix = _VERSION.to_bytes(1, "big")
+    digest = hashlib.md5(_json_dumps(thing).encode("utf-8")).digest()
     return prefix + digest[:-1]
 
 
@@ -57,7 +57,7 @@ def _json_dumps(thing: object) -> str:
         ensure_ascii=False,
         sort_keys=True,
         indent=None,
-        separators=(',', ':'),
+        separators=(",", ":"),
     )
 
 
@@ -67,7 +67,7 @@ def _json_default(thing: object) -> Any:
     except TypeError:
         pass
     if isinstance(thing, datetime.datetime):
-        return thing.isoformat(timespec='microseconds')
+        return thing.isoformat(timespec="microseconds")
     raise TypeError(f"Object of type {type(thing).__name__} is not JSON serializable")
 
 

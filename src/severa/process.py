@@ -1,22 +1,24 @@
 import pandas as pd
 from workalendar.europe import Finland
 
+
 def unravel_subset(data_subset: pd.DataFrame) -> pd.DataFrame:
-    mask = data_subset.date.isna() & ~(data_subset["start_date"].isna() | data_subset["end_date"].isna())
-    
+    mask = data_subset.date.isna() & ~(
+        data_subset["start_date"].isna() | data_subset["end_date"].isna()
+    )
+
     data = data_subset[mask]
 
     if len(data) < 1:
         return data
 
-
     # Calculate dates and workdays
     calendar = Finland()
-    data.loc[:,"date"] = data.loc[:,:].apply(
+    data.loc[:, "date"] = data.loc[:, :].apply(
         lambda x: pd.date_range(start=x["start_date"], end=x["end_date"]), axis=1
     )
 
-    data.loc[:,"_num_workdays"] = data.loc[:,:].apply(
+    data.loc[:, "_num_workdays"] = data.loc[:, :].apply(
         lambda x: calendar.get_working_days_delta(
             x["start_date"].date(), x["end_date"].date(), include_start=True
         ),
@@ -49,8 +51,9 @@ def unravel(data: pd.DataFrame) -> pd.DataFrame:
     data.loc[data.id == "maximum", "end_date"] = pd.Timestamp(max_date)
 
     calendar = Finland()
-    data.loc[data.id == "maximum", "value"] = data.loc[data.id == "maximum",:].apply(
-        lambda x: x["value"] * calendar.get_working_days_delta(
+    data.loc[data.id == "maximum", "value"] = data.loc[data.id == "maximum", :].apply(
+        lambda x: x["value"]
+        * calendar.get_working_days_delta(
             x["start_date"].date(), x["end_date"].date(), include_start=True
         ),
         axis=1,

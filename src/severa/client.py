@@ -13,6 +13,8 @@ from src.daterange import DateRange
 from src.severa import models
 from src.severa.base_client import Client as BaseClient
 
+from src.stable_hash import get_hash
+
 T = typing.TypeVar("T", bound="Client")
 
 SALES_CACHE_REFRESH_AFTER_SECONDS = 60 * 60  # Save sales for 1h
@@ -495,6 +497,7 @@ class Client:
         result = pd.DataFrame(
             [{**v, "id": k} for k, lst in self._invalid_sales.items() for v in lst]
         )
+        result["_id"] = result.apply(lambda x: get_hash((x["id"], x["guid"], x["phase"])), axis=1)
         result["inserted"] = pd.Timestamp(arrow.utcnow().datetime)
         return result.convert_dtypes()
 

@@ -3,7 +3,7 @@ import time
 
 import pandas as pd
 from loguru import logger
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne, ReplaceOne, InsertOne
 
 
 class NotNanDict(dict):
@@ -45,6 +45,37 @@ class Base:
         )
 
         return result
+
+    def upsert(self, data: pd.DataFrame):
+        if "_id" in data.columns:
+            items_with_id = data[~data["_id"].isna()].to_dict(
+                orient="records", into=NotNanDict
+            )
+            items_without_id = data[data["_id"].isna()].to_dict(
+                orient="records", into=NotNanDict
+            )
+            operations = [
+                ReplaceOne({"_id": item["_id"]}, item, upsert=True)
+                for item in items_with_id
+            ] + [InsertOne(item) for item in items_without_id]
+        else:
+            items_without_id = data.to_dict(orient="records", into=NotNanDict)
+            operations = [InsertOne(item) for item in items_without_id]
+
+        print(operations)
+
+        result = self._coll.bulk_write(operations, ordered=False)
+        if result.acknowledged:
+            ins = result.inserted_count
+            matched = result.matched_count
+            ups = result.upserted_count
+            mod = result.modified_count
+            
+            logger.success(
+                f"[{self._coll.name}] Inserted {ins}, matched {matched}, modified {mod}, upserted {ups} documents of {len(data)}."
+            )
+        else:
+            logger.error(f"[{self._coll.name}] Bulk write unacknowledged.")
 
     def find(self, query=None) -> pd.DataFrame:
         if query is None:
