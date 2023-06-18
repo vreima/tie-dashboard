@@ -131,6 +131,7 @@ class Client:
                     "user": user.guid,
                     "value": user.workContract.dailyHours,
                     "id": "maximum",
+                    "internal_guid": user.guid,
                 }
                 for user in await self.users()
             ]
@@ -179,6 +180,7 @@ class Client:
                     "is_all_day": absence.isAllDay,
                     "activity_type": absence.activityType.guid,
                     "id": "absences",
+                    "internal_guid": absence.guid,
                 }
                 for absence in absences
             ]
@@ -219,7 +221,9 @@ class Client:
                     "value": hour.quantity,
                     "date": pd.Timestamp(hour.eventDate, tz="utc"),
                     "project": hour.project.guid,
+                    "phase": hour.phase.guid,
                     "productive": hour.isProductive,
+                    "internal_guid": hour.guid,
                     "id": "workhours",
                 }
                 for hour in hours
@@ -251,7 +255,8 @@ class Client:
         return pd.DataFrame(
             [
                 {
-                    "is_internal": alloc.project.isInternal,
+                    "internal_guid": alloc.guid,
+                    "productive": not alloc.project.isInternal,
                     "value": alloc.calculatedAllocationHours,
                     "user": user.guid,
                     "project": alloc.project.guid,
@@ -297,6 +302,12 @@ class Client:
         dfs = [await self.fetch_maximums()] + await gather(awaitables)
         result = pd.concat(dfs, ignore_index=True)
         result["forecast_date"] = arrow.utcnow().floor("day").datetime
+        result["_id"] = result.apply(
+            lambda x: get_hash(
+                (x.get("internal_guid"), x.get("id"), x.get("forecast_date"))
+            ),
+            axis=1,
+        )
 
         return result.convert_dtypes()
 
@@ -434,8 +445,11 @@ class Client:
                             "start_date": arrow.get(phase.startDate).datetime,
                             "end_date": arrow.get(phase.deadline).datetime,
                             "project": phase.project.guid,
+                            "phase": phase.guid,
                             "sold_by": sale.salesPerson.guid,
+                            "productive": not sale.isInternal,
                             "id": "saleswork",
+                            "internal_guid": phase.guid,
                         }
                     )
 
@@ -469,6 +483,7 @@ class Client:
                 "project": pd.Series(dtype=str),
                 "date": pd.Series(dtype="datetime64[ns, utc]"),
                 "value": pd.Series(dtype=float),
+                "internal_guid": pd.Series(dtype=str),
             }
         )
 
@@ -481,6 +496,7 @@ class Client:
                         "project": sale.guid,
                         "date": pd.Timestamp(sale.expectedOrderDate, tz="utc"),
                         "value": sale.expectedValue.amount,
+                        "internal_guid": sale.guid,
                     }
                 ]
             )

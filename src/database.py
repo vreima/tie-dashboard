@@ -46,7 +46,7 @@ class Base:
 
         return result
 
-    def upsert(self, data: pd.DataFrame):
+    def upsert(self, data: pd.DataFrame) -> None:
         if "_id" in data.columns:
             items_with_id = data[~data["_id"].isna()].to_dict(
                 orient="records", into=NotNanDict
@@ -54,6 +54,7 @@ class Base:
             items_without_id = data[data["_id"].isna()].to_dict(
                 orient="records", into=NotNanDict
             )
+
             operations = [
                 ReplaceOne({"_id": item["_id"]}, item, upsert=True)
                 for item in items_with_id
@@ -62,9 +63,8 @@ class Base:
             items_without_id = data.to_dict(orient="records", into=NotNanDict)
             operations = [InsertOne(item) for item in items_without_id]
 
-        print(operations)
-
         result = self._coll.bulk_write(operations, ordered=False)
+
         if result.acknowledged:
             ins = result.inserted_count
             matched = result.matched_count

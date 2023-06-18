@@ -22,6 +22,7 @@ import dataclasses
 import datetime
 import hashlib
 import json
+from base64 import standard_b64encode
 from collections.abc import Collection
 from typing import Any
 
@@ -41,10 +42,10 @@ _VERSION = 0
 _EXCLUDE = "_hash_exclude_"
 
 
-def get_hash(thing: object) -> bytes:
+def get_hash(thing: object) -> str:
     prefix = _VERSION.to_bytes(1, "big")
     digest = hashlib.md5(_json_dumps(thing).encode("utf-8")).digest()
-    return prefix + digest[:-1]
+    return standard_b64encode(prefix + digest[:-1]).decode()
 
 
 def _json_dumps(thing: object) -> str:

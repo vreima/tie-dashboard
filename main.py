@@ -150,13 +150,9 @@ async def save_sparse():
             except Exception as e:
                 logger.exception(e)
             else:
-                inserted = len(
-                    Base(kpi.base_name, kpi.collection_name)
-                    .insert(data, sparsify=True)
-                    .inserted_ids
-                )
+                Base(kpi.base_name, kpi.collection_name).upsert(data)
                 logger.success(
-                    f"{inserted} documents for KPI '{kpi.id}' fetched and saved in {time.monotonic() - t0:.2f}s."
+                    f"Documents for KPI '{kpi.id}' fetched and upserted in {time.monotonic() - t0:.2f}s."
                 )
 
         inv_collection = Base(BASE, "invalid")
