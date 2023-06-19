@@ -160,7 +160,7 @@ async def save_only_invalid_salescase_info():
 
         inv_collection = Base("kpi-dev-02", "invalid")
         inv_collection.create_index(23 * 60 * 60)
-        inv_collection.insert(client.get_invalid_sales())
+        inv_collection.upsert(client.get_invalid_sales())
 
 
 @app.get("/save")
