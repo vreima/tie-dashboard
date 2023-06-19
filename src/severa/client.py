@@ -83,6 +83,9 @@ class Client:
 
         return self._users[user_guid]
 
+    async def project_by_guid(self, project_guid: str) -> models.ProjectOutputModel:
+        return (await self.fetch_projects_with_cache())[project_guid]
+
     @property
     def businessunits(self) -> list[str]:
         # TIE, BAD
@@ -507,11 +510,126 @@ class Client:
     # Fetching billing        #
     ###########################
 
+    async def fetch_billing(self, span: DateRange) -> pd.DataFrame:
+        projects_mapping = await self.fetch_projects_with_cache()
+
+        span_past, span_future = span.cut(arrow.utcnow())
+        awaitables = []
+
+        if span_past:
+            awaitables += [(self.fetch_realized_billing, span_past)]
+
+        if span_future:
+            awaitables += [(self.fetch_forecasted_billing, span_future)]
+
+        result = pd.concat(await gather(awaitables), ignore_index=True)
+        result["user"] = result["project"].apply(
+            lambda x: projects_mapping[x].projectOwner.guid
+            if x in projects_mapping
+            else "CACHE_MISS"
+        )
+        result["forecast_date"] = arrow.utcnow().floor("day").datetime
+        result["_id"] = result.apply(
+            lambda x: get_hash(
+                (x.get("internal_guid"), x.get("id"), x.get("forecast_date"))
+            ),
+            axis=1,
+        )
+
+        return result.convert_dtypes()
+
     async def fetch_realized_billing(self, span: DateRange) -> pd.DataFrame:
-        raise NotImplementedError()
+        all_invoices = [
+            models.InvoiceOutputModel(**invoice_json)
+            for invoice_json in await self._client.get_all(
+                "invoices",
+                {**span, "projectBusinessUnitGuids": self.businessunits},
+            )
+        ]
+
+        billing_df = pd.DataFrame(
+            [
+                {
+                    "value": invoice.totalExcludingTax.amount,
+                    "project": invoice.projects[0].guid,
+                    "internal_guid": invoice.guid,
+                    "date": pd.Timestamp(invoice.date, tz="utc"),
+                    "status": invoice.status.guid,
+                    "id": "billing",
+                }
+                for invoice in all_invoices
+            ]
+        )
+
+        return billing_df.convert_dtypes()
 
     async def fetch_forecasted_billing(self, span: DateRange) -> pd.DataFrame:
-        raise NotImplementedError()
+        all_projects = (await self.fetch_projects_with_cache()).values()
+
+        forecasts: list[models.ProjectForecastOutputModel] = sum(
+            await gather(
+                (self.fetch_project_forecasts, project, span)
+                for project in all_projects
+            ),
+            start=[],
+        )
+
+        result = pd.DataFrame(
+            [
+                {
+                    "id": "billing",
+                    "internal_guid": forecast.guid,
+                    "start_date": pd.Timestamp(
+                        arrow.get(forecast.year, forecast.month, 1)
+                        .floor("month")
+                        .datetime
+                    ),
+                    "end_date": pd.Timestamp(
+                        arrow.get(forecast.year, forecast.month, 1)
+                        .ceil("month")
+                        .datetime
+                    ),
+                    "project": forecast.project.guid,
+                    "value": forecast.billingForecast.amount
+                    if forecast.billingForecast is not None
+                    else 0.0,
+                    "billing": forecast.billingForecast.amount
+                    if forecast.billingForecast is not None
+                    else 0.0,
+                    "expense": forecast.expenseForecast.amount
+                    if forecast.expenseForecast is not None
+                    else 0.0,
+                    "revenue": forecast.revenueForecast.amount
+                    if forecast.revenueForecast is not None
+                    else 0.0,
+                    "labor_expense": forecast.laborExpenseForecast.amount
+                    if forecast.laborExpenseForecast is not None
+                    else 0.0,
+                }
+                for forecast in forecasts
+            ]
+        )
+
+        forecast_sum = result[["billing", "expense", "revenue", "labor_expense"]].sum(
+            axis=1
+        )
+        return result[(forecast_sum < 0) | (forecast_sum > 0)]
+
+    async def fetch_project_forecasts(
+        self, project: models.ProjectOutputModel, span: DateRange
+    ) -> typing.Iterable[models.ProjectForecastOutputModel]:
+        """
+        Get all the forecasts in span for one project.
+        """
+        return [
+            models.ProjectForecastOutputModel(**forecast_json)
+            for forecast_json in await self._client.get_all(
+                f"projects/{project.guid}/projectforecasts", {**span}
+            )
+            if not project.isClosed
+            and not project.isInternal
+            and project.lastUpdatedDateTime > span.start.shift(months=-4).datetime
+        ]
 
     ###########################
     # Fetching sales          #
@@ -520,7 +638,9 @@ class Client:
     async def fetch_forecasted_salesvalue(self, span: DateRange) -> pd.DataFrame:
         saleshours = await self.fetch_sales()
         # TODO: span
-        return saleshours[saleshours.id == "salesvalue"].drop(["start_date", "end_date", "phase", "productive"], axis=1)
+        return saleshours[saleshours.id == "salesvalue"].drop(
+            ["start_date", "end_date", "phase", "productive"], axis=1
+        )
 
     async def fetch_realized_salesvalue(self, span: DateRange) -> pd.DataFrame:
         result = pd.DataFrame(
@@ -534,7 +654,7 @@ class Client:
                     "sold_by": project.salesPerson.guid,
                     "id": "salesvalue",
                 }
-                for project in await self.fetch_projects_with_cache(span)
+                for project in (await self.fetch_projects_with_cache()).values()
                 if span.contains(arrow.get(project.expectedOrderDate.isoformat()))
             ]
         )
@@ -563,9 +683,7 @@ class Client:
 
         return result.convert_dtypes()
 
-    async def fetch_projects_with_cache(
-        self, span: DateRange
-    ) -> list[models.ProjectOutputModel]:
+    async def fetch_projects_with_cache(self) -> dict[str, models.ProjectOutputModel]:
         if self._projects_cache is not None and (
             time.monotonic() - self._projects_cache_refresh_time
             < PROJECTS_CACHE_REFRESH_AFTER_SECONDS
@@ -576,15 +694,14 @@ class Client:
             "projects",
             {
                 "businessUnitGuids": self.businessunits,
-                "isClosed": False,
                 "salesStatusTypeGuids": SalesStatus.TILAUS.value,
-                "changedSince": span.start.isoformat(),
             },
         )
 
-        self._projects_cache = [
-            models.ProjectOutputModel(**project) for project in projects_json
-        ]
+        self._projects_cache = {
+            project_json["guid"]: models.ProjectOutputModel(**project_json)
+            for project_json in projects_json
+        }
 
         return self._projects_cache
 

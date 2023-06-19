@@ -144,7 +144,7 @@ async def save_sparse():
             "sales",
             DateRange(540),
             Client.fetch_salesvalue,
-        )
+        ),
     ]
 
     logger.debug("/save_sparse: Fetching and saving kpis.")

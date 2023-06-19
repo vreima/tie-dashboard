@@ -36,6 +36,8 @@ class Client:
         )
         self._auth: models.PublicAuthenticationOutputModel | None = None
         self._request_limit = anyio.Semaphore(4)
+        self._request_limit_per_second = anyio.Semaphore(10)
+        self._request_limit_first_req_timestamp = 0.0
 
     async def _authenticate(self) -> None:
         payload = {
