@@ -16,6 +16,7 @@ from src.stable_hash import get_hash
 T = typing.TypeVar("T", bound="Client")
 
 SALES_CACHE_REFRESH_AFTER_SECONDS = 60 * 60  # Save sales for 1h
+PROJECTS_CACHE_REFRESH_AFTER_SECONDS = 60 * 60  # Save projects for 1h
 
 
 class SalesStatus(Enum):
@@ -42,6 +43,10 @@ class Client:
         self._users: dict[str, models.UserOutputModel] = {}
 
         self._sales_cache = None
+        self._projects_cache = None
+
+        self._sales_cache_refresh_time = 0.0
+        self._projects_cache_refresh_time = 0.0
 
         # Aliases
         self.fetch_forecasted_absences = self.fetch_absences
@@ -100,26 +105,6 @@ class Client:
     ###########################
     # Fetching hours          #
     ###########################
-
-    # async def fetch_maximums(self, span: DateRange) -> pd.DataFrame:
-    #     dt_index = pd.date_range(span.start.date(), span.end.date(), freq="D", tz="utc")
-    #     workday_mask = pd.DataFrame(
-    #         {"date": dt_index, "value": dt_index.map(Finland().is_working_day)}
-    #     )
-    #     users = pd.DataFrame(
-    #         [
-    #             {
-    #                 "user": user.guid,
-    #                 "daily_hours": user.workContract.dailyHours,
-    #                 "id": "maximum",
-    #             }
-    #             for user in await self.users()
-    #         ]
-    #     )
-    #     result = users.merge(workday_mask, how="cross")
-    #     result.loc[:, "value"] *= result.loc[:, "daily_hours"]
-
-    #     return result.drop("daily_hours", axis=1).convert_dtypes()
 
     async def fetch_maximums(self) -> pd.DataFrame:
         """
@@ -494,6 +479,7 @@ class Client:
                         "user": sale.projectOwner.guid,
                         "id": "salesvalue",
                         "project": sale.guid,
+                        "sold_by": sale.salesPerson.guid,
                         "date": pd.Timestamp(sale.expectedOrderDate, tz="utc"),
                         "value": sale.expectedValue.amount,
                         "internal_guid": sale.guid,
@@ -531,11 +517,76 @@ class Client:
     # Fetching sales          #
     ###########################
 
-    async def fetch_realized_salesvalue(self, span: DateRange) -> pd.DataFrame:
-        raise NotImplementedError()
-
     async def fetch_forecasted_salesvalue(self, span: DateRange) -> pd.DataFrame:
-        raise NotImplementedError()
+        saleshours = await self.fetch_sales()
+        # TODO: span
+        return saleshours[saleshours.id == "salesvalue"].drop(["start_date", "end_date", "phase", "productive"], axis=1)
+
+    async def fetch_realized_salesvalue(self, span: DateRange) -> pd.DataFrame:
+        result = pd.DataFrame(
+            [
+                {
+                    "value": project.expectedValue.amount,
+                    "project": project.guid,
+                    "date": pd.Timestamp(project.expectedOrderDate, tz="utc"),
+                    "user": project.projectOwner.guid,
+                    "internal_guid": project.guid,
+                    "sold_by": project.salesPerson.guid,
+                    "id": "salesvalue",
+                }
+                for project in await self.fetch_projects_with_cache(span)
+                if span.contains(arrow.get(project.expectedOrderDate.isoformat()))
+            ]
+        )
+
+        return result.convert_dtypes()
+
+    async def fetch_salesvalue(self, span: DateRange) -> pd.DataFrame:
+        span_past, span_future = span.cut(arrow.utcnow())
+
+        awaitables = []
+
+        if span_past:
+            awaitables += [(self.fetch_realized_salesvalue, span_past)]
+
+        if span_future:
+            awaitables += [(self.fetch_forecasted_salesvalue, span_future)]
+
+        result = pd.concat(await gather(awaitables), ignore_index=True)
+        result["forecast_date"] = arrow.utcnow().floor("day").datetime
+        result["_id"] = result.apply(
+            lambda x: get_hash(
+                (x.get("internal_guid"), x.get("id"), x.get("forecast_date"))
+            ),
+            axis=1,
+        )
+
+        return result.convert_dtypes()
+
+    async def fetch_projects_with_cache(
+        self, span: DateRange
+    ) -> list[models.ProjectOutputModel]:
+        if self._projects_cache is not None and (
+            time.monotonic() - self._projects_cache_refresh_time
+            < PROJECTS_CACHE_REFRESH_AFTER_SECONDS
+        ):
+            return self._sales_cache
+
+        projects_json = await self._client.get_all(
+            "projects",
+            {
+                "businessUnitGuids": self.businessunits,
+                "isClosed": False,
+                "salesStatusTypeGuids": SalesStatus.TILAUS.value,
+                "changedSince": span.start.isoformat(),
+            },
+        )
+
+        self._projects_cache = [
+            models.ProjectOutputModel(**project) for project in projects_json
+        ]
+
+        return self._projects_cache
 
     ###########################
     # Utility                 #

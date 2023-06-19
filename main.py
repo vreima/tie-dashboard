@@ -137,6 +137,13 @@ async def save_sparse():
             "hours",
             DateRange(540),
             Client.fetch_hours,
+        ),
+        KPI(
+            "sales",
+            BASE,
+            "sales",
+            DateRange(540),
+            Client.fetch_salesvalue,
         )
     ]
 
