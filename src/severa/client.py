@@ -484,7 +484,7 @@ class Client:
                         "project": sale.guid,
                         "sold_by": sale.salesPerson.guid,
                         "date": pd.Timestamp(sale.expectedOrderDate, tz="utc"),
-                        "value": sale.expectedValue.amount,
+                        "value": sale.expectedValue.amount * sale.probability / 100.0,
                         "internal_guid": sale.guid,
                     }
                 ]
@@ -655,7 +655,7 @@ class Client:
                     "id": "salesvalue",
                 }
                 for project in (await self.fetch_projects_with_cache()).values()
-                if span.contains(arrow.get(project.expectedOrderDate.isoformat()))
+                if project.expectedOrderDate is not None and span.contains(arrow.get(project.expectedOrderDate.isoformat()))
             ]
         )
 
