@@ -303,13 +303,17 @@ class Client:
     # Fetching sales          #
     ###########################
 
-    async def fetch_sales(self) -> pd.DataFrame:
+    async def fetch_sales(self, force_refresh=False) -> pd.DataFrame:
         """
         Return future sales values (€) and work (hours).
         """
-        if self._sales_cache is not None and (
-            time.monotonic() - self._sales_cache_refresh_time
-            < SALES_CACHE_REFRESH_AFTER_SECONDS
+        if (
+            not force_refresh
+            and self._sales_cache is not None
+            and (
+                time.monotonic() - self._sales_cache_refresh_time
+                < SALES_CACHE_REFRESH_AFTER_SECONDS
+            )
         ):
             return self._sales_cache
 
@@ -655,7 +659,8 @@ class Client:
                     "id": "salesvalue",
                 }
                 for project in (await self.fetch_projects_with_cache()).values()
-                if project.expectedOrderDate is not None and span.contains(arrow.get(project.expectedOrderDate.isoformat()))
+                if project.expectedOrderDate is not None
+                and span.contains(arrow.get(project.expectedOrderDate.isoformat()))
             ]
         )
 

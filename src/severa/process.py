@@ -2,7 +2,6 @@ import pandas as pd
 from workalendar.europe import Finland
 
 
-
 def unravel_subset(data_subset: pd.DataFrame) -> pd.DataFrame:
     mask = data_subset.date.isna() & ~(
         data_subset["start_date"].isna() | data_subset["end_date"].isna()

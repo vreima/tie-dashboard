@@ -11,7 +11,6 @@ import anyio
 import arrow
 import croniter
 import httpx
-import pandas as pd
 
 # from bokeh.embed import server_document
 from fastapi import BackgroundTasks, FastAPI, Request
@@ -26,7 +25,6 @@ from src.daterange import DateRange
 from src.severa import base_client
 from src.severa.client import Client
 from src.severa.fetch import Fetcher
-from src.stable_hash import get_hash
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
@@ -48,20 +46,6 @@ async def favicon():
 @app.get("/")
 async def root():
     return {"message": "Hello World."}
-
-
-async def save_only_invalid_salescase_info():
-    async with Fetcher() as fetcher:
-        try:
-            data = await fetcher.get_sales_work(DateRange(540))  # noqa: F841
-        except Exception as e:
-            logger.exception(e)
-
-        inv_collection = Base("kpi-dev", "invalid")
-        inv_collection.create_index(23 * 60 * 60)
-        inv_collection.insert(fetcher.invalid_sales())
-
-    return "ok"
 
 
 async def save(only_kpis=None):
@@ -167,6 +151,18 @@ async def save_sparse():
         inv_collection.upsert(client.get_invalid_sales())
 
 
+async def save_only_invalid_salescase_info():
+    async with Client() as client:
+        try:
+            sales = await client.fetch_sales(force_refresh=True)  # noqa: F841
+        except Exception as e:
+            logger.exception(e)
+
+        inv_collection = Base("kpi-dev-02", "invalid")
+        inv_collection.create_index(23 * 60 * 60)
+        inv_collection.insert(client.get_invalid_sales())
+
+
 @app.get("/save")
 async def read_save(request: Request) -> None:
     logger.debug(f"/save request from {request.client.host}")
@@ -179,10 +175,10 @@ async def read_save_sparse(request: Request) -> None:
     await save_sparse()
 
 
-@app.get("/save_invalid")
-async def read_save_invalid(request: Request) -> None:
-    logger.debug(f"/save_invalid request from {request.client.host}")
-    await save_only_invalid_salescase_info()
+# @app.get("/save_invalid")
+# async def read_save_invalid(request: Request) -> None:
+#     logger.debug(f"/save_invalid request from {request.client.host}")
+#     await save_only_invalid_salescase_info()
 
 
 @app.get("/load/{base}/{collection}")
@@ -192,24 +188,25 @@ async def read_load(request: Request, base: str, collection: str):
     )
 
 
-@app.get("/save_test")
-async def read_save_test(request: Request):
-    item = dict(request.query_params.multi_items())
-    item["_id"] = get_hash(item.get("id"))
-    Base("test", "test").upsert(pd.DataFrame([item]))
+# @app.get("/save_test")
+# async def read_save_test(request: Request):
+#     item = dict(request.query_params.multi_items())
+#     item["_id"] = get_hash(item.get("id"))
+#     Base("test", "test").upsert(pd.DataFrame([item]))
 
-    return pre(Base("test", "test").find().to_string(show_dimensions=True), request)
+#     return pre(Base("test", "test").find().to_string(show_dimensions=True), request)
 
 
-@app.get("/debug")
-async def read_debug(request: Request):
-    async with Fetcher() as f:
-        data = await f.get_billing_forecast(DateRange(540))
-    return pre(data.to_string(show_dimensions=True), request)
+# @app.get("/debug")
+# async def read_debug(request: Request):
+#     async with Fetcher() as f:
+#         data = await f.get_billing_forecast(DateRange(540))
+#     return pre(data.to_string(show_dimensions=True), request)
 
 
 @app.get("/invalid_salescases")
 async def invalid_salescases():
+    await save_only_invalid_salescase_info()
     return Base("kpi-dev-02", "invalid").find().to_dict(orient="records")
 
 
