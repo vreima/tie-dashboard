@@ -1,18 +1,15 @@
 import datetime
 import json
-
-# import panel as pn
 import os
 import time
 import typing
 from collections import namedtuple
+from contextlib import asynccontextmanager
 
 import anyio
 import arrow
 import croniter
 import httpx
-
-# from bokeh.embed import server_document
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,7 +23,28 @@ from src.severa import base_client
 from src.severa.client import Client
 from src.severa.fetch import Fetcher
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    jobs = get_cronjobs()
+
+    jobs.add_jobs(
+        [
+            Cronjob(*params)
+            for params in [(save, "0 2 * * *"), (save_sparse, "0 2 * * *")]
+        ]
+    )
+
+    with anyio.CancelScope() as scope:
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(jobs.start)
+
+            yield
+
+            scope.cancel()
+
+
+app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 templates = Jinja2Templates(directory="src/static")
 
@@ -354,17 +372,8 @@ async def run_cronjob(timing: Cronjob):
             await timing.endpoint()
 
 
-@app.get("/start")
-async def start(background_tasks: BackgroundTasks, request: Request):
+@app.get("/status")
+async def status(request: Request):
     jobs = get_cronjobs()
-
-    if not jobs.started:
-        jobs.add_jobs(
-            [
-                Cronjob(*params)
-                for params in [(save, "0 2 * * *"), (save_sparse, "0 2 * * *")]
-            ]
-        )
-        background_tasks.add_task(jobs.start)
 
     return pre(jobs.status(), request)
