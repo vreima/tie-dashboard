@@ -5,33 +5,39 @@ import time
 import typing
 from collections import namedtuple
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 import anyio
 import arrow
 import croniter
 import httpx
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
 import src.visualization
+from src import security
 from src.database import Base
 from src.daterange import DateRange
+from src.security import get_current_username
 from src.severa import base_client
 from src.severa.client import Client
 from src.severa.fetch import Fetcher
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # noqa: ARG001
     jobs = get_cronjobs()
 
     jobs.add_jobs(
         [
             Cronjob(*params)
-            for params in [(save, "0 2 * * *"), (save_sparse, "0 2 * * *")]
+            for params in [
+                # (save, "0 2 * * *"),
+                (save_sparse, "0 2 * * *")
+            ]
         ]
     )
 
@@ -45,11 +51,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(security.router)
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
+
 templates = Jinja2Templates(directory="src/static")
 
 
 def pre(text: str, request: Request):
+    """
+    Render simple <pre></pre> -formatted HTML page for debugging.
+    """
     return templates.TemplateResponse(
         "pre.html",
         {"request": request, "text": text},
@@ -147,6 +159,13 @@ async def save_sparse():
             DateRange(540),
             Client.fetch_salesvalue,
         ),
+        KPI(
+            "billing",
+            BASE,
+            "billing",
+            DateRange(120),
+            Client.fetch_billing,
+        ),
     ]
 
     logger.debug("/save_sparse: Fetching and saving kpis.")
@@ -181,14 +200,11 @@ async def save_only_invalid_salescase_info():
         inv_collection.upsert(client.get_invalid_sales())
 
 
-@app.get("/save")
-async def read_save(request: Request) -> None:
-    logger.debug(f"/save request from {request.client.host}")
-    await save(request.query_params.getlist("kpi"))
-
-
 @app.get("/save_sparse")
-async def read_save_sparse(request: Request) -> None:
+async def read_save_sparse(
+    request: Request,
+    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+) -> None:
     logger.debug(f"/save_sparse request from {request.client.host}")
     await save_sparse()
 
@@ -200,7 +216,12 @@ async def read_save_sparse(request: Request) -> None:
 
 
 @app.get("/load/{base}/{collection}")
-async def read_load(request: Request, base: str, collection: str):
+async def read_load(
+    request: Request,
+    base: str,
+    collection: str,
+    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+):
     return pre(
         Base(base, collection).find(ids=True).to_string(show_dimensions=True), request
     )
@@ -229,7 +250,11 @@ async def invalid_salescases():
 
 
 @app.get("/severa/{endpoint:path}")
-async def severa_endpoint(endpoint: str, request: Request):
+async def severa_endpoint(
+    endpoint: str,
+    request: Request,
+    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+):
     async with base_client.Client() as client:
         return pre(
             json.dumps(
@@ -257,7 +282,11 @@ async def salescases(request: Request):
 
 
 @app.get("/read/{endpoint}")
-async def read(endpoint: str, request: Request):
+async def read(
+    endpoint: str,
+    request: Request,
+    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+):
     async with base_client.Client() as client:
         return await client.get_all(
             endpoint,
