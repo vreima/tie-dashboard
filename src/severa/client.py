@@ -449,7 +449,7 @@ class Client:
                     # only report problems in leaf phases
                     self._invalid_sales["Vaiheen työmääräarvio puuttuu"].append(
                         {
-                            "name": f"{sale.name} / {phase.name}",
+                            "name": sale.name,
                             "phase": phase.name,
                             "soldby": sale.salesPerson.firstName,
                             "owner": sale.projectOwner.firstName,
