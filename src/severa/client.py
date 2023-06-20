@@ -1,3 +1,4 @@
+import datetime
 import time
 import typing
 from enum import Enum
@@ -160,11 +161,17 @@ class Client:
                     "value": (
                         absence.endDateTime - absence.startDateTime
                     ).total_seconds()
-                    / 60
-                    / 60,
-                    "date": pd.Timestamp(
-                        arrow.get(absence.startDateTime).to("utc").datetime
-                    ),
+                    / 60.0
+                    / 60.0,
+                    "date": pd.Timestamp(absence.startDateTime.date(), tz="utc")
+                    if (absence.startDateTime.date() == absence.endDateTime.date())
+                    else pd.NaT,
+                    "start_date": pd.Timestamp(absence.startDateTime.date(), tz="utc")
+                    if (absence.startDateTime.date() != absence.endDateTime.date())
+                    else pd.NaT,
+                    "end_date": pd.Timestamp(absence.endDateTime.date(), tz="utc")
+                    if (absence.startDateTime.date() != absence.endDateTime.date())
+                    else pd.NaT,
                     "is_all_day": absence.isAllDay,
                     "activity_type": absence.activityType.guid,
                     "id": "absences",
@@ -178,16 +185,25 @@ class Client:
             return (await self.user_by_guid(guid)).workContract.dailyHours
 
         if not result.empty:
+            cal = Finland()
+
             # "AllDay" absences result in 24h durations, fix them after the fact
             result.loc[result["is_all_day"], "value"] = [
-                await daily_hours_by_user_guid(guid)
-                for guid in result.loc[result["is_all_day"], "user"]
+                (await daily_hours_by_user_guid(row["user"]))
+                * (
+                    cal.is_working_day(row["date"])
+                    if not pd.isna(row["date"])
+                    else cal.get_working_days_delta(
+                        row["start_date"].date(),
+                        row["end_date"].date(),
+                        include_start=True,
+                    )
+                )
+                for index, row in result.loc[result["is_all_day"], :].iterrows()
             ]
 
             # Discard holidays, weekends etc
-            cal = Finland()
-            working_days = result.date.map(cal.is_working_day)
-            result = result[working_days]
+            result = result[result.value > 0]
 
         return result.drop("is_all_day", axis=1).convert_dtypes()
 
