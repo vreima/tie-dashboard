@@ -113,6 +113,8 @@ class Client:
             try:
                 response.raise_for_status()
             except httpx.HTTPStatusError as exc:
+                logger.error(f"{exc}\n{exc.response.text}")
+
                 if exc.response.status_code == Client.HTTP_ERROR_429:
                     # Too Many Requests
 
@@ -126,7 +128,7 @@ class Client:
                 logger.exception(exc)
                 raise
             except httpx.HTTPError as exc:
-                logger.exception(exc)
+                logger.error(f"{exc}\n{exc.response.text}")
                 raise
             else:
                 logger.success(

@@ -11,6 +11,7 @@ import anyio
 import arrow
 import croniter
 import httpx
+import pandas as pd
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -188,7 +189,7 @@ async def save_sparse():
         inv_collection.upsert(client.get_invalid_sales())
 
 
-async def save_only_invalid_salescase_info():
+async def save_only_invalid_salescase_info() -> pd.DataFrame:
     async with Client() as client:
         try:
             sales = await client.fetch_sales(force_refresh=True)  # noqa: F841
@@ -196,8 +197,10 @@ async def save_only_invalid_salescase_info():
             logger.exception(e)
 
         inv_collection = Base("kpi-dev-02", "invalid")
-        inv_collection.create_index(23 * 60 * 60)
+        inv_collection.create_index(60 * 60)
         inv_collection.upsert(client.get_invalid_sales())
+
+        return client.get_invalid_sales()
 
 
 @app.get("/save_sparse")
@@ -245,8 +248,8 @@ async def read_load(
 
 @app.get("/invalid_salescases")
 async def invalid_salescases():
-    await save_only_invalid_salescase_info()
-    return Base("kpi-dev-02", "invalid").find().to_dict(orient="records")
+    return await save_only_invalid_salescase_info().to_dict(orient="records")
+    # return Base("kpi-dev-02", "invalid").find().to_dict(orient="records")
 
 
 @app.get("/severa/{endpoint:path}")
