@@ -197,7 +197,7 @@ async def save_only_invalid_salescase_info() -> pd.DataFrame:
             logger.exception(e)
 
         inv_collection = Base("kpi-dev-02", "invalid")
-        inv_collection.create_index(60 * 60)
+        # inv_collection.create_index(60 * 60)
         inv_collection.upsert(client.get_invalid_sales())
 
         return client.get_invalid_sales()
@@ -248,7 +248,7 @@ async def read_load(
 
 @app.get("/invalid_salescases")
 async def invalid_salescases():
-    return await save_only_invalid_salescase_info().to_dict(orient="records")
+    return (await save_only_invalid_salescase_info()).to_dict(orient="records")
     # return Base("kpi-dev-02", "invalid").find().to_dict(orient="records")
 
 
