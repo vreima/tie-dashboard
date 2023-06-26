@@ -4,9 +4,8 @@
   <script type="text/javascript" src="{{ base_url }}static/pressure.js"></script>
 </head>
 <html>
-  <body>
+  <body onload="fetch_pressure('{{ base_url }}', 7)">
     <div id="body">
-      <h1>{{ user_name }}</h1>
       <h3>Kiirekysely</h3>
 
       <div class="table">
@@ -17,8 +16,7 @@
         </div>
         <div class="canvas">
           <canvas
-            onclick="myFunction(event, '{{ base_url }}', '{{ user_name }}')"
-            onmousemove="update(event)"
+            
             id="area"
             width="800"
             height="800"
@@ -31,19 +29,6 @@
           <div class="text-right">Liikaa tekemistä</div>
         </div>
       </div>
-      <p style="width: 800px; margin: 3em auto; padding-left: 2em; text-align: left;">
-        Merkitse kiireen määrä klikkaamalla sopivaan kohtaan. Akseleina
-        <strong>kiireen määrä</strong> kuvaa työkuormaa, vasemmalla sopiva
-        työmäärä ja oikealla tilanne, jossa kalenteri on täynnä eikä kaikkea
-        ehdi tekemään. <strong>Kiireen tuntu</strong> tarkoittaa fiilistä.
-        Alhaalla työn tekeminen tuntuu mukavalta, ylhäällä kiireet ja tulipalot
-        ovat mielessä vapaa-ajallakin.
-      </p>
     </div>
-
-    <script>
-      let finished = false;
-      reset_canvas();
-    </script>
   </body>
 </html>
