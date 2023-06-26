@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <head>
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <link rel="stylesheet" type="text/css" href="https://{{ hostname }}/static/pressure.css" />
-  <script type="text/javascript" src="https://{{ hostname }}/static/pressure.js"></script>
+  <link rel="stylesheet" type="text/css" href="{{ base_url }}static/pressure.css" />
+  <script type="text/javascript" src="{{ base_url }}static/pressure.js"></script>
 </head>
 <html>
-  <body onload="fetch_pressure('{{ hostname }}', 7)">
+  <body onload="fetch_pressure('{{ base_url }}', 7)">
     <div id="body">
       <h3>Kiirekysely</h3>
 
@@ -19,8 +19,8 @@
           <canvas
             
             id="area"
-            width="800"
-            height="800"
+            width="700"
+            height="700"
           ></canvas>
         </div>
         <div></div>

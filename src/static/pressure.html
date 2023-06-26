@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <head>
-  <link rel="stylesheet" type="text/css" href="https://{{ hostname }}/static/pressure.css" />
-  <script type="text/javascript" src="https://{{ hostname }}/static/pressure.js"></script>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <link rel="stylesheet" type="text/css" href="{{ base_url }}static/pressure.css" />
+  <script type="text/javascript" src="{{ base_url }}static/pressure.js"></script>
 </head>
 <html>
   <body>
@@ -17,11 +18,11 @@
         </div>
         <div class="canvas">
           <canvas
-            onclick="myFunction(event, '{{ hostname }}', '{{ user_name }}')"
+            onclick="myFunction(event, '{{ base_url }}', '{{ user_name }}')"
             onmousemove="update(event)"
             id="area"
-            width="800"
-            height="800"
+            width="700"
+            height="700"
           ></canvas>
         </div>
         <div></div>
@@ -31,7 +32,7 @@
           <div class="text-right">Liikaa tekemistä</div>
         </div>
       </div>
-      <p style="width: 800px; margin: 3em auto; padding-left: 2em; text-align: left;">
+      <p style="width: 700px; margin: 3em auto; padding-left: 2em; text-align: left;">
         Merkitse kiireen määrä klikkaamalla sopivaan kohtaan. Akseleina
         <strong>kiireen määrä</strong> kuvaa työkuormaa, vasemmalla sopiva
         työmäärä ja oikealla tilanne, jossa kalenteri on täynnä eikä kaikkea

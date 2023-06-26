@@ -115,7 +115,7 @@ async function myFunction(event, hostname, user_name) {
   const scaled_y = 1.0 - y / h;
 
   const response = await fetch(
-    `https://${hostname}/pressure/save/${user_name}?x=${scaled_x}&y=${scaled_y}`
+    `${hostname}pressure/save/${user_name}?x=${scaled_x}&y=${scaled_y}`
   );
   const jsonData = await response.json();
 
@@ -128,7 +128,7 @@ async function fetch_pressure(hostname, offset) {
   const h = c.offsetHeight;
     const ctx = reset_canvas();
 
-  const response = await fetch(`https://${hostname}/pressure/?offset=${offset}`);
+  const response = await fetch(`${hostname}pressure/?offset=${offset}`);
   const jsonData = await response.json();
 
   ctx.lineCap = "round";

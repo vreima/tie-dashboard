@@ -3,11 +3,13 @@ body {
 }
 h1 {
   margin: 0;
+  text-transform: capitalize;
 }
 h3 {
   margin: 0 0 1em 0;
   color: dimgray;
   font-weight: lighter;
+  text-transform: capitalize;
 }
 div#body {
   display: flex;
@@ -27,7 +29,7 @@ div#body {
   color: grey;
 }
 .bottom {
-  width: 800px;
+  width: 700px;
 }
 .table > .left {
   writing-mode: vertical-lr;
@@ -40,8 +42,8 @@ div#body {
   margin: 0;
   border-left: 2px solid black;
   border-bottom: 2px solid black;
-  width: 800px;
-  height: 800px;
+  width: 700px;
+  height: 700px;
 }
 .table .text-left,
 .table .text-mid,
