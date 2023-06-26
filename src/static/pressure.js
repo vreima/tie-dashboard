@@ -83,7 +83,7 @@ function cross(ctx, x, y, cross_size) {
   ctx.stroke();
 }
 
-async function myFunction(event, base_url, user_name) {
+async function myFunction(event, hostname, user_name) {
   if (finished) return;
 
   finished = true;
@@ -115,20 +115,20 @@ async function myFunction(event, base_url, user_name) {
   const scaled_y = 1.0 - y / h;
 
   const response = await fetch(
-    `${base_url}pressure/save/${user_name}?x=${scaled_x}&y=${scaled_y}`
+    `https://${hostname}/pressure/save/${user_name}?x=${scaled_x}&y=${scaled_y}`
   );
   const jsonData = await response.json();
 
   console.log(jsonData);
 }
 
-async function fetch_pressure(base_url, offset) {
+async function fetch_pressure(hostname, offset) {
     const c = document.getElementById("area");
   const w = c.offsetWidth;
   const h = c.offsetHeight;
     const ctx = reset_canvas();
 
-  const response = await fetch(`${base_url}pressure/?offset=${offset}`);
+  const response = await fetch(`https://${hostname}/pressure/?offset=${offset}`);
   const jsonData = await response.json();
 
   ctx.lineCap = "round";

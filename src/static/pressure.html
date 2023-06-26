@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <head>
-  <link rel="stylesheet" type="text/css" href="{{ base_url }}static/pressure.css" />
-  <script type="text/javascript" src="{{ base_url }}static/pressure.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://{{ hostname }}/static/pressure.css" />
+  <script type="text/javascript" src="https://{{ hostname }}/static/pressure.js"></script>
 </head>
 <html>
   <body>
@@ -17,7 +17,7 @@
         </div>
         <div class="canvas">
           <canvas
-            onclick="myFunction(event, '{{ base_url }}', '{{ user_name }}')"
+            onclick="myFunction(event, '{{ hostname }}', '{{ user_name }}')"
             onmousemove="update(event)"
             id="area"
             width="800"
