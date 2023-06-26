@@ -230,6 +230,57 @@ async def read_load(
     )
 
 
+@app.get("/pressure")
+async def pressure(request: Request):  # noqa: ARG001
+    results = (
+        Base("pressure", "pressure")
+        .find({"date": {"$gte": arrow.utcnow().shift(days=-7).datetime}})
+        .to_dict(orient="records")
+    )
+    logger.debug(results)
+    return results
+
+
+@app.get("/kiire/{user_name}")
+async def user_pressure(request: Request, user_name: str):
+    return templates.TemplateResponse(
+        "pressure.html",
+        {"request": request, "user_name": user_name, "base_url": request.base_url},
+    )
+
+
+@app.get("/pressure/save/{user_name}")
+async def save_user_pressure(
+    request: Request,  # noqa: ARG001
+    user_name: str,
+    x: float | None = None,
+    y: float | None = None,
+):
+    logger.debug(f"{user_name}: {x=}, {y=}")
+    Base("pressure", "pressure").upsert(
+        pd.DataFrame(
+            [
+                {
+                    "user": user_name,
+                    "date": pd.Timestamp(arrow.utcnow().datetime),
+                    "x": x,
+                    "y": y,
+                }
+            ]
+        )
+    )
+    return "OK"
+
+
+@app.get("/pressure/load/{user_name}")
+async def load_user_pressure(request: Request, user_name: str):  # noqa: ARG001
+    results = (
+        Base("pressure", "pressure").find({"user": user_name}).to_dict(orient="records")
+    )
+    logger.debug(results)
+    return results
+
+
 # @app.get("/save_test")
 # async def read_save_test(request: Request):
 #     item = dict(request.query_params.multi_items())

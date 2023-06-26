@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<head>
+  <style>
+    body {
+      font-family: Lato, sans-serif;
+    }
+    h1 {
+      margin: 0;
+    }
+    h3 {
+      margin: 0 0 1em 0;
+      color: dimgray;
+      font-weight: lighter;
+    }
+    div#body {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .table {
+      display: grid;
+      grid-template-columns: auto auto;
+    }
+    .table > .left,
+    .table > .bottom {
+      display: grid;
+      grid-template-columns: auto auto auto;
+      color: grey;
+    }
+    .bottom {
+      width: 800px;
+    }
+    .table > .left {
+      writing-mode: vertical-lr;
+      text-orientation: sideways;
+      transform: rotate(-180deg);
+    }
+    .table > .canvas {
+      padding-left: 0;
+      padding-right: 0;
+      margin: 0;
+      border-left: 2px solid black;
+      border-bottom: 2px solid black;
+      width: 800px;
+      height: 800px;
+    }
+    .table .text-left,
+    .table .text-mid,
+    .table .text-right {
+      padding: 0.5em;
+    }
+    .table .text-left {
+      text-align: left;
+    }
+    .table .text-mid {
+      text-align: center;
+      font-weight: bold;
+    }
+    .table .text-right {
+      text-align: right;
+    }
+  </style>
+</head>
+<html>
+  <body>
+    <div id="body">
+      <h1>{{ user_name }}</h1>
+      <h3>Kiirekysely</h3>
+
+      <div class="table">
+        <div class="left">
+          <div class="text-left">Hyvä fiilis</div>
+          <div class="text-mid">Kiireen tuntu</div>
+          <div class="text-right">Ahdistaa</div>
+        </div>
+        <div class="canvas">
+          <canvas
+            onclick="myFunction(event)"
+            onmousemove="update(event)"
+            id="area"
+            width="800"
+            height="800"
+          ></canvas>
+        </div>
+        <div></div>
+        <div class="bottom">
+          <div class="text-left">Sopivasti tekemistä</div>
+          <div class="text-mid">Kiireen määrä</div>
+          <div class="text-right">Liikaa tekemistä</div>
+        </div>
+      </div>
+      <p style="width: 800px; margin: 3em auto; padding-left: 2em; text-align: left;">
+        Merkitse kiireen määrä klikkaamalla sopivaan kohtaan. Akseleina
+        <strong>kiireen määrä</strong> kuvaa työkuormaa, vasemmalla sopiva
+        työmäärä ja oikealla tilanne, jossa kalenteri on täynnä eikä kaikkea
+        ehdi tekemään. <strong>Kiireen tuntu</strong> tarkoittaa fiilistä.
+        Alhaalla työn tekeminen tuntuu mukavalta, ylhäällä kiireet ja tulipalot
+        ovat mielessä vapaa-ajallakin.
+      </p>
+    </div>
+
+    <script>
+      let finished = false;
+
+      function lerp(start, end, amt) {
+        return (1 - amt) * start + amt * end;
+      }
+
+      function threepoint_lerp(start, mid, end, amt) {
+        return amt < 0.5
+          ? lerp(start, mid, amt / 0.5)
+          : lerp(mid, end, (amt - 0.5) / 0.5);
+      }
+
+      function gradient(x, y, alpha) {
+        ratio = (x + y) / 2.0;
+
+        hue = threepoint_lerp(94, 60, 19, ratio);
+        s = threepoint_lerp(54, 100, 96, ratio);
+        l = threepoint_lerp(59, 87, 67, ratio);
+
+        // console.log(`${ratio} :: hsla(${Math.round(hue)}, ${Math.round(s)}%, ${Math.round(l)}%, ${alpha}%)`)
+
+        return `hsla(${Math.round(hue)}, ${Math.round(s)}%, ${Math.round(
+          l
+        )}%, ${alpha}%)`;
+      }
+
+      function reset_canvas() {
+        const c = document.getElementById("area");
+        const w = c.offsetWidth;
+        const h = c.offsetHeight;
+
+        const ctx = c.getContext("2d");
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Background
+
+        const green = 94;
+        const red = 19;
+
+        let h_gradient = ctx.createLinearGradient(0, h, w, 0);
+        h_gradient.addColorStop(0, gradient(0, 0, 30));
+        h_gradient.addColorStop(0.5, gradient(0.5, 0.5, 30));
+        h_gradient.addColorStop(1, gradient(1, 1, 30));
+
+        ctx.fillStyle = h_gradient;
+        ctx.fillRect(0, 0, w, h);
+
+        // let v_gradient = ctx.createLinearGradient(0, h, 0, 0);
+        // v_gradient.addColorStop(0, `hsla(${green}, 54%, 59%, 50%)`);
+        // h_gradient.addColorStop(0.5, `hsla(60, 100%, 87%, 50%)`);
+        // v_gradient.addColorStop(1, `hsla(${red}, 96%, 67%, 50%)`);
+        // ctx.fillStyle = v_gradient;
+        // ctx.fillRect(0, 0, w, h);
+
+        // Axis
+
+        // ctx.strokeStyle = "rgb(220, 220, 220)";
+        // ctx.fillStyle = "rgb(220, 220, 220)";
+        // ctx.setLineDash([8, 8]);
+
+        // ctx.lineWidth = 2;
+        // ctx.lineCap = "round";
+
+        // ctx.beginPath();
+        // ctx.moveTo(0, h / 2.0);
+        // ctx.lineTo(w, h / 2.0);
+        // ctx.moveTo(w / 2.0, 0);
+        // ctx.lineTo(w / 2.0, h);
+        // ctx.stroke();
+
+        // Reset
+
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "rgb(50, 50, 50)";
+      }
+
+      async function update(event) {
+        if (finished) return;
+
+        const x = event.offsetX;
+        const y = event.offsetY;
+
+        reset_canvas();
+
+        const c = document.getElementById("area");
+        const w = c.offsetWidth;
+        const h = c.offsetHeight;
+
+        const ctx = c.getContext("2d");
+
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.setLineDash([8, 16]);
+        ctx.strokeStyle = gradient(x / w, 1 - y / h, 100);
+
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      function cross(ctx, x, y, cross_size) {
+        ctx.beginPath();
+        ctx.moveTo(x - cross_size, y - cross_size);
+        ctx.lineTo(x + cross_size, y + cross_size);
+        ctx.moveTo(x - cross_size, y + cross_size);
+        ctx.lineTo(x + cross_size, y - cross_size);
+        ctx.stroke();
+      }
+
+      async function myFunction(event) {
+        if (finished) return;
+
+        finished = true;
+
+        const x = event.offsetX;
+        const y = event.offsetY;
+
+        reset_canvas();
+
+        const c = document.getElementById("area");
+        const w = c.offsetWidth;
+        const h = c.offsetHeight;
+
+        const cross_size = 10;
+
+        const ctx = c.getContext("2d");
+
+        ctx.lineCap = "round";
+
+        ctx.strokeStyle = "rgba(0, 0, 0, 70%)";
+        ctx.lineWidth = 12;
+        cross(ctx, x, y, cross_size);
+
+        ctx.strokeStyle = gradient(x / w, 1 - y / h, 100);
+        ctx.lineWidth = 7;
+        cross(ctx, x, y, cross_size);
+
+        const scaled_x = x / w;
+        const scaled_y = 1.0 - y / h;
+
+        const response = await fetch(
+          `{{ base_url }}pressure/save/{{ user_name }}?x=${scaled_x}&y=${scaled_y}`
+        );
+        const jsonData = await response.json();
+
+        
+
+        console.log(jsonData);
+      }
+
+      reset_canvas();
+    </script>
+  </body>
+</html>
