@@ -28,18 +28,9 @@ async def pressure(request: Request, offset: int = 7):  # noqa: ARG001
 async def pressure_dashboard(
     request: Request,
 ):
-    logger.debug(f"{request.base_url=}")
-    logger.debug(f"{request.base_url.scheme=}")
-    logger.debug(f"{request.base_url.is_secure=}")
-    logger.debug(f"{request.base_url.hostname=}")
-    logger.debug(f"{request.base_url.path=}")
-    logger.debug(f"{request.url=}")
-    logger.debug(f"{request.url.scheme=}")
-    logger.debug(f"{request.url.fragment=}")
-    logger.debug(f"{request.url.path=}")
     return templates.TemplateResponse(
         "pressure_dashboard.html",
-        {"request": request, "base_url": request.base_url},
+        {"request": request, "base_url": request.base_url, "hostname": request.base_url.hostname},
     )
 
 
@@ -47,7 +38,7 @@ async def pressure_dashboard(
 async def user_pressure(request: Request, user_name: str):
     return templates.TemplateResponse(
         "pressure.html",
-        {"request": request, "user_name": user_name, "base_url": request.base_url},
+        {"request": request, "user_name": user_name, "base_url": request.base_url, "hostname": request.base_url.hostname},
     )
 
 
