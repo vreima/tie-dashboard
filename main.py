@@ -22,6 +22,7 @@ import src.visualization
 from src import security
 from src.database import Base
 from src.daterange import DateRange
+from src.kpi import kpi
 from src.pressure import pressure
 from src.security import get_current_username
 from src.severa import base_client
@@ -56,6 +57,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(security.router)
 app.include_router(pressure.router)
+app.include_router(kpi.router)
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 templates = Jinja2Templates(directory="src/static")
@@ -214,12 +216,6 @@ async def read_save_sparse(
     await save_sparse()
 
 
-# @app.get("/save_invalid")
-# async def read_save_invalid(request: Request) -> None:
-#     logger.debug(f"/save_invalid request from {request.client.host}")
-#     await save_only_invalid_salescase_info()
-
-
 @app.get("/load/{base}/{collection}")
 async def read_load(
     request: Request,
@@ -232,26 +228,9 @@ async def read_load(
     )
 
 
-# @app.get("/save_test")
-# async def read_save_test(request: Request):
-#     item = dict(request.query_params.multi_items())
-#     item["_id"] = get_hash(item.get("id"))
-#     Base("test", "test").upsert(pd.DataFrame([item]))
-
-#     return pre(Base("test", "test").find().to_string(show_dimensions=True), request)
-
-
-# @app.get("/debug")
-# async def read_debug(request: Request):
-#     async with Fetcher() as f:
-#         data = await f.get_billing_forecast(DateRange(540))
-#     return pre(data.to_string(show_dimensions=True), request)
-
-
 @app.get("/invalid_salescases")
 async def invalid_salescases():
     return (await save_only_invalid_salescase_info()).to_dict(orient="records")
-    # return Base("kpi-dev-02", "invalid").find().to_dict(orient="records")
 
 
 @app.get("/severa/{endpoint:path}")
@@ -274,11 +253,6 @@ async def severa_endpoint(
             ),
             request,
         )
-
-
-@app.get("/table")
-async def tabulate(request: Request):
-    return templates.TemplateResponse("table.html", {"request": request})
 
 
 @app.get("/salescases")

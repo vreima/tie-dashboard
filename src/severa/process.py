@@ -1,6 +1,18 @@
+import datetime
+
 import arrow
 import pandas as pd
 from workalendar.europe import Finland
+
+
+def sanitize_dates(data: pd.DataFrame, date_columns: list[str]) -> pd.DataFrame:
+    """
+    Convert all date columns to UTC and handle NaT values.
+    """
+    for column in date_columns:
+        data[column] = pd.to_datetime(data.loc[:, column], utc=True)
+
+    return data
 
 
 def unravel_subset(data_subset: pd.DataFrame) -> pd.DataFrame:
@@ -45,9 +57,13 @@ def unravel_subset(data_subset: pd.DataFrame) -> pd.DataFrame:
 
 
 def unravel(
-    data: pd.DataFrame, date_span_start=None, date_span_end=None
+    data: pd.DataFrame,
+    date_span_start: datetime.datetime = None,
+    date_span_end: datetime.datetime = None,
 ) -> pd.DataFrame:
-    data_view = data.copy()
+    data_view = sanitize_dates(
+        data.copy(), ["start_date", "end_date", "date", "forecast_date"]
+    )
 
     min_date = data_view.loc[:, ["date", "start_date"]].min().min()
     max_date = data_view.loc[:, ["date", "end_date"]].max().max()
@@ -81,13 +97,17 @@ def unravel(
     return unravel_subset(data_view).convert_dtypes()
 
 
-def cull_before(data: pd.DataFrame, date: arrow.Arrow, ids: list[str]):
+def cull_before(
+    data: pd.DataFrame, date: arrow.Arrow, ids: list[str], inclusive: bool = True
+):
     """
-    Cull forescasts that extend to times before date.
+    Cull forescasts that extend to times before date. Includes date if inclusive == True.
     """
     id_match = True if ids is None else data.id.isin(ids)
     is_realized_date_item = data.get("start_date").isna() & data.get("end_date").isna()
 
-    return data[
-        ~id_match | (id_match & (is_realized_date_item | (data.date >= date.datetime)))
-    ]
+    date_filter = (
+        (data.date >= date.datetime) if inclusive else (data.date > date.datetime)
+    )
+
+    return data[~id_match | (id_match & (is_realized_date_item | date_filter))]

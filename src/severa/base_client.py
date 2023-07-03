@@ -1,5 +1,7 @@
 import os
+import time
 import typing
+from asyncio import PriorityQueue
 from types import TracebackType
 
 import anyio
@@ -7,6 +9,7 @@ import arrow
 import httpx
 from dotenv import load_dotenv
 from loguru import logger
+from sortedcontainers import SortedList
 
 from src.severa import models
 
@@ -20,6 +23,34 @@ SEVERA_BASE_URL = "https://api.severa.visma.com/rest-api/v1.0/"
 
 T = typing.TypeVar("T", bound="Client")
 JSON = dict[str, typing.Any]
+
+
+class RateLimiter:
+    def __init__(self, max_items: int, in_seconds: float):
+        self._queue = SortedList()
+        self._max_items = max_items
+        self._time = in_seconds
+
+    async def wait(self) -> None:
+        ts_now = time.monotonic()
+        last_n_items = self._queue[-self._max_items : -1]
+
+        if not last_n_items:
+            self._queue.add(ts_now)
+            return
+
+        # Timestamp of latest relevant item in queue
+        ts_last_item = last_n_items[-1]
+
+        logger.debug(f"wait(): {ts_now=}, {ts_last_item=}")
+
+        ts_diff = ts_now - ts_last_item
+        if ts_diff < self._time:
+            logger.debug(f"Waiting for {ts_diff:.1f}s.")
+            await anyio.sleep(ts_diff)
+
+        # Recalculate the timestamp
+        self._queue.add(time.monotonic())
 
 
 class Client:
@@ -36,8 +67,7 @@ class Client:
         )
         self._auth: models.PublicAuthenticationOutputModel | None = None
         self._request_limit = anyio.Semaphore(4)
-        self._request_limit_per_second = anyio.Semaphore(10)
-        self._request_limit_first_req_timestamp = 0.0
+        self._ratelimit = RateLimiter(10, 1.0)
 
     async def _authenticate(self) -> None:
         payload = {

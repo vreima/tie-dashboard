@@ -83,6 +83,17 @@ function cross(ctx, x, y, cross_size) {
   ctx.stroke();
 }
 
+function dot(ctx, x, y, dot_size, color) {
+  ctx.fillStyle = color;
+  ctx.strokeStyle = "rgba(255, 255, 255, 100%)";
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+  ctx.arc(x, y, dot_size, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+}
+
 async function myFunction(event, hostname, user_name) {
   if (finished) return;
 
@@ -123,10 +134,10 @@ async function myFunction(event, hostname, user_name) {
 }
 
 async function fetch_pressure(hostname, offset) {
-    const c = document.getElementById("area");
+  const c = document.getElementById("area");
   const w = c.offsetWidth;
   const h = c.offsetHeight;
-    const ctx = reset_canvas();
+  const ctx = reset_canvas();
 
   const response = await fetch(`${hostname}pressure/?offset=${offset}`);
   const jsonData = await response.json();
@@ -138,8 +149,8 @@ async function fetch_pressure(hostname, offset) {
   mean_x = 0;
   mean_y = 0;
 
-  jsonData.forEach(element => {
-    cross(ctx, element.x * w, (1-element.y) * h, 5);
+  jsonData.forEach((element) => {
+    cross(ctx, element.x * w, (1 - element.y) * h, 5);
     mean_x += element.x;
     mean_y += element.y;
   });
@@ -148,7 +159,7 @@ async function fetch_pressure(hostname, offset) {
   mean_y /= jsonData.length;
 
   mx = mean_x * w;
-  my = (1-mean_y) * h;
+  my = (1 - mean_y) * h;
 
   ctx.strokeStyle = "rgba(0, 0, 0, 100%)";
   ctx.lineWidth = 3;
@@ -156,5 +167,300 @@ async function fetch_pressure(hostname, offset) {
 
   ctx.font = "18px Lato, sans-serif";
   ctx.fillStyle = "black";
-  ctx.fillText("keskiarvo", mx+20, my + 5)
+  ctx.fillText("keskiarvo", mx + 20, my + 5);
+}
+
+function dateToString(date) {
+  return `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+}
+
+let global_data = null;
+let global_hostname = "http://127.0.0.1:8000/";
+
+async function init(hostname) {
+  reset_canvas();
+
+  global_hostname = hostname;
+
+  const filter_inputs = document.querySelectorAll("fieldset#filters input");
+
+  filter_inputs.forEach((input) => {
+    input.addEventListener("change", refresh_data);
+  });
+
+  const graphics_inputs = document.querySelectorAll("fieldset#graphics input");
+
+  graphics_inputs.forEach((input) => {
+    input.addEventListener("change", refresh_graphics);
+  });
+
+  const today = new Date();
+  const weekAgo = new Date(today.valueOf() - 1000 * 60 * 60 * 24 * 7);
+
+  document.getElementById("start-date").value = dateToString(weekAgo);
+  document.getElementById("end-date").value = dateToString(today);
+
+  await refresh_data(null);
+  await refresh_graphics(null);
+}
+
+async function refresh_data(event) {
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+  const userFilter = document.getElementById("user-filter").value;
+  // const unitFilter = document.getElementById("businessunit-filter").value;
+
+  global_data = await fetch_pressure_data(
+    hostname,
+    startDate,
+    endDate,
+    userFilter,
+    null // unitFilter
+  );
+
+  await refresh_graphics(null);
+  await refresh_vega(global_data);
+
+  console.log(global_data);
+}
+
+async function refresh_vega(data) {
+  // Assign the specification to a local variable vlSpec.
+  const embedOpt = {
+    mode: "vega-lite",
+    actions: false,
+    timeFormatLocale: {
+      dateTime: "%A, %-d. %Bta %Y klo %X",
+      date: "%-d.%-m.%Y",
+      time: "%H:%M:%S",
+      periods: ["a.m.", "p.m."],
+      days: [
+        "sunnuntai",
+        "maanantai",
+        "tiistai",
+        "keskiviikko",
+        "torstai",
+        "perjantai",
+        "lauantai",
+      ],
+      shortDays: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+      months: [
+        "tammikuu",
+        "helmikuu",
+        "maaliskuu",
+        "huhtikuu",
+        "toukokuu",
+        "kesäkuu",
+        "heinäkuu",
+        "elokuu",
+        "syyskuu",
+        "lokakuu",
+        "marraskuu",
+        "joulukuu",
+      ],
+      shortMonths: [
+        "Tammi",
+        "Helmi",
+        "Maalis",
+        "Huhti",
+        "Touko",
+        "Kesä",
+        "Heinä",
+        "Elo",
+        "Syys",
+        "Loka",
+        "Marras",
+        "Joulu",
+      ],
+    },
+  };
+  const vlSpec = {
+    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+
+    data: {
+      values: data,
+    },
+    vconcat: [
+      {
+        height: 100,
+        width: 700,
+        mark: "area",
+        encoding: {
+          y: {
+            aggregate: "mean",
+            field: "y",
+            type: "quantitative",
+            scale: { domain: [0.0, 1.0] },
+            axis: {
+              title: "Kiireen tuntu",
+              labels: false,
+              ticks: false,
+            },
+          },
+          x: {
+            field: "date",
+            timeUnit: "yearmonthdate",
+            axis: { title: null },
+          },
+        },
+      },
+      {
+        height: 100,
+        width: 700,
+        mark: "area",
+        encoding: {
+          y: {
+            aggregate: "mean",
+            field: "x",
+            type: "quantitative",
+            scale: { domain: [0.0, 1.0] },
+            axis: {
+              title: "Kiireen määrä",
+              labels: false,
+              ticks: false,
+            },
+          },
+          x: {
+            field: "date",
+            timeUnit: "yearmonthdate",
+            axis: { title: null },
+          },
+        },
+      },
+    ],
+    config: {
+      view: { stroke: null },
+      axis: { grid: false },
+    },
+  };
+
+  // Embed the visualization in the container with id `vis`
+  vegaEmbed("#vis", vlSpec, embedOpt);
+}
+
+async function refresh_graphics(event) {
+  const showTotalMean = document.getElementById("show-total-mean").checked;
+  const showUserMeans = document.getElementById("show-user-means").checked;
+  const coloringOff = document.getElementById("off").checked;
+  const coloringByUser = document.getElementById("user").checked;
+  // const coloringByUnit = document.getElementById("businessunit").checked;
+
+  // const colors = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]; // Dutch Field
+  // const colors = ["#ea5545", "#f46a9b", "#ef9b20", "#edbf33", "#ede15b", "#bdcf32", "#87bc45", "#27aeef", "#b33dc6"]: // Retro Metro
+  const colors = [
+    "#fd7f6f",
+    "#7eb0d5",
+    "#b2e061",
+    "#bd7ebe",
+    "#ffb55a",
+    "#ffee65",
+    "#beb9db",
+    "#fdcce5",
+    "#8bd3c7",
+  ]; // Spring pastels
+
+  reset_canvas();
+
+  const c = document.getElementById("area");
+  const w = c.offsetWidth;
+  const h = c.offsetHeight;
+  const ctx = reset_canvas();
+
+  if (global_data !== null) {
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(0, 0, 0, 100%)";
+    ctx.fillStyle = "rgba(0, 0, 0, 100%)";
+    ctx.lineWidth = 2;
+
+    let mean_x = 0;
+    let mean_y = 0;
+
+    const coloursByUser = new Map();
+    let i = 0;
+
+    global_data.forEach((element) => {
+      if (!coloursByUser.has(element.user)) {
+        coloursByUser.set(element.user, colors[i++]);
+      }
+    });
+
+    const means = new Map();
+
+    global_data.forEach((element) => {
+      dot(
+        ctx,
+        element.x * w,
+        (1 - element.y) * h,
+        5,
+        coloringByUser ? coloursByUser.get(element.user) : colors[0]
+      );
+
+      mean_x += element.x;
+      mean_y += element.y;
+
+      user_mean = { x: 0.0, y: 0.0, n: 0 };
+      if (means.has(element.user)) {
+        user_mean = means.get(element.user);
+      }
+
+      means.set(element.user, {
+        x: user_mean.x + element.x,
+        y: user_mean.y + element.y,
+        n: user_mean.n + 1,
+      });
+    });
+
+    mean_x /= global_data.length;
+    mean_y /= global_data.length;
+
+    if (showUserMeans) {
+      means.forEach((mean, name) => {
+        const mx = (mean.x / mean.n) * w;
+        const my = (1 - mean.y / mean.n) * h;
+        ctx.strokeStyle = "rgba(0, 0, 0, 100%)";
+        ctx.lineWidth = 3;
+        dot(
+          ctx,
+          mx,
+          my,
+          7,
+          coloringByUser ? coloursByUser.get(name) : colors[0]
+        );
+        ctx.font = "12px Lato, sans-serif";
+        ctx.fillStyle = "black";
+        ctx.fillText(name, mx + 20, my + 5);
+      });
+    }
+
+    if (showTotalMean) {
+      mx = mean_x * w;
+      my = (1 - mean_y) * h;
+
+      ctx.strokeStyle = "rgba(0, 0, 0, 100%)";
+      ctx.lineWidth = 3;
+      dot(ctx, mx, my, 10, colors[colors.length - 1]);
+
+      ctx.font = "18px Lato, sans-serif";
+      ctx.fillStyle = "black";
+      ctx.fillText("keskiarvo", mx + 20, my + 5);
+    }
+  }
+}
+
+async function fetch_pressure_data(
+  hostname,
+  startDate,
+  endDate,
+  userFilter,
+  unitFilter
+) {
+  // const url = `${hostname}pressure/?startDate=${startDate}&endDate=${endDate}&users=${userFilter}&businessunits=${unitFilter}`;
+
+  const url = `${hostname}pressure/?startDate=${startDate}&endDate=${endDate}&users=${userFilter}`;
+
+  const response = await fetch(url);
+  const jsonData = await response.json();
+  return jsonData;
 }

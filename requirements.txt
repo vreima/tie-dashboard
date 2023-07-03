@@ -24,3 +24,4 @@ panel
 altair
 croniter
 python-multipart
+sortedcontainers

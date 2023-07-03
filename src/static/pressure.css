@@ -20,7 +20,7 @@ div#body {
 
 .table {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto 700px auto;
 }
 .table > .left,
 .table > .bottom {
@@ -28,9 +28,7 @@ div#body {
   grid-template-columns: auto auto auto;
   color: grey;
 }
-.bottom {
-  width: 700px;
-}
+
 .table > .left {
   writing-mode: vertical-lr;
   text-orientation: sideways;
@@ -59,4 +57,44 @@ div#body {
 }
 .table .text-right {
   text-align: right;
+}
+
+fieldset#filters {
+    display: grid;
+    grid-template-columns: auto 3em auto;
+}
+
+fieldset#graphics {
+    display: grid;
+    grid-template-columns: auto auto;
+}
+
+fieldset#graphics > div, fieldset#graphics > fieldset  {
+    display: grid;
+    grid-template-columns: 1em auto;
+}
+
+div > fieldset {
+    width: 700px;
+    margin: 2em auto;
+}
+
+fieldset, input, input:active, input:focus {
+    margin: 0.3em 0;
+    padding: 0.6em;
+    border: lightgray 1px solid;
+    border-radius: 7px;
+}
+
+
+
+label {
+    padding: 0.6em;
+    text-align: left;
+    display: flex;
+    align-items: center;
+}
+
+input:invalid {
+    background-color: lightcoral;
 }

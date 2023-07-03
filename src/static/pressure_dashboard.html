@@ -1,11 +1,31 @@
 <!DOCTYPE html>
 <head>
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <link rel="stylesheet" type="text/css" href="{{ base_url }}static/pressure.css" />
-  <script type="text/javascript" src="{{ base_url }}static/pressure.js"></script>
+  <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
+  <link
+    rel="stylesheet"
+    type="text/css"
+    href="{{ base_url }}static/pressure.css"
+  />
+  <script
+    type="text/javascript"
+    src="{{ base_url }}static/pressure.js"
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.25.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.12.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.22.1"></script>
 </head>
 <html>
-  <body onload="fetch_pressure('{{ base_url }}', 7)">
+  <body onload="init('{{ base_url }}')">
+    <datalist id="businessunits">
+      <option value="tie">TIE</option>
+      <option value="bad">BAD</option>
+      <option value="lah">LAH</option>
+      <option value="vis">VIS</option>
+      <option value="sov">SOV</option>
+      <option value="johto">Johto</option>
+      <option value="hallinto">Hallinto</option>
+    </datalist>
+
     <div id="body">
       <h3>Kiirekysely</h3>
 
@@ -16,19 +36,75 @@
           <div class="text-right">Ahdistaa</div>
         </div>
         <div class="canvas">
-          <canvas
-            
-            id="area"
-            width="700"
-            height="700"
-          ></canvas>
+          <canvas id="area" width="700" height="700"></canvas>
         </div>
+        <div></div>
         <div></div>
         <div class="bottom">
           <div class="text-left">Sopivasti tekemistä</div>
           <div class="text-mid">Kiireen määrä</div>
           <div class="text-right">Liikaa tekemistä</div>
         </div>
+        <div></div>
+      </div>
+
+      <div id="vis"></div>
+
+      <div>
+        <fieldset id="filters">
+          <legend>Filtterit</legend>
+          <input type="date" id="start-date" />
+          <div><p>...</p></div>
+          <input type="date" id="end-date" />
+          <input
+            type="text"
+            id="user-filter"
+            pattern="([a-z]+,)*[a-z]+"
+            placeholder="joni,johanna"
+          />
+          <div></div>
+          <label for="user-filter">Henkilöfiltteri</label>
+          <!--<input
+            type="text"
+            id="businessunit-filter"
+            pattern="((tie|bad|vis|johto|hallinto|sov|lah),)*(tie|bad|vis|johto|hallinto|sov|lah)"
+            placeholder="tie,bad"
+          />
+          <div></div>-->
+          <!--<label for="businessunit-filter"><s>Yksikköfiltteri</s> (ei toiminnassa)</label>-->
+        </fieldset>
+        <fieldset id="graphics">
+          <legend>Esitystavat</legend>
+          <div>
+            <input type="checkbox" id="show-total-mean" />
+            <label for="show-total-mean">Näytä keskiarvo</label>
+            <input type="checkbox" id="show-user-means" />
+            <label for="show-user-means"
+              >Näytä käyttäjäkohtaiset keskiarvot</label
+            >
+          </div>
+          <fieldset>
+            <legend>Väritys</legend>
+
+            <input
+              type="radio"
+              name="coloring-by"
+              id="off"
+              value="off"
+              checked
+            />
+            <label for="off">Ei väritystä</label>
+            <input type="radio" name="coloring-by" id="user" value="user" />
+            <label for="user">Per käyttäjä</label>
+            <!--<input
+              type="radio"
+              name="coloring-by"
+              id="businessunit"
+              value="businessunit"
+            /> -->
+            <!--<label for="businessunit">Per yksikkö (ei toimi)</label>-->
+          </fieldset>
+        </fieldset>
       </div>
     </div>
   </body>
