@@ -16,9 +16,13 @@
 </head>
 <html>
   <body onload="init_vega('{{ base_url }}')">
-    <!-- <body onload="init_vega('http://127.0.0.1:8000/')"> -->
+  <!-- <body onload="init_vega('http://127.0.0.1:8000/')"> -->
     <div id="body">
-      <div id="vis"></div>
+      <div id="vis">
+        <div class="loader-parent">
+          <div class="loader"></div>
+        </div>
+      </div>
 
       <div class="filters">
         <fieldset id="filters">
@@ -42,12 +46,17 @@
           />
           <div></div>-->
           <!--<label for="businessunit-filter"><s>Yksikköfiltteri</s> (ei toiminnassa)</label>-->
-          </fieldset><p>
-            Kuvaaja esittää oletuksena kaikki kiiremerkinnät. Aikajanaa voi rajata visuaalisesti valitsemalla hiirellä aikavälin "Kiireen määrä" ja "Kiireen tuntu" -aikajanoilla,
-            tai numeerisesti filttereillä yllä. Henkilöitä voi rajata klikkaamalla henkilölistaa yläoikealla. Shift valitsee
-            useamman, shift-klikkaus samaan nimeen poistaa valinnat ja näyttää kaikki. Värilliset rastit ovat
-            keskiarvoja per henkilö, katkoviivaleikkaus on valittujen kokonaiskeskiarvo.
-          </p> <!--
+        </fieldset>
+        <p>
+          Kuvaaja esittää oletuksena kaikki kiiremerkinnät. Aikajanaa voi rajata
+          visuaalisesti valitsemalla hiirellä aikavälin "Kiireen määrä" ja
+          "Kiireen tuntu" -aikajanoilla, tai numeerisesti filttereillä yllä.
+          Henkilöitä voi rajata klikkaamalla henkilölistaa yläoikealla. Shift
+          valitsee useamman, shift-klikkaus samaan nimeen poistaa valinnat ja
+          näyttää kaikki. Värilliset rastit ovat keskiarvoja per henkilö,
+          katkoviivaleikkaus on valittujen kokonaiskeskiarvo.
+        </p>
+        <!--
         <fieldset id="graphics">
           <legend>Esitystavat</legend>
           <div>
@@ -71,14 +80,14 @@
             <label for="off">Ei väritystä</label>
             <input type="radio" name="coloring-by" id="user" value="user" />
             <label for="user">Per käyttäjä</label> -->
-            <!--<input
+        <!--<input
               type="radio"
               name="coloring-by"
               id="businessunit"
               value="businessunit"
             /> -->
-            <!--<label for="businessunit">Per yksikkö (ei toimi)</label>-->
-          <!-- </fieldset>
+        <!--<label for="businessunit">Per yksikkö (ei toimi)</label>-->
+        <!-- </fieldset>
         </fieldset> -->
       </div>
     </div>

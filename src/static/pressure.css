@@ -77,14 +77,13 @@ fieldset#graphics > fieldset {
 }
 
 div.filters {
-    width: 732px;
-    margin: 2em auto;
-    padding: 0.7em 0;
-    border: lightgray 1px solid;
+  width: 732px;
+  margin: 2em auto;
+  padding: 0.7em 0;
+  border: lightgray 1px solid;
   border-radius: 7px;
   background-color: white;
 }
-
 
 fieldset,
 input,
@@ -95,8 +94,8 @@ input:focus {
 }
 
 input {
-    margin: 0.5em;
-    border: lightgray 1px solid;
+  margin: 0.5em;
+  border: lightgray 1px solid;
   border-radius: 7px;
 }
 
@@ -108,8 +107,8 @@ label {
 }
 
 p {
-    text-align: left;
-    margin: 1.5em;
+  text-align: left;
+  margin: 1.5em;
 }
 
 input:invalid {
@@ -121,8 +120,47 @@ div#vis {
   margin: auto;
 }
 
+.loader-parent {
+  height: 732px;
+  border: lightgray 1px solid;
+  border-radius: 7px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 80px;
+  height: 80px;
+  -webkit-animation: spin 1s linear infinite; /* Safari */
+  animation: spin 1s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 form.vega-bindings {
-    margin-top: 0.7em;
+  margin-top: 0.7em;
   padding: 0.6em;
   border: lightgray 1px solid;
   border-radius: 7px;
