@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <head>
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="upgrade-insecure-requests"
+  />
   <link
     rel="stylesheet"
     type="text/css"
@@ -16,7 +19,7 @@
 </head>
 <html>
   <body onload="init_vega('{{ base_url }}')">
-  <!-- <body onload="init_vega('http://127.0.0.1:8000/')"> -->
+    <!-- <body onload="init_vega('http://127.0.0.1:8000/')"> -->
     <div id="body">
       <div id="vis">
         <div class="loader-parent">
@@ -48,13 +51,25 @@
           <!--<label for="businessunit-filter"><s>Yksikköfiltteri</s> (ei toiminnassa)</label>-->
         </fieldset>
         <p>
-          Kuvaaja esittää oletuksena kaikki kiiremerkinnät. Aikajanaa voi rajata
-          visuaalisesti valitsemalla hiirellä aikavälin "Kiireen määrä" ja
-          "Kiireen tuntu" -aikajanoilla, tai numeerisesti filttereillä yllä.
-          Henkilöitä voi rajata klikkaamalla henkilölistaa yläoikealla. Shift
-          valitsee useamman, shift-klikkaus samaan nimeen poistaa valinnat ja
-          näyttää kaikki. Värilliset rastit ovat keskiarvoja per henkilö,
-          katkoviivaleikkaus on valittujen kokonaiskeskiarvo.
+          <strong>Pääkuvaaja</strong> esittää kiiremittaustulokset oletuksena
+          henkilöittäin väritettynä. Henkilöperustaiset keskiarvot esitetään
+          rasteilla, koko aineiston keskiarvo katkoviivaristillä. Havaintojen
+          tooltipeissä tarkempaa tietoa. Aineistoa voi rajata henkilöittäin
+          klikkaamalla nimiä yläoikealta. Shiftillä voi valita useamman nimen,
+          shift-klikkaus valitun nimen kohdalla poistaa valinnat.
+        </p>
+
+        <p>
+          <strong>Aikajanat</strong> esittävät valittujen kiiremerkintöjen
+          päivittäisiä keskiarvoja. Katkoviivoitettu alue on 95%:n
+          luottamusväli. Molempia aikajanoja voi käyttää ajanjakson rajaamiseen,
+          klikkaa ja raahaa väli hiirellä.
+        </p>
+
+        <p>
+          <strong>Filttereillä</strong> voi rajata aineistoa edellisen lisäksi.
+          Filttereiden muokkaaminen suorittaa uuden tietokantahaun, muu
+          rajaaminen toimii selaimessa.
         </p>
         <!--
         <fieldset id="graphics">

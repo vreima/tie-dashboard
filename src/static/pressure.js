@@ -462,7 +462,12 @@ async function refresh_vega(data) {
                 },
               },
             ],
-            mark: { type: "rule", strokeDash: [5, 5], color: "grey",  strokeWidth: 1  },
+            mark: {
+              type: "rule",
+              strokeDash: [5, 5],
+              color: "grey",
+              strokeWidth: 1,
+            },
             encoding: {
               y: {
                 aggregate: "mean",
@@ -482,7 +487,12 @@ async function refresh_vega(data) {
                 },
               },
             ],
-            mark: { type: "rule", strokeDash: [5, 5], color: "grey", strokeWidth: 1 },
+            mark: {
+              type: "rule",
+              strokeDash: [5, 5],
+              color: "grey",
+              strokeWidth: 1,
+            },
             encoding: {
               x: {
                 aggregate: "mean",
@@ -563,6 +573,55 @@ async function refresh_vega(data) {
             transform: [{ filter: { param: "user-selection" } }],
             encoding: {
               y: { field: "y", aggregate: "mean" },
+              tooltip: [
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "Kiireen tuntu (avg)",
+                  format: ".0%",
+                  aggregate: "mean",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "Havaintojen lkm",
+                  aggregate: "count",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "95% LV alaraja",
+                  format: ".0%",
+                  aggregate: "ci0",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "95% LV yläraja",
+                  format: ".0%",
+                  aggregate: "ci1",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "Minimi",
+                  format: ".0%",
+                  aggregate: "min",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "Maksimi",
+                  format: ".0%",
+                  aggregate: "max",
+                },
+                {
+                  field: "y",
+                  type: "nominal",
+                  title: "Korkein merkintä",
+                  aggregate: { argmax: "user" },
+                },
+              ],
             },
             params: [
               {
