@@ -179,6 +179,25 @@ function dateToString(date) {
 let global_data = null;
 let global_hostname = "http://127.0.0.1:8000/";
 
+async function init_vega(hostname) {
+  global_hostname = hostname;
+
+  const today = new Date();
+  const start = new Date(2023, 5, 1);
+  // const weekAgo = new Date(today.valueOf() - 1000 * 60 * 60 * 24 * 7);
+
+  document.getElementById("start-date").value = dateToString(start);
+  document.getElementById("end-date").value = dateToString(today);
+
+  await refresh_data(null);
+
+  const filter_inputs = document.querySelectorAll("fieldset#filters input");
+
+  filter_inputs.forEach((input) => {
+    input.addEventListener("change", refresh_data);
+  });
+}
+
 async function init(hostname) {
   reset_canvas();
 
@@ -213,17 +232,14 @@ async function refresh_data(event) {
   // const unitFilter = document.getElementById("businessunit-filter").value;
 
   global_data = await fetch_pressure_data(
-    hostname,
+    global_hostname,
     startDate,
     endDate,
     userFilter,
     null // unitFilter
   );
 
-  await refresh_graphics(null);
   await refresh_vega(global_data);
-
-  console.log(global_data);
 }
 
 async function refresh_vega(data) {
@@ -279,17 +295,211 @@ async function refresh_vega(data) {
   const vlSpec = {
     $schema: "https://vega.github.io/schema/vega-lite/v5.json",
 
+    params: [
+      {
+        name: "toggle",
+        bind: {
+          input: "checkbox",
+          name: "Henkilönmukainen väritys ja keskiarvot pois",
+        },
+      },
+      { name: "fontSize", value: 14 },
+    ],
+
+    background: "rgba(0,0,0,0%)",
+
     data: {
       values: data,
     },
     vconcat: [
       {
+        layer: [
+          {
+            height: 700,
+            title: "Kiirekysely - tulokset",
+            transform: [{ filter: { param: "brush" } }],
+            mark: {
+              type: "circle",
+            },
+            params: [
+              {
+                name: "user-selection",
+                select: { type: "point", fields: ["user"] },
+                bind: "legend",
+              },
+            ],
+            encoding: {
+              y: {
+                field: "y",
+                type: "quantitative",
+                scale: { domain: [0.0, 1.0] },
+                axis: {
+                  title: "Kiireen tuntu",
+                  labels: false,
+                  ticks: false,
+                },
+              },
+              x: {
+                field: "x",
+                type: "quantitative",
+                scale: { domain: [0.0, 1.0] },
+                axis: {
+                  title: "Kiireen määrä",
+                  labels: false,
+                  ticks: false,
+                },
+              },
+              size: { value: 100 },
+              color: {
+                condition: {
+                  test: {
+                    and: [
+                      { not: { param: "toggle" } },
+                      { param: "user-selection" },
+                    ],
+                  },
+                  field: "user",
+                  type: "nominal",
+                },
+                value: "grey",
+              },
+              opacity: {
+                condition: {
+                  param: "user-selection",
+                  value: 1,
+                },
+                value: 0.1,
+              },
+              tooltip: [
+                { field: "user", type: "nominal", title: "Käyttäjä" },
+                {
+                  field: "x",
+                  type: "quantitative",
+                  title: "Kiireen tuntu",
+                  format: ".0%",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "Kiireen määrä",
+                  format: ".0%",
+                },
+                {
+                  field: "date",
+                  type: "temporal",
+                  title: "Päiväys",
+                  formatType: "time",
+                  format: "%-d.%-m.%Y %H:%M",
+                },
+              ],
+            },
+          },
+
+          {
+            transform: [
+              {
+                filter: {
+                  and: [{ param: "brush" }, { not: { param: "toggle" } }],
+                },
+              },
+            ],
+            mark: {
+              type: "point",
+              shape: "M-1,-1L1,1M-1,1L1-1",
+            },
+            encoding: {
+              y: {
+                aggregate: "mean",
+                field: "y",
+                type: "quantitative",
+              },
+              x: {
+                aggregate: "mean",
+                field: "x",
+                type: "quantitative",
+              },
+              color: {
+                field: "user",
+                type: "nominal",
+                legend: {
+                  title: "Henkilö",
+                  orient: "top-right",
+                },
+              },
+              size: { value: 250 },
+              opacity: {
+                condition: {
+                  param: "user-selection",
+                  value: 1,
+                },
+                value: 0.1,
+              },
+              tooltip: [
+                { field: "user", type: "nominal", title: "Käyttäjä" },
+                {
+                  field: "x",
+                  type: "quantitative",
+                  title: "Kiireen tuntu (avg)",
+                  format: ".0%",
+                  aggregate: "mean",
+                },
+                {
+                  field: "y",
+                  type: "quantitative",
+                  title: "Kiireen määrä (avg)",
+                  format: ".0%",
+                  aggregate: "mean",
+                },
+              ],
+            },
+          },
+
+          {
+            transform: [
+              {
+                filter: {
+                  and: [{ param: "brush" }, { param: "user-selection" }],
+                },
+              },
+            ],
+            mark: { type: "rule", strokeDash: [5, 5], color: "grey",  strokeWidth: 1  },
+            encoding: {
+              y: {
+                aggregate: "mean",
+                field: "y",
+                type: "quantitative",
+              },
+
+              opacity: { value: 0.3 },
+            },
+          },
+
+          {
+            transform: [
+              {
+                filter: {
+                  and: [{ param: "brush" }, { param: "user-selection" }],
+                },
+              },
+            ],
+            mark: { type: "rule", strokeDash: [5, 5], color: "grey", strokeWidth: 1 },
+            encoding: {
+              x: {
+                aggregate: "mean",
+                field: "x",
+                type: "quantitative",
+              },
+
+              opacity: { value: 0.3 },
+            },
+          },
+        ],
+      },
+
+      {
         height: 100,
-        width: 700,
-        mark: "area",
         encoding: {
           y: {
-            aggregate: "mean",
             field: "y",
             type: "quantitative",
             scale: { domain: [0.0, 1.0] },
@@ -302,17 +512,72 @@ async function refresh_vega(data) {
           x: {
             field: "date",
             timeUnit: "yearmonthdate",
-            axis: { title: null },
+            axis: {
+              title: null,
+              grid: true,
+              labelAlign: "left",
+              labelExpr:
+                "[timeFormat(datum.value, '%-d.%-m.'), timeFormat(datum.value, '%d') == '01' ? timeFormat(datum.value, '%B') : timeFormat(datum.value, '%u') == '1' ? 'vko ' + timeFormat(datum.value, '%V') : '']",
+              tickSize: 30,
+              tickCount: "day",
+              labelOffset: 4,
+              labelPadding: -24,
+              labelBound: true,
+              gridDash: {
+                condition: {
+                  test: { field: "value", timeUnit: "date", equal: 1 },
+                  value: [],
+                },
+                value: [5, 5],
+              },
+              tickDash: {
+                condition: {
+                  test: { field: "value", timeUnit: "date", equal: 1 },
+                  value: [],
+                },
+                value: [5, 5],
+              },
+            },
           },
         },
+
+        layer: [
+          {
+            mark: {
+              type: "errorband",
+              extent: "ci",
+              borders: true,
+              borders: {
+                opacity: 0.5,
+                strokeDash: [6, 4],
+              },
+            },
+            transform: [{ filter: { param: "user-selection" } }],
+            encoding: {
+              y: { field: "y" },
+            },
+          },
+
+          {
+            mark: "line",
+            transform: [{ filter: { param: "user-selection" } }],
+            encoding: {
+              y: { field: "y", aggregate: "mean" },
+            },
+            params: [
+              {
+                name: "brush",
+                select: { type: "interval", encodings: ["x"] },
+              },
+            ],
+          },
+        ],
       },
+
       {
         height: 100,
-        width: 700,
-        mark: "area",
         encoding: {
           y: {
-            aggregate: "mean",
             field: "x",
             type: "quantitative",
             scale: { domain: [0.0, 1.0] },
@@ -325,14 +590,87 @@ async function refresh_vega(data) {
           x: {
             field: "date",
             timeUnit: "yearmonthdate",
-            axis: { title: null },
+            axis: {
+              title: null,
+              grid: true,
+              labelAlign: "left",
+              labelExpr:
+                "[timeFormat(datum.value, '%-d.%-m.'), timeFormat(datum.value, '%d') == '01' ? timeFormat(datum.value, '%B') : timeFormat(datum.value, '%u') == '1' ? 'vko ' + timeFormat(datum.value, '%V') : '']",
+              tickSize: 30,
+              tickCount: "day",
+              labelOffset: 4,
+              labelPadding: -24,
+              labelBound: true,
+              gridDash: {
+                condition: {
+                  test: { field: "value", timeUnit: "date", equal: 1 },
+                  value: [],
+                },
+                value: [5, 5],
+              },
+              tickDash: {
+                condition: {
+                  test: { field: "value", timeUnit: "date", equal: 1 },
+                  value: [],
+                },
+                value: [5, 5],
+              },
+            },
           },
         },
+
+        layer: [
+          {
+            mark: {
+              type: "errorband",
+              extent: "ci",
+              borders: true,
+              borders: {
+                opacity: 0.5,
+                strokeDash: [6, 4],
+              },
+            },
+            transform: [{ filter: { param: "user-selection" } }],
+            encoding: {
+              y: { field: "x" },
+            },
+          },
+
+          {
+            mark: "line",
+            encoding: {
+              y: { field: "x", aggregate: "mean" },
+            },
+            transform: [{ filter: { param: "user-selection" } }],
+            params: [
+              {
+                name: "brush",
+                select: { type: "interval", encodings: ["x"] },
+              },
+            ],
+          },
+        ],
       },
     ],
     config: {
-      view: { stroke: null },
-      axis: { grid: false },
+      view: { fill: "white", cornerRadius: 7, width: 700 },
+      title: {
+        fontWeight: "normal",
+        fontSize: { expr: "fontSize + 6" },
+        font: "Lato, sans-serif",
+      },
+      axis: {
+        grid: false,
+        titleFontWeight: "normal",
+        titleFontSize: { expr: "fontSize" },
+        titleFont: "Lato, sans-serif",
+      },
+      header: {
+        titleFontSize: { expr: "fontSize" },
+        labelFontSize: { expr: "fontSize" },
+        titleFont: "Lato, sans-serif",
+        labelFont: "Lato, sans-serif",
+      },
     },
   };
 

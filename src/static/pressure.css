@@ -1,5 +1,6 @@
 body {
   font-family: Lato, sans-serif;
+  background-color: #eee;
 }
 h1 {
   margin: 0;
@@ -60,41 +61,74 @@ div#body {
 }
 
 fieldset#filters {
-    display: grid;
-    grid-template-columns: auto 3em auto;
+  display: grid;
+  grid-template-columns: auto 3em auto;
 }
 
 fieldset#graphics {
-    display: grid;
-    grid-template-columns: auto auto;
+  display: grid;
+  grid-template-columns: auto auto;
 }
 
-fieldset#graphics > div, fieldset#graphics > fieldset  {
-    display: grid;
-    grid-template-columns: 1em auto;
+fieldset#graphics > div,
+fieldset#graphics > fieldset {
+  display: grid;
+  grid-template-columns: 1em auto;
 }
 
-div > fieldset {
-    width: 700px;
+div.filters {
+    width: 732px;
     margin: 2em auto;
-}
-
-fieldset, input, input:active, input:focus {
-    margin: 0.3em 0;
-    padding: 0.6em;
+    padding: 0.7em 0;
     border: lightgray 1px solid;
-    border-radius: 7px;
+  border-radius: 7px;
+  background-color: white;
 }
 
 
+fieldset,
+input,
+input:active,
+input:focus {
+  padding: 0.6em;
+  border: 0;
+}
+
+input {
+    margin: 0.5em;
+    border: lightgray 1px solid;
+  border-radius: 7px;
+}
 
 label {
-    padding: 0.6em;
+  padding: 0.6em;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+p {
     text-align: left;
-    display: flex;
-    align-items: center;
+    margin: 1.5em;
 }
 
 input:invalid {
-    background-color: lightcoral;
+  background-color: lightcoral;
+}
+
+div#vis {
+  width: 732px;
+  margin: auto;
+}
+
+form.vega-bindings {
+    margin-top: 0.7em;
+  padding: 0.6em;
+  border: lightgray 1px solid;
+  border-radius: 7px;
+  background-color: white;
+}
+
+form.vega-bindings div label input {
+  margin: 1em;
 }
