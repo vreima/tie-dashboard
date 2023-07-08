@@ -284,9 +284,9 @@ async def get_offers_json(
 @slack_router.get("/offers")
 async def get_offers(
     request: Request,
-    channel: str = "CSFQ71ANA", 
-    reaction: str = "k", 
-    startDate: datetime.datetime | None = None, 
+    channel: str = "CSFQ71ANA",
+    reaction: str = "k",
+    startDate: datetime.datetime | None = None,
 ):
     """
     Fetch all open (not marked with reaction)
@@ -294,15 +294,16 @@ async def get_offers(
     Timespan defaults to last two months.
     """
 
-    return templates.TemplateResponse(
-        "offers.html",
-        {
-            "request": request,
-            channel: channel,
-            reaction: reaction,
-            startDate: startDate,
-        },
-    )
+    params = {
+        "request": request,
+        "channel": channel,
+        "reaction": reaction,
+    }
+
+    if startDate is not None:
+        params["startDate"] = startDate.isoformat()
+
+    return templates.TemplateResponse("offers.html", params)
 
 
 default_router.include_router(slack_router)

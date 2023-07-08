@@ -10,8 +10,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css"
     />
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-    <script src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
   </head>
   <body>
     <div id="example" style="width: 80%"></div>
@@ -21,7 +20,7 @@
         .then((out) => {
           out.forEach((element) => {
             element.link = `<a href="https://severa.visma.com/project/${element.guid}">https://severa.visma.com/project/${element.guid}</a>`;
-            element.inserted = moment.utc(element.inserted).tz('Europe/Helsinki').format("ddd D.M.YYYY HH:mm:ss Z")
+            element.inserted = luxon.DateTime.fromISO(element.inserted).setLocale("fi").toFormat("dd.MM.yyyy 'klo' hh:mm")
           });
 
           const container = document.querySelector("#example");

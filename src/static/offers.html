@@ -15,16 +15,29 @@
   <body>
     <div id="example" style="width: 80%"></div>
     <script type="text/javascript">
-      fetch(`/slack/offers.json?channel={{ channel }}&reaction={{ reaction }}&startDate={{ startDate }}`)
-      //fetch("http://127.0.0.1:8000/slack/offers.json")
+      const start_date = "{{ startDate }}";
+      fetch(
+        `/slack/offers.json?channel={{ channel }}&reaction={{ reaction }}${
+          start_date.length > 1 ? "&startDate=" + start_date : ""
+        }`
+      )
+        //fetch("http://127.0.0.1:8000/slack/offers.json")
         .then((res) => res.json())
         .then((out) => {
           out.forEach((element) => {
-            element.inserted = luxon.DateTime.fromSeconds(Number(element.timestamp)).setLocale('fi').toFormat("dd.MM.yyyy 'klo' hh:mm");
-            element.link = `<a href="${element.url}">${element.inserted}</a>`;
+            element.inserted = luxon.DateTime.fromSeconds(
+              Number(element.timestamp)
+            ).setLocale("fi");
+            element.inserted_rel = element.inserted.toRelative();
+            element.link = `<a href="${
+              element.url
+            }">${element.inserted.toFormat("dd.MM.yyyy 'klo' hh:mm")}</a>`;
             element.first_row = element.message.split("\n")[0];
-            if (element.deadline != null)
-              element.deadline = luxon.DateTime.fromISO(element.deadline).setLocale('fi').toFormat("dd.MM.yyyy 'klo' hh:mm");
+            if (element.deadline != null) {
+              dl = luxon.DateTime.fromISO(element.deadline).setLocale("fi");
+              element.deadline = dl.toFormat("dd.MM.yyyy 'klo' hh:mm");
+              element.deadline_rel = dl.toRelative();
+            }
           });
 
           const container = document.querySelector("#example");
@@ -33,12 +46,9 @@
             data: [...out],
             columns: [
               { title: "Aikaleima ja linkki", renderer: "html", data: "link" },
+              { title: "...", type: "text", data: "inserted_rel" },
               { title: "Deadline", type: "text", data: "deadline" },
-              {
-                title: "Deadline",
-                type: "text",
-                data: "deadline_humanized",
-              },
+              { title: "...", type: "text", data: "deadline_rel" },
               { title: "Viesti", type: "text", data: "first_row" },
             ],
             rowHeaders: true,

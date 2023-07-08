@@ -23,7 +23,7 @@ class OfferListing(BaseModel):
     timestamp: str
     message: str
     url: str
-    deadline_humanized: str | None = None
+    # deadline_humanized: str | None = None
     deadline: datetime | None = None
 
 
@@ -119,7 +119,7 @@ class Client:
                     message=self.unformat(msg["text"]),
                     timestamp=msg["ts"],
                     deadline=None if dt is None else dt.datetime,
-                    deadline_humanized=None if dt is None else dt.humanize(locale="fi"),
+                    # deadline_humanized=None if dt is None else dt.humanize(locale="fi"),
                     url=f"https://tietoa.slack.com/archives/{channel}/p{ts}",
                 )
 
