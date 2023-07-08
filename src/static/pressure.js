@@ -126,59 +126,59 @@ async function myFunction(event, hostname, user_name) {
   const scaled_y = 1.0 - y / h;
 
   const response = await fetch(
-    `${hostname}pressure/save/${user_name}?x=${scaled_x}&y=${scaled_y}`
+    `/kiire/save/${user_name}?x=${scaled_x}&y=${scaled_y}`
   );
   const jsonData = await response.json();
 
   console.log(jsonData);
 }
 
-async function fetch_pressure(hostname, offset) {
-  const c = document.getElementById("area");
-  const w = c.offsetWidth;
-  const h = c.offsetHeight;
-  const ctx = reset_canvas();
+// async function fetch_pressure(hostname, offset) {
+//   const c = document.getElementById("area");
+//   const w = c.offsetWidth;
+//   const h = c.offsetHeight;
+//   const ctx = reset_canvas();
 
-  let response;
+//   let response;
 
-  try {
-    response = await fetch(`${hostname}pressure/?offset=${offset}`);
-  } catch (error) {
-    document.getElementById(
-      "vis"
-    ).innerText = `Error fetching $${hostname}pressure/?offset=${offset}: ${error}`;
-    return;
-  }
+//   try {
+//     response = await fetch(`${hostname}pressure/?offset=${offset}`);
+//   } catch (error) {
+//     document.getElementById(
+//       "vis"
+//     ).innerText = `Error fetching $${hostname}pressure/?offset=${offset}: ${error}`;
+//     return;
+//   }
 
-  const jsonData = await response.json();
+//   const jsonData = await response.json();
 
-  ctx.lineCap = "round";
-  ctx.strokeStyle = "rgba(0, 0, 0, 50%)";
-  ctx.lineWidth = 2;
+//   ctx.lineCap = "round";
+//   ctx.strokeStyle = "rgba(0, 0, 0, 50%)";
+//   ctx.lineWidth = 2;
 
-  mean_x = 0;
-  mean_y = 0;
+//   mean_x = 0;
+//   mean_y = 0;
 
-  jsonData.forEach((element) => {
-    cross(ctx, element.x * w, (1 - element.y) * h, 5);
-    mean_x += element.x;
-    mean_y += element.y;
-  });
+//   jsonData.forEach((element) => {
+//     cross(ctx, element.x * w, (1 - element.y) * h, 5);
+//     mean_x += element.x;
+//     mean_y += element.y;
+//   });
 
-  mean_x /= jsonData.length;
-  mean_y /= jsonData.length;
+//   mean_x /= jsonData.length;
+//   mean_y /= jsonData.length;
 
-  mx = mean_x * w;
-  my = (1 - mean_y) * h;
+//   mx = mean_x * w;
+//   my = (1 - mean_y) * h;
 
-  ctx.strokeStyle = "rgba(0, 0, 0, 100%)";
-  ctx.lineWidth = 3;
-  cross(ctx, mx, my, 10);
+//   ctx.strokeStyle = "rgba(0, 0, 0, 100%)";
+//   ctx.lineWidth = 3;
+//   cross(ctx, mx, my, 10);
 
-  ctx.font = "18px Lato, sans-serif";
-  ctx.fillStyle = "black";
-  ctx.fillText("keskiarvo", mx + 20, my + 5);
-}
+//   ctx.font = "18px Lato, sans-serif";
+//   ctx.fillStyle = "black";
+//   ctx.fillText("keskiarvo", mx + 20, my + 5);
+// }
 
 function dateToString(date) {
   return `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -1059,7 +1059,7 @@ async function fetch_pressure_data(
 ) {
   // const url = `${hostname}pressure/?startDate=${startDate}&endDate=${endDate}&users=${userFilter}&businessunits=${unitFilter}`;
 
-  const url = `${hostname}pressure/?startDate=${startDate}&endDate=${endDate}&users=${userFilter}`;
+  const url = `/kiire/pressure.json?startDate=${startDate}&endDate=${endDate}&users=${userFilter}`;
 
   const response = await fetch(url);
 

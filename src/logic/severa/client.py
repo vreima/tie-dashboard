@@ -6,6 +6,7 @@ from types import TracebackType
 import anyio
 import arrow
 import pandas as pd
+from loguru import logger
 from workalendar.europe import Finland
 
 from src.logic.severa import models
@@ -738,3 +739,16 @@ class Client:
 
     async def lookup_businessunits(self, raw_data: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError()
+
+
+async def fetch_invalid_salescases() -> pd.DataFrame:
+    """
+    Fetch and return invalid salescases.
+    """
+    async with Client() as client:
+        try:
+            sales = await client.fetch_sales(force_refresh=True)  # noqa: F841
+        except Exception as e:
+            logger.exception(e)
+
+        return client.get_invalid_sales()

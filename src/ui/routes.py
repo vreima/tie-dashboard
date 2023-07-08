@@ -4,7 +4,6 @@ import os
 import time
 import typing
 from collections import namedtuple
-from contextlib import asynccontextmanager
 from typing import Annotated
 
 import anyio
@@ -12,43 +11,23 @@ import arrow
 import croniter
 import httpx
 import pandas as pd
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
 from src.database.database import Base
+from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa import base_client
 from src.logic.severa.client import Client as SeveraClient
 from src.logic.slack.client import Client as SlackClient
+from src.logic.slack.client import (
+    send_weekly_slack_update_debug,
+)
 from src.security import get_current_username
 from src.util.daterange import DateRange
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    jobs = get_cronjobs()
-
-    jobs.add_jobs(
-        [
-            Cronjob(*params)
-            for params in [
-                # (save, "0 2 * * *"),
-                (save_sparse, "0 2 * * *")
-            ]
-        ]
-    )
-
-    with anyio.CancelScope() as scope:
-        async with anyio.create_task_group() as tg:
-            tg.start_soon(jobs.start, app)
-
-            yield
-
-            scope.cancel()
-
-
-default_router = APIRouter(tags=["main"], lifespan=lifespan)
+default_router = APIRouter(tags=["main"])
 
 
 templates = Jinja2Templates(directory="src/static")
@@ -306,6 +285,11 @@ async def get_offers(
     return templates.TemplateResponse("offers.html", params)
 
 
+@slack_router.get("/debug")
+async def send_debug_message():
+    await send_weekly_slack_update_debug()
+
+
 default_router.include_router(slack_router)
 
 
@@ -355,3 +339,97 @@ async def severa_endpoint(
 
 
 default_router.include_router(severa_router)
+
+
+###################
+# Pressure routes #
+###################
+
+pressure_router = APIRouter(prefix="/kiire", tags=["pressure"])
+
+
+@pressure_router.get("/pressure.json")
+async def pressure(
+    request: Request,  # noqa: ARG001
+    startDate: str = "",
+    endDate: str = "",
+    users: str = "",
+    businessunits: str = "",  # noqa: ARG001
+):
+    if not startDate:
+        start = arrow.utcnow().shift(years=-1).floor("day")
+    else:
+        try:
+            start = arrow.get(startDate).floor("day")
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Query parameter 'startDate' has invalid date format, expected YYYY-mm-dd",
+            ) from None
+
+    if not endDate:
+        end = arrow.utcnow().ceil("day")
+    else:
+        try:
+            end = arrow.get(endDate).ceil("day")
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Query parameter 'endDate' has invalid date format, expected YYYY-mm-dd",
+            ) from None
+
+    return await fetch_pressure(
+        start, end, users.split(",") if len(users) > 0 else None
+    )
+
+
+@pressure_router.get("/")
+async def pressure_dashboard(
+    request: Request,
+):
+    return templates.TemplateResponse(
+        "pressure_dashboard.html",
+        {
+            "request": request,
+            "base_url": request.base_url,
+            "hostname": request.base_url.hostname,
+        },
+    )
+
+
+@pressure_router.get("/{user_name}")
+async def user_pressure(request: Request, user_name: str):
+    return templates.TemplateResponse(
+        "pressure.html",
+        {
+            "request": request,
+            "user_name": user_name,
+            "base_url": request.base_url,
+            "hostname": request.base_url.hostname,
+        },
+    )
+
+
+@pressure_router.get("/save/{user_name}")
+async def save_user_pressure(
+    request: Request,  # noqa: ARG001
+    user_name: str,
+    x: float | None = None,
+    y: float | None = None,
+):
+    Base("pressure", "pressure").upsert(
+        pd.DataFrame(
+            [
+                {
+                    "user": user_name,
+                    "date": pd.Timestamp(arrow.utcnow().datetime),
+                    "x": x,
+                    "y": y,
+                }
+            ]
+        )
+    )
+    return "OK"
+
+
+default_router.include_router(pressure_router)

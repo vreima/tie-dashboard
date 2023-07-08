@@ -1,9 +1,10 @@
 import os
 import re
-from datetime import datetime
 from collections.abc import Iterable
+from datetime import datetime
 
 import arrow
+import pandas as pd
 
 # import openai_async
 from loguru import logger
@@ -12,6 +13,8 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
 
+from src.logic.pressure.pressure import fetch_pressure
+from src.logic.severa.client import fetch_invalid_salescases
 from src.util.process import search_string_for_datetime
 
 CHANNEL_YKS_TIETOMALLINTAMINEN = "C2RTSBH2T"
@@ -122,6 +125,183 @@ class Client:
                     # deadline_humanized=None if dt is None else dt.humanize(locale="fi"),
                     url=f"https://tietoa.slack.com/archives/{channel}/p{ts}",
                 )
+
+
+async def send_weekly_slack_update(channel: str | None = None):
+    if not channel:
+        channel = CHANNEL_YKS_TIETOMALLINTAMINEN
+
+    now = arrow.utcnow().to("Europe/Helsinki")
+    slack = Client()
+
+    # Offers:
+    unmarked_offers = slack.fetch_unmarked_offers(
+        CHANNEL_TIE_TARJOUSPYYNNOT, "k", now.shift(months=-3).floor("month")
+    )
+
+    if unmarked_offers:
+        newline = "\n"
+        fi = "fi"
+        formatted_strs = (
+            "📣 Kanavan #tie_tarjouspyynnöt <https://tie.up.railway.app/slack/offers|käsittelemättömät viestit>:\n"
+            + "\n".join(
+                (
+                    f"> *<{offer.url}|{arrow.get(float(offer.timestamp)).format('DD.MM.YYYY')}>* | "
+                    f"{f'*DL _{arrow.get(offer.deadline).humanize(locale=fi)}_* |' if offer.deadline else ''} {offer.message.split(newline)[0]}"
+                )
+                for offer in unmarked_offers
+            )
+        )
+    else:
+        formatted_strs = (
+            "📣 Kanavalla #tie_tarjouspyynnöt ei käsittelemättömiä viestejä ✨"
+        )
+
+    # Salescases:
+    salescases_df = await fetch_invalid_salescases()
+
+    salescases_text = ":sparkles: Sisällä olevien <https://tie.up.railway.app/severa/salescases|tarjousten suolauslista>:\n"
+    for key, group in salescases_df.groupby("id"):
+        if not group.empty:
+            salescases_text += f"*{key}*:\n"
+            for _row_num, row in group.iterrows():
+                salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if not pd.isna(row.phase) else ''} (@{row.soldby})\n"
+
+    # Pressure:
+    last_week_start = now.shift(weeks=-1).floor("week")
+    readings = pd.DataFrame(
+        [
+            dict(model)
+            for model in await fetch_pressure(
+                now.shift(weeks=-2).floor("week"), now.shift(weeks=0).ceil("week"), None
+            )
+        ]
+    )
+    readings["date"] = pd.to_datetime(readings.loc[:, "date"], utc=True)
+
+    weekly = readings.groupby([pd.Grouper(key="date", freq="W")])[["x", "y"]].mean()
+    diff = weekly.diff()
+
+    logger.debug(weekly)
+
+    def f(val, val_diff):
+        return (
+            f"*{val:.1%}*\t(" + ("▲" if val_diff >= 0 else "▼") + f" {val_diff:+.1%})"
+        )
+
+    print(readings.dtypes)
+
+    pressure_titles = (
+        ":hammer_and_pick: Edellisen viikon kiireen määrä:\n:bomb: Edellisen viikon kiireen tuntu:\n"
+        f"       ⤷ perustuu {len(readings[readings.date > pd.Timestamp(last_week_start.datetime)])} <https://tie.up.railway.app/kiire/|kyselyvastaukseeen>"
+    )
+    pressure_text = (
+        f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"
+        f"{f(weekly.y.iloc[1], diff.y.iloc[1])}\n"
+    )
+
+    # Forming the blocks:
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": f"Viikkopalaveri {now.format('D.M.YYYY')}",
+                "emoji": True,
+            },
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Huomenta @timpat ja tervetuloa viikkopalaveriin!",
+            },
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "<https://app.slack.com/huddle/T1FB2571R/C2RTSBH2T|"
+                    ":headphones: Huddle>",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "<https://miro.com/app/board/o9J_kjURPUs=/"
+                    "?share_link_id=181288254962|🗓️ Miro>",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "<https://docs.google.com/document/d/"
+                    "1uRIynIL0bU0SHZZJtyNYSV-7Iub6m3Gy-cjo4GkrKXY/"
+                    "edit?usp=sharing|📋 Asialista>",
+                },
+                # {
+                #     "type": "mrkdwn",
+                #     "text": "<https://severa-data-dashboard.vercel.app/"
+                #     "sales|📊 Myynti>",
+                # },
+                # {
+                #     "type": "mrkdwn",
+                #     "text": "<https://tie_bot-1-n6951403.deta.app|"
+                #     ":control_knobs: Ohjauspaneeli>",
+                # },
+            ],
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": formatted_strs,
+            },
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": salescases_text,
+            },
+        },
+        {"type": "divider"},
+        # {
+        #     "type": "section",
+        #     "text": {
+        #         "type": "mrkdwn",
+        #         "text": pressure_text,
+        #     },
+        # },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": pressure_titles,
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": pressure_text,
+                },
+            ],
+        }
+        # {"type": "divider"},
+        # {
+        #     "type": "section",
+        #     "text": {
+        #         "type": "mrkdwn",
+        #         "text": ":sparkles: Sisällä olevien tarjousten suolauslista:\n\n"
+        #         + suolaus,
+        #     },
+        # },
+    ]
+
+    slack.post_message(channel=channel, message_text="Viikkopalaveri", blocks=blocks)
+
+
+async def send_weekly_slack_update_debug() -> None:
+    await send_weekly_slack_update(CHANNEL_KONSU_TESTAUS)
 
 
 # {
