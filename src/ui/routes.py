@@ -284,9 +284,9 @@ async def get_offers_json(
 @slack_router.get("/offers")
 async def get_offers(
     request: Request,
-    channel: str = "CSFQ71ANA",  # noqa: ARG001
-    reaction: str = "k",  # noqa: ARG001
-    startDate: datetime.datetime | None = None,  # noqa: ARG001
+    channel: str = "CSFQ71ANA", 
+    reaction: str = "k", 
+    startDate: datetime.datetime | None = None, 
 ):
     """
     Fetch all open (not marked with reaction)
@@ -296,7 +296,12 @@ async def get_offers(
 
     return templates.TemplateResponse(
         "offers.html",
-        {"request": request},
+        {
+            "request": request,
+            channel: channel,
+            reaction: reaction,
+            startDate: startDate,
+        },
     )
 
 
