@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from src.logic.kpi import kpi
+from src.logic.slack.client import send_weekly_slack_update, send_weekly_slack_update_debug
 from src.ui import routes
 
 
@@ -17,8 +18,8 @@ async def lifespan(app: FastAPI):
             routes.Cronjob(*params)
             for params in [
                 (routes.save_sparse, "0 2 * * *"),
-                (routes.send_weekly_slack_update, "0 8 * * *"),
-                (routes.send_weekly_slack_update_debug, "0 * * * *"),
+                (send_weekly_slack_update, "0 8 * * *"),
+                (send_weekly_slack_update_debug, "0 * * * *"),
             ]
         ]
     )
