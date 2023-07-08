@@ -1,4 +1,6 @@
 import datetime
+import re
+from itertools import product
 
 import arrow
 import pandas as pd
@@ -61,6 +63,11 @@ def unravel(
     date_span_start: datetime.datetime = None,
     date_span_end: datetime.datetime = None,
 ) -> pd.DataFrame:
+    date_cols = ["start_date", "end_date", "date", "forecast_date"]
+    for date_col in date_cols:
+        if date_col not in data.columns:
+            data[date_col] = pd.NaT
+
     data_view = sanitize_dates(
         data.copy(), ["start_date", "end_date", "date", "forecast_date"]
     )
@@ -111,3 +118,75 @@ def cull_before(
     )
 
     return data[~id_match | (id_match & (is_realized_date_item | date_filter))]
+
+
+def search_string_for_datetime(input_str: str) -> arrow.Arrow | None:
+    """
+    Search a string for a datetime value using some common abbreviated formats.
+    Return None if no datetimes are found.
+    """
+    date_formats = [
+        "DD.MM.YYYY",
+        "DD.M.YYYY",
+        "D.MM.YYYY",
+        "D.M.YYYY",
+        "DD-MM-YYYY",
+        "D-M-YYYY",
+        "YYYY-MM-DD",
+        "YYYY-M-DD",
+        "YYYY-MM-D",
+        "YYYY-M-D",
+    ]
+
+    time_formats = [
+        "HH:mm",
+        "H:mm",
+        "HH:m",
+        "H:m",
+        "HH.mm",
+        "H.mm",
+        "HH.m",
+        "H.m",
+        "HH",
+        "H",
+        "",
+    ]
+
+    mid_regex = r"[\s?(klo)?\.?\s?]"
+    date_formats_with_implicit_year = [fmt.replace("YYYY", "") for fmt in date_formats]
+
+    # Cleanup
+    input_str = input_str.replace("*", "")
+
+    this_year = arrow.now("Europe/Helsinki").year
+
+    for d_fmt, t_fmt in product(date_formats, time_formats):
+        try:
+            fmt = rf"{d_fmt}{mid_regex}{t_fmt}"
+            return arrow.get(
+                input_str, fmt, tzinfo="Europe/Helsinki", normalize_whitespace=True
+            )
+        except arrow.parser.ParserError:
+            continue
+        except ValueError:
+            continue
+
+    for d_fmt, t_fmt in product(date_formats_with_implicit_year, time_formats):
+        try:
+            return arrow.get(
+                input_str,
+                rf"{d_fmt}{mid_regex}{t_fmt}",
+                tzinfo="Europe/Helsinki",
+                normalize_whitespace=True,
+            ).replace(year=this_year)
+        except arrow.parser.ParserError:
+            continue
+        except ValueError:
+            continue
+
+    match = re.search(r"vko (\d+)", input_str)
+    if match:
+        vko = match.group(1)
+        return arrow.get(f"{this_year}-W{vko:0>2}-5T12:00", tzinfo="Europe/Helsinki")
+
+    return None

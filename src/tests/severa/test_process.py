@@ -5,8 +5,7 @@ import pandas as pd
 import pytest
 from pytest import approx
 
-import src.severa.process as process
-from src.daterange import DateRange
+from src.util import process
 
 
 @pytest.fixture
@@ -109,21 +108,24 @@ class TestProcess:
 
         for col in cols:
             assert pd.api.types.is_datetime64tz_dtype(result[col])
-            assert result[col].dt.tz is datetime.timezone.utc
+            assert result[col].dt.tz is datetime.UTC
 
     def test_unravel_with_forecasts(self, forecast_dataframe):
+        forecast_dataframe.loc[:, "value"] = 6.0
         result = process.unravel(forecast_dataframe)
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 10
-        assert result.loc[:, "value"].values == approx(1.0)
+        assert result.loc[:, "value"].to_numpy() == approx(
+            [0, 1, 1, 1, 1, 0, 0, 0, 1, 1]
+        )
 
     def test_unravel_without_forecasts(self, realized_dataframe):
         result = process.unravel(realized_dataframe)
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 1
-        assert result.loc[:, "value"].values == approx(1.0)
+        assert result.loc[:, "value"].to_numpy() == approx(1.0)
 
     def test_unravel_with_maximum(self):
         data = pd.DataFrame(
@@ -144,7 +146,12 @@ class TestProcess:
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 10
-        assert result.loc[:, "value"].values == approx(1.0)
+
+        # Sunday, Epihany, next weekend
+        assert result.loc[:, "value"].to_numpy()[[0, 5, 6, 7]] == approx(0.0)
+
+        # Weekdays
+        assert result.loc[:, "value"].to_numpy()[1:5] == approx(10.0)
 
     def test_cull_one_id(self, forecast_dataframe_large):
         unraveled = process.unravel(forecast_dataframe_large)

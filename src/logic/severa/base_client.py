@@ -1,7 +1,6 @@
 import os
 import time
 import typing
-from asyncio import PriorityQueue
 from types import TracebackType
 
 import anyio
@@ -11,7 +10,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from sortedcontainers import SortedList
 
-from src.severa import models
+from src.logic.severa import models
 
 load_dotenv(r"C:\Users\vireima\tie-dashboard\.env")
 

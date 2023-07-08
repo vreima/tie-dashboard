@@ -1,10 +1,9 @@
 import arrow
 import pandas as pd
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
-from loguru import logger
 
-from src.database import Base
+from src.database.database import Base
 
 router = APIRouter()
 
@@ -13,12 +12,12 @@ templates = Jinja2Templates(directory="src/static")
 
 @router.get("/pressure")
 async def pressure(
-    request: Request,
+    request: Request,  # noqa: ARG001
     startDate: str = "",
     endDate: str = "",
     users: str = "",
-    businessunits: str = "",
-):  # noqa: ARG001
+    businessunits: str = "",  # noqa: ARG001
+):
     if not startDate:
         start = arrow.utcnow().shift(days=-7).floor("day")
     else:
@@ -28,7 +27,7 @@ async def pressure(
             raise HTTPException(
                 status_code=400,
                 detail="Query parameter 'startDate' has invalid date format, expected YYYY-mm-dd",
-            )
+            ) from None
 
     if not endDate:
         end = arrow.utcnow().ceil("day")
@@ -39,16 +38,16 @@ async def pressure(
             raise HTTPException(
                 status_code=400,
                 detail="Query parameter 'endDate' has invalid date format, expected YYYY-mm-dd",
-            )
+            ) from None
 
-    filter = {"date": {"$gte": start.datetime, "$lte": end.datetime}}
+    filter_query = {"date": {"$gte": start.datetime, "$lte": end.datetime}}
 
     if users:
-        filter["user"] = {"$in": users.split(",")}
+        filter_query["user"] = {"$in": users.split(",")}
 
     # TODO: businessunits
 
-    results = Base("pressure", "pressure").find(filter).to_dict(orient="records")
+    results = Base("pressure", "pressure").find(filter_query).to_dict(orient="records")
     return results
 
 

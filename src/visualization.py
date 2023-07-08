@@ -3,7 +3,7 @@ from datetime import timedelta
 import altair as alt
 import pandas as pd
 
-from src.database import Base
+from src.database.database import Base
 from src.severa.fetch import Fetcher
 
 FI_LOCALE_JSON = {

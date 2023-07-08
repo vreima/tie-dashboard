@@ -9,9 +9,9 @@ import pandas as pd
 from loguru import logger
 from workalendar.europe import Finland
 
-from src.daterange import DateRange
-from src.severa import models
-from src.severa.base_client import Client
+from src.logic.severa import models
+from src.logic.severa.base_client import Client
+from src.util.daterange import DateRange
 
 T = typing.TypeVar("T", bound="Client")
 

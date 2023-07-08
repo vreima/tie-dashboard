@@ -8,10 +8,10 @@ import arrow
 import pandas as pd
 from workalendar.europe import Finland
 
-from src.daterange import DateRange
-from src.severa import models
-from src.severa.base_client import Client as BaseClient
-from src.stable_hash import get_hash
+from src.logic.severa import models
+from src.logic.severa.base_client import Client as BaseClient
+from src.util.daterange import DateRange
+from src.util.stable_hash import get_hash
 
 T = typing.TypeVar("T", bound="Client")
 
@@ -283,7 +283,9 @@ class Client:
             ignore_index=True,
         ).convert_dtypes()
 
-    async def fetch_forecasted_saleshours(self, span: DateRange) -> pd.DataFrame:
+    async def fetch_forecasted_saleshours(
+        self, span: DateRange  # noqa: ARG002
+    ) -> pd.DataFrame:
         saleshours = await self.fetch_sales()
         # TODO: span
         return saleshours[saleshours.id == "saleswork"]
@@ -654,7 +656,9 @@ class Client:
     # Fetching sales          #
     ###########################
 
-    async def fetch_forecasted_salesvalue(self, span: DateRange) -> pd.DataFrame:
+    async def fetch_forecasted_salesvalue(
+        self, span: DateRange  # noqa: ARG002
+    ) -> pd.DataFrame:
         saleshours = await self.fetch_sales()
         # TODO: span
         return saleshours[saleshours.id == "salesvalue"].drop(

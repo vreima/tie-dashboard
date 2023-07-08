@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Severan tarjoukset</title>
+    <title>Tarjouspyynnöt</title>
     <script
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"
@@ -10,18 +10,21 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css"
     />
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-    <script src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
   </head>
   <body>
     <div id="example" style="width: 80%"></div>
     <script type="text/javascript">
-      fetch("https://tie.up.railway.app/salescases.json")
+      //fetch("https://tie.up.railway.app/slack/offers.json")
+      fetch("http://127.0.0.1:8000/slack/offers.json")
         .then((res) => res.json())
         .then((out) => {
           out.forEach((element) => {
-            element.link = `<a href="https://severa.visma.com/project/${element.guid}">https://severa.visma.com/project/${element.guid}</a>`;
-            element.inserted = moment.utc(element.inserted).tz('Europe/Helsinki').format("ddd D.M.YYYY HH:mm:ss Z")
+            element.inserted = luxon.DateTime.fromSeconds(Number(element.timestamp)).setLocale('fi').toFormat("dd.MM.yyyy 'klo' hh:mm");
+            element.link = `<a href="${element.url}">${element.inserted}</a>`;
+            element.first_row = element.message.split("\n")[0];
+            if (element.deadline != null)
+              element.deadline = luxon.DateTime.fromISO(element.deadline).setLocale('fi').toFormat("dd.MM.yyyy 'klo' hh:mm");
           });
 
           const container = document.querySelector("#example");
@@ -29,13 +32,14 @@
           const hot = new Handsontable(container, {
             data: [...out],
             columns: [
-              { title: "Ongelma", type: "text", data: "id" },
-              { title: "Projekti", type: "text", data: "name" },
-              { title: "Vaihe", type: "text", data: "phase" },
-              { title: "Myyjä", type: "text", data: "soldby" },
-              { title: "Projektipäällikkö", type: "text", data: "owner" },
-              { title: "Severa", renderer: "html", data: "link" },
-              { title: "Aikaleima", type: "time", data: "inserted" },
+              { title: "Aikaleima ja linkki", renderer: "html", data: "link" },
+              { title: "Deadline", type: "text", data: "deadline" },
+              {
+                title: "Deadline",
+                type: "text",
+                data: "deadline_humanized",
+              },
+              { title: "Viesti", type: "text", data: "first_row" },
             ],
             rowHeaders: true,
             colHeaders: true,

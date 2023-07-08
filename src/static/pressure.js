@@ -139,7 +139,17 @@ async function fetch_pressure(hostname, offset) {
   const h = c.offsetHeight;
   const ctx = reset_canvas();
 
-  const response = await fetch(`${hostname}pressure/?offset=${offset}`);
+  let response;
+
+  try {
+    response = await fetch(`${hostname}pressure/?offset=${offset}`);
+  } catch (error) {
+    document.getElementById(
+      "vis"
+    ).innerText = `Error fetching $${hostname}pressure/?offset=${offset}: ${error}`;
+    return;
+  }
+
   const jsonData = await response.json();
 
   ctx.lineCap = "round";
@@ -231,15 +241,22 @@ async function refresh_data(event) {
   const userFilter = document.getElementById("user-filter").value;
   // const unitFilter = document.getElementById("businessunit-filter").value;
 
-  global_data = await fetch_pressure_data(
-    global_hostname,
-    startDate,
-    endDate,
-    userFilter,
-    null // unitFilter
-  );
+  try {
+    global_data = await fetch_pressure_data(
+      global_hostname,
+      startDate,
+      endDate,
+      userFilter,
+      null // unitFilter
+    );
 
-  await refresh_vega(global_data);
+    await refresh_vega(global_data);
+  } catch (error) {
+    document.getElementById(
+      "vis"
+    ).innerText = `${error}`;
+    return;
+  }
 }
 
 async function refresh_vega(data) {
@@ -348,12 +365,12 @@ async function refresh_vega(data) {
               type: "trail",
             },
             params: [
-                {
-                  name: "user-selection",
-                  select: { type: "point", fields: ["user"] },
-                  bind: "legend",
-                },
-              ],
+              {
+                name: "user-selection",
+                select: { type: "point", fields: ["user"] },
+                bind: "legend",
+              },
+            ],
             encoding: {
               y: {
                 field: "y",
@@ -394,7 +411,7 @@ async function refresh_vega(data) {
                   type: "nominal",
                 },
                 value: "#4682b4",
-                legend: null
+                legend: null,
               },
               opacity: {
                 condition: {
@@ -413,7 +430,7 @@ async function refresh_vega(data) {
             mark: {
               type: "circle",
             },
-            
+
             encoding: {
               y: {
                 field: "y",
@@ -1045,6 +1062,8 @@ async function fetch_pressure_data(
   const url = `${hostname}pressure/?startDate=${startDate}&endDate=${endDate}&users=${userFilter}`;
 
   const response = await fetch(url);
+
   const jsonData = await response.json();
+
   return jsonData;
 }

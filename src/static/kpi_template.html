@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<head>
+  <!--<meta
+    http-equiv="Content-Security-Policy"
+    content="upgrade-insecure-requests"
+  />-->
+  <link rel="stylesheet" type="text/css" href="{{ base_url }}static/kpi.css" />
+  <script type="text/javascript" src="{{ base_url }}static/kpi.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.25.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.12.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.22.1"></script>
+</head>
+<html>
+  <body onload="init('{{ base_url }}', '{{ kpi }}')">
+    <!--<body onload="init('http://127.0.0.1:8000/')"> -->
+    <div id="body">
+      <div class="left">
+        <input
+          type="number"
+          id="span"
+          name="span"
+          min="1"
+          max="90"
+          value="28"
+        /> <label for="span">Liukuvan ikkunan leveys vuorokausissa</label><br>
+        <input
+          type="number"
+          id="billing_target"
+          name="billing_target"
+          min="0"
+          max="200000"
+          value="75000"
+        /> <label for="billing_target">Laskutustavoite (€ / kk)</label><br>
+        <input
+          type="number"
+          id="billing_target_span"
+          name="billing_target_span"
+          ,
+          value="75000"
+          disabled
+        /> <label for="billing_target">Laskutustavoite suhteessa ikkunan leveyteen</label>
+      </div>
+      <div class="right">
+        <div id="salesmargin">
+          <div class="loader-parent">
+            <div class="loader"></div>
+          </div>
+        </div>
+
+        <div id="hours">
+          <div class="loader-parent">
+            <div class="loader"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

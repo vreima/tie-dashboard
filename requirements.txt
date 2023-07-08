@@ -25,3 +25,4 @@ altair
 croniter
 python-multipart
 sortedcontainers
+slack_sdk
