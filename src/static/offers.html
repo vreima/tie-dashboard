@@ -15,7 +15,7 @@
   <body>
     <div id="example" style="width: 80%"></div>
     <script type="text/javascript">
-      fetch("https://tie.up.railway.app/slack/offers.json")
+      fetch("/offers.json")
       //fetch("http://127.0.0.1:8000/slack/offers.json")
         .then((res) => res.json())
         .then((out) => {
