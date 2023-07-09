@@ -127,47 +127,12 @@ class Client:
                 )
 
 
-async def send_weekly_slack_update(channel: str | None = None):
-    if not channel:
-        channel = CHANNEL_YKS_TIETOMALLINTAMINEN
-
+async def format_pressure_as_slack_block():
+    """
+    Fetch last weeks pressure ('kiire') results and format them as a block.
+    """
     now = arrow.utcnow().to("Europe/Helsinki")
-    slack = Client()
 
-    # Offers:
-    unmarked_offers = slack.fetch_unmarked_offers(
-        CHANNEL_TIE_TARJOUSPYYNNOT, "k", now.shift(months=-3).floor("month")
-    )
-
-    if unmarked_offers:
-        newline = "\n"
-        fi = "fi"
-        formatted_strs = (
-            "📣 Kanavan #tie_tarjouspyynnöt <https://tie.up.railway.app/slack/offers|käsittelemättömät viestit>:\n"
-            + "\n".join(
-                (
-                    f"> *<{offer.url}|{arrow.get(float(offer.timestamp)).format('DD.MM.YYYY')}>* | "
-                    f"{f'*DL _{arrow.get(offer.deadline).humanize(locale=fi)}_* |' if offer.deadline else ''} {offer.message.split(newline)[0]}"
-                )
-                for offer in unmarked_offers
-            )
-        )
-    else:
-        formatted_strs = (
-            "📣 Kanavalla #tie_tarjouspyynnöt ei käsittelemättömiä viestejä ✨"
-        )
-
-    # Salescases:
-    salescases_df = await fetch_invalid_salescases()
-
-    salescases_text = ":sparkles: Sisällä olevien <https://tie.up.railway.app/severa/salescases|tarjousten suolauslista>:\n"
-    for key, group in salescases_df.groupby("id"):
-        if not group.empty:
-            salescases_text += f"*{key}*:\n"
-            for _row_num, row in group.iterrows():
-                salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if not pd.isna(row.phase) else ''} (@{row.soldby})\n"
-
-    # Pressure:
     last_week_start = now.shift(weeks=-1).floor("week")
     readings = pd.DataFrame(
         [
@@ -199,6 +164,94 @@ async def send_weekly_slack_update(channel: str | None = None):
         f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"
         f"{f(weekly.y.iloc[1], diff.y.iloc[1])}\n"
     )
+
+    return {
+        "type": "section",
+        "fields": [
+            {
+                "type": "mrkdwn",
+                "text": pressure_titles,
+            },
+            {
+                "type": "mrkdwn",
+                "text": pressure_text,
+            },
+        ],
+    }
+
+
+async def format_salescases_as_slack_block():
+    """
+    Fetch invalid/incorrect salescases from Severa and format them as a block.
+    """
+    salescases_df = await fetch_invalid_salescases()
+
+    salescases_text = ":sparkles: Sisällä olevien <https://tie.up.railway.app/severa/salescases|tarjousten suolauslista>:\n"
+    for key, group in salescases_df.groupby("id"):
+        if not group.empty:
+            salescases_text += f"*{key}*:\n"
+            for _row_num, row in group.iterrows():
+                salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if not pd.isna(row.phase) else ''} (@{row.soldby})\n"
+
+    return (
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": salescases_text,
+            },
+        },
+    )
+
+
+async def format_offers_as_slack_block(slack: Client):
+    """
+    Get unmarked/open offers from Slack channel and format them as a block.
+    """
+    now = arrow.utcnow().to("Europe/Helsinki")
+
+    unmarked_offers = slack.fetch_unmarked_offers(
+        CHANNEL_TIE_TARJOUSPYYNNOT, "k", now.shift(months=-3).floor("month")
+    )
+
+    if unmarked_offers:
+        newline = "\n"
+        fi = "fi"
+        formatted_strs = (
+            "📣 Kanavan #tie_tarjouspyynnöt <https://tie.up.railway.app/slack/offers|käsittelemättömät viestit>:\n"
+            + "\n".join(
+                (
+                    f"> *<{offer.url}|{arrow.get(float(offer.timestamp)).format('DD.MM.YYYY')}>* | "
+                    f"{f'*DL _{arrow.get(offer.deadline).humanize(locale=fi)}_* |' if offer.deadline else ''} {offer.message.split(newline)[0]}"
+                )
+                for offer in unmarked_offers
+            )
+        )
+    else:
+        formatted_strs = (
+            "📣 Kanavalla #tie_tarjouspyynnöt ei käsittelemättömiä viestejä ✨"
+        )
+
+    return (
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": formatted_strs,
+            },
+        },
+    )
+
+
+async def send_weekly_slack_update(channel: str | None = None):
+    """
+    Format and send the weekly 'Viikkopalaveri' message.
+    """
+    if not channel:
+        channel = CHANNEL_YKS_TIETOMALLINTAMINEN
+
+    now = arrow.utcnow().to("Europe/Helsinki")
+    slack = Client()
 
     # Forming the blocks:
     blocks = [
@@ -237,70 +290,23 @@ async def send_weekly_slack_update(channel: str | None = None):
                     "1uRIynIL0bU0SHZZJtyNYSV-7Iub6m3Gy-cjo4GkrKXY/"
                     "edit?usp=sharing|📋 Asialista>",
                 },
-                # {
-                #     "type": "mrkdwn",
-                #     "text": "<https://severa-data-dashboard.vercel.app/"
-                #     "sales|📊 Myynti>",
-                # },
-                # {
-                #     "type": "mrkdwn",
-                #     "text": "<https://tie_bot-1-n6951403.deta.app|"
-                #     ":control_knobs: Ohjauspaneeli>",
-                # },
             ],
         },
         {"type": "divider"},
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": formatted_strs,
-            },
-        },
+        await format_offers_as_slack_block(slack),
         {"type": "divider"},
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": salescases_text,
-            },
-        },
+        await format_salescases_as_slack_block(),
         {"type": "divider"},
-        # {
-        #     "type": "section",
-        #     "text": {
-        #         "type": "mrkdwn",
-        #         "text": pressure_text,
-        #     },
-        # },
-        {
-            "type": "section",
-            "fields": [
-                {
-                    "type": "mrkdwn",
-                    "text": pressure_titles,
-                },
-                {
-                    "type": "mrkdwn",
-                    "text": pressure_text,
-                },
-            ],
-        }
-        # {"type": "divider"},
-        # {
-        #     "type": "section",
-        #     "text": {
-        #         "type": "mrkdwn",
-        #         "text": ":sparkles: Sisällä olevien tarjousten suolauslista:\n\n"
-        #         + suolaus,
-        #     },
-        # },
+        await format_pressure_as_slack_block(),
     ]
 
     slack.post_message(channel=channel, message_text="Viikkopalaveri", blocks=blocks)
 
 
 async def send_weekly_slack_update_debug() -> None:
+    """
+    Sends the weekly 'Viikkopalaveri' message to a debugging channel.
+    """
     await send_weekly_slack_update(CHANNEL_KONSU_TESTAUS)
 
 
