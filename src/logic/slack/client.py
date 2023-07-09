@@ -250,12 +250,13 @@ class Client:
         logger.debug(chat)
 
         openai_response = await openai_chat(messages=chat)
+        formatted_response = self.names_to_user_ids(openai_response)
 
         logger.debug("posting message...")
 
         self._client.chat_postMessage(
             channel=channel,
-            text=openai_response,
+            text=formatted_response,
             thread_ts=ts,
             unfurl_links=False,
             unfurl_media=False,
