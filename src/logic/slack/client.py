@@ -12,6 +12,10 @@ from pydantic import BaseModel
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
+import openai_async
+import httpx
+
+import src.logic.slack.models
 
 from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa.client import fetch_invalid_salescases
@@ -129,6 +133,55 @@ class Client:
                     # deadline_humanized=None if dt is None else dt.humanize(locale="fi"),
                     url=f"https://tietoa.slack.com/archives/{channel}/p{ts}",
                 )
+
+    ###################################
+    # Events API / OpenAI integration #
+    ###################################
+
+    async def fetch_replies(self, channel: str, ts: str) -> Iterable[dict[str, str]]:
+        """
+        Get replies by channel and thread id (timestamp) in OpenAI chat format.
+        """
+        batches = self._client.conversations_replies(channel=channel, ts=ts)
+
+        for batch in batches:
+            for reply in batch["messages"]:
+                user = reply["user"]
+                message = self.unformat(reply["text"])
+
+                yield {"role": "user", "content": f"{user} ||| {message}"}
+
+    async def process_app_mention_event(
+        self, event: src.logic.slack.models.AppMentionWrapperModel
+    ):
+        """
+        Respond to chat mentions with OpenAI.
+        """
+        ts = event.event.ts
+        channel = event.event.channel
+
+        chat = [
+            {
+                "role": "system",
+                "content": "Olet @tie_botti, yrityksen Tietoa Finland Oy "
+                "Tietomallinnus -yksikön yleishyödyllinen keskustelubotti, joka toimii Slackissä. "
+                "Tietoa Finland Oy on Helsinkiläinen rakennusalan ja tietomallintamisen konsulttiyhtiö. "
+                "Pyri käyttämään personaallista kieltä. Pyri käyttämään runomittaa. "
+                "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat. "
+                "Vastaa seuraavaan viestiketjuun.",
+            },
+            *await self.fetch_replies(channel, ts),
+        ]
+
+        openai_response = await openai_chat(messages=chat)
+
+        self.chat_postMessage(
+            channel=channel,
+            text=openai_response,
+            thread_ts=ts,
+            unfurl_links=False,
+            unfurl_media=False,
+        )
 
 
 async def format_pressure_as_slack_block():
@@ -311,6 +364,62 @@ async def send_weekly_slack_update_debug() -> None:
     Sends the weekly 'Viikkopalaveri' message to a debugging channel.
     """
     await send_weekly_slack_update(CHANNEL_KONSU_TESTAUS)
+
+
+###########
+# OpenAI  #
+###########
+
+
+async def openai_chat(
+    messages: list[dict[str, str]],
+    model: str = "gpt-4",
+    max_tokens: int = 8192,
+    temp: float = 0.6,
+    timeout: float = 20.0,
+) -> str:
+    try:
+        response = await openai_async.chat_complete(
+            os.getenv("OPENAI_API_KEY"),
+            timeout=timeout,
+            payload={
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temp,
+            },
+        )
+    except httpx.ReadTimeout:
+        logger.error("httpx.ReadTimeout")
+        return "httpx.ReadTimeout"
+
+    response = response.json()
+
+    logger.debug(f"{response=}")
+
+    suffix = ""
+    result = ""
+
+    if "error" in response:
+        err = response["error"]
+        logger.error(f"Error: {err['type']} / {err['code']}\n{err['message']}")
+        return f"[{err['code']}] {err['message']}"
+
+    try:
+        if response["choices"][0]["finish_reason"] == "length":
+            logger.warning(f"OpenAI response cut off, {max_tokens} tokens reached")
+            suffix = response["choices"][0]["message"]["content"] + "..."
+
+        result = response["choices"][0]["message"]["content"] + suffix
+    except Exception:
+        logger.exception("Malformed response from OpenAI")
+        result = "Undefined error, please refer to logs."
+    else:
+        logger.info(
+            f"OpenAI response OK. Total tokens: {response['usage']['total_tokens']}."
+        )
+
+    return result.strip()
 
 
 # {

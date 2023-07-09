@@ -14,7 +14,6 @@ from src.logic.severa.base_client import Client as BaseClient
 from src.util.daterange import DateRange
 from src.util.stable_hash import get_hash
 
-from pydantic import ValidationError
 
 T = typing.TypeVar("T", bound="Client")
 
@@ -217,10 +216,7 @@ class Client:
             **span,
         )
 
-        hours = (
-            models.WorkHourOutputModel(**json)
-            for json in workhours_json
-        )
+        hours = (models.WorkHourOutputModel(**json) for json in workhours_json)
 
         return pd.DataFrame(
             [
@@ -237,7 +233,6 @@ class Client:
                 for hour in hours
             ]
         )
-        
 
     async def fetch_realized_workhours(self, span: DateRange) -> pd.DataFrame:
         return pd.concat(

@@ -25,3 +25,4 @@ croniter==1.4.1
 python-multipart==0.0.6
 sortedcontainers==2.4.0
 slack_sdk==3.21.3
+openai_async==0.0.3

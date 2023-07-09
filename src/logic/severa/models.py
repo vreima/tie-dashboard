@@ -11,8 +11,9 @@ from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, Field, confloat, conint, constr, ConfigDict
 
+
 class Parent(BaseModel):
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")
 
 
 class UserWithFirstNameLastNameAndPhotoFileModel(Parent):
