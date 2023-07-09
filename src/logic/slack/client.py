@@ -92,7 +92,11 @@ class Client:
         # For any other content within those sub-strings, format as a URL link
         # Once the format has been determined, check for a pipe (|) - if present, use the text following the pipe as the label for the link or mention.
 
-        return re.sub(r"<[^|]*\|([^|]*)>", r"\1", text)
+        strip_urls_etc = re.sub(r"<[^|]*\|([^|]*)>", r"\1", text)
+        strip_bold = re.sub(r"\*([^*]*)\*", r"\1", strip_urls_etc)
+        strip_italics = re.sub(r"_([^_]*)_", r"\1", strip_bold)
+
+        return strip_italics
 
     ###################
     # Business logic  #
@@ -193,15 +197,13 @@ async def format_salescases_as_slack_block():
             for _row_num, row in group.iterrows():
                 salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if not pd.isna(row.phase) else ''} (@{row.soldby})\n"
 
-    return (
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": salescases_text,
-            },
+    return {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": salescases_text,
         },
-    )
+    }
 
 
 async def format_offers_as_slack_block(slack: Client):
@@ -232,15 +234,13 @@ async def format_offers_as_slack_block(slack: Client):
             "📣 Kanavalla #tie_tarjouspyynnöt ei käsittelemättömiä viestejä ✨"
         )
 
-    return (
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": formatted_strs,
-            },
+    return {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": formatted_strs,
         },
-    )
+    }
 
 
 async def send_weekly_slack_update(channel: str | None = None):
@@ -293,6 +293,9 @@ async def send_weekly_slack_update(channel: str | None = None):
             ],
         },
         {"type": "divider"},
+    ]
+
+    blocks += [
         await format_offers_as_slack_block(slack),
         {"type": "divider"},
         await format_salescases_as_slack_block(),

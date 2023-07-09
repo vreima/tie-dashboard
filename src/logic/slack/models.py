@@ -1,12 +1,16 @@
-from pydantic import BaseModel, Extra
 from typing import Literal
 
+from pydantic import BaseModel, Extra
+
+
 class ChallengeModel(BaseModel):
+    type: Literal["url_verification"]  # noqa: A003
     token: str
     challenge: str
-    type: str
+
 
 class AppMentionModel(BaseModel):
+    type: Literal["app_mention"]  # noqa: A003
     user: str
     text: str
     ts: str
@@ -15,7 +19,7 @@ class AppMentionModel(BaseModel):
 
 
 class AppMentionWrapperModel(BaseModel, extra=Extra.allow):
-    type: Literal["event_callback"]
+    type: Literal["event_callback"]  # noqa: A003
     token: str
     team_id: str
     api_app_id: str

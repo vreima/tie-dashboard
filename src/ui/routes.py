@@ -16,14 +16,13 @@ from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
+import src.logic.slack.models as slack_models
 from src.database.database import Base
 from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa import base_client
 from src.logic.severa.client import Client as SeveraClient
 from src.logic.slack.client import Client as SlackClient
-from src.logic.slack.client import (
-    send_weekly_slack_update_debug,
-)
+from src.logic.slack.client import send_weekly_slack_update_debug
 from src.security import get_current_username
 from src.util.daterange import DateRange
 
@@ -292,22 +291,19 @@ async def send_debug_message():
     """
     await send_weekly_slack_update_debug()
 
-import src.logic.slack.models as slack_models
 
-@slack_router.get("/event")
-async def handle_slack_handshake(event: slack_models.ChallengeModel):
-    """
-    Handle Slack API endpoint verification.
-    """
-    # Return plain text challenge string to handle verification.
-    return event.challenge
-
-@slack_router.get("/event")
-async def handle_slack_event(event: slack_models.AppMentionWrapperModel):
+@slack_router.post("/event")
+async def handle_slack_event(
+    event: slack_models.ChallengeModel | slack_models.AppMentionWrapperModel,
+):
     """
     Main Slack Event API handler.
     """
-    logger.info(event)
+    if isinstance(event, slack_models.ChallengeModel):
+        # Return plain text challenge string to handle verification.
+        return event.challenge
+    else:
+        logger.info(dict(event))
 
 
 default_router.include_router(slack_router)
