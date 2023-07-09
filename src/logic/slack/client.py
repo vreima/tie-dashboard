@@ -158,7 +158,7 @@ async def format_pressure_as_slack_block():
 
     pressure_titles = (
         ":hammer_and_pick: Edellisen viikon kiireen määrä:\n:bomb: Edellisen viikon kiireen tuntu:\n"
-        f"       ⤷ perustuu {len(readings[readings.date > pd.Timestamp(last_week_start.datetime)])} <https://tie.up.railway.app/kiire/|kyselyvastaukseeen>"
+        f"        ⤷ perustuu {len(readings[readings.date > pd.Timestamp(last_week_start.datetime)])} <https://tie.up.railway.app/kiire/|kyselyvastaukseeen>"
     )
     pressure_text = (
         f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"

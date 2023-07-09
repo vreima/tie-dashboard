@@ -287,7 +287,27 @@ async def get_offers(
 
 @slack_router.get("/debug")
 async def send_debug_message():
+    """
+    Send weekly Viikkopalaveri msg mor often and to a debug channel.
+    """
     await send_weekly_slack_update_debug()
+
+import src.logic.slack.models as slack_models
+
+@slack_router.get("/event")
+async def handle_slack_handshake(event: slack_models.ChallengeModel):
+    """
+    Handle Slack API endpoint verification.
+    """
+    # Return plain text challenge string to handle verification.
+    return event.challenge
+
+@slack_router.get("/event")
+async def handle_slack_event(event: slack_models.AppMentionWrapperModel):
+    """
+    Main Slack Event API handler.
+    """
+    logger.info(event)
 
 
 default_router.include_router(slack_router)
