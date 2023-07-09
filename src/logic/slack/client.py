@@ -378,7 +378,7 @@ async def send_weekly_slack_update_debug() -> None:
 async def openai_chat(
     messages: list[dict[str, str]],
     model: str = "gpt-4",
-    max_tokens: int = 8192,
+    max_tokens: int = 1024 * 3,
     temp: float = 0.6,
     timeout: float = 20.0,
 ) -> str:
