@@ -42,13 +42,13 @@ class Client:
         """
         Get username from user id, or None if not known.
         """
-        return self._users[0].get(user_id, None)
+        return self._users()[0].get(user_id, None)
 
     def user_by_name(self, user_name: str) -> str | None:
         """
         Get user id from username or None if not known.
         """
-        return self._users[1].get(user_name, None)
+        return self._users()[1].get(user_name, None)
 
     def _users(
         self, _cache={}, _reversed={}  # noqa: B006
