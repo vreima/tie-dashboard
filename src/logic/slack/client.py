@@ -173,6 +173,8 @@ class Client:
             *await self.fetch_replies(channel, ts),
         ]
 
+        logger.debug(chat)
+
         openai_response = await openai_chat(messages=chat)
 
         self.chat_postMessage(

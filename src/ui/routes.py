@@ -303,7 +303,9 @@ async def handle_slack_event(
         # Return plain text challenge string to handle verification.
         return event.challenge
     else:
-        logger.info(event.model_dump(mode="json"))
+        slack = SlackClient()
+        logger.debug(event.model_dump(mode="json"))
+        slack.process_app_mention_event(event)
 
 
 default_router.include_router(slack_router)
