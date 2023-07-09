@@ -166,9 +166,8 @@ class Client:
                 "content": "Olet @tie_botti, yrityksen Tietoa Finland Oy "
                 "Tietomallinnus -yksikön yleishyödyllinen keskustelubotti, joka toimii Slackissä. "
                 "Tietoa Finland Oy on Helsinkiläinen rakennusalan ja tietomallintamisen konsulttiyhtiö. "
-                "Pyri käyttämään personaallista kieltä. Pyri käyttämään runomittaa. "
-                "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat. "
-                "Vastaa seuraavaan viestiketjuun.",
+                "Pyri käyttämään personaallista kieltä. "
+                "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat. ",
             },
             *self.fetch_replies(channel, ts),
         ]
@@ -380,7 +379,7 @@ async def openai_chat(
     model: str = "gpt-4",
     max_tokens: int = 1024 * 3,
     temp: float = 0.6,
-    timeout: float = 20.0,
+    timeout: float = 240.0,
 ) -> str:
     try:
         response = await openai_async.chat_complete(
