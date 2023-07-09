@@ -150,7 +150,7 @@ async def read(
 
 
 class Cronjob:
-    def __init__(self, endpoint: str | typing.Awaitable, cron: str):
+    def __init__(self, endpoint: typing.Coroutine, cron: str):
         self.endpoint = endpoint
         self.cronstring = cron
         self.croniter = croniter.croniter(cron, arrow.utcnow().datetime)
@@ -303,7 +303,7 @@ async def handle_slack_event(
         # Return plain text challenge string to handle verification.
         return event.challenge
     else:
-        logger.info(dict(event))
+        logger.info(event.model_dump(mode="json"))
 
 
 default_router.include_router(slack_router)

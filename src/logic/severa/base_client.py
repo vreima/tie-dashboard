@@ -153,11 +153,8 @@ class Client:
                 else:
                     raise
 
-            except httpx.RequestError as exc:
+            except (httpx.RequestError, httpx.HTTPError) as exc:
                 logger.exception(exc)
-                raise
-            except httpx.HTTPError as exc:
-                logger.error(f"{exc}\n{exc.response.text}")
                 raise
             else:
                 logger.success(

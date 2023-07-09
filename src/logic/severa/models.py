@@ -9,10 +9,13 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Annotated, List, Optional
 
-from pydantic import BaseModel, Field, confloat, conint, constr
+from pydantic import BaseModel, Field, confloat, conint, constr, ConfigDict
+
+class Parent(BaseModel):
+    model_config = ConfigDict(extra='allow')
 
 
-class UserWithFirstNameLastNameAndPhotoFileModel(BaseModel):
+class UserWithFirstNameLastNameAndPhotoFileModel(Parent):
     code: Optional[str] = None
     name: Optional[str] = None
     guid: Optional[str] = None
@@ -26,12 +29,12 @@ class CountryRegionsStatus(Enum):
     HasRegions = "HasRegions"
 
 
-class ModelWithName(BaseModel):
+class ModelWithName(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
 
 
-class AddressCustomer(BaseModel):
+class AddressCustomer(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
@@ -74,7 +77,7 @@ class PatchOperationType(Enum):
     Replace = "Replace"
 
 
-class BusinessUnitCostCenterModel(BaseModel):
+class BusinessUnitCostCenterModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     identifier: Optional[str] = None
@@ -98,19 +101,19 @@ class SortDirection(Enum):
     DescNullsLast = "DescNullsLast"
 
 
-class ModelBaseWithRequiredGuid(BaseModel):
+class ModelBaseWithRequiredGuid(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
 
 
-class CommunicationTypeSubModel(BaseModel):
+class CommunicationTypeSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     isActive: Optional[bool] = True
     type: Optional[CommunicationMethodType] = None
 
 
-class ContactRoleModel(BaseModel):
+class ContactRoleModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -126,7 +129,7 @@ class SalutationType(Enum):
     Ms_ = "Ms."
 
 
-class ContactCustomer(BaseModel):
+class ContactCustomer(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     number: Optional[int] = None
@@ -139,12 +142,12 @@ class SatisfactionLevelType(Enum):
     Unknown = "Unknown"
 
 
-class KeyValuePairOfStringAndObject(BaseModel):
+class KeyValuePairOfStringAndObject(Parent):
     key: Optional[str] = None
     value: Optional[str] = None
 
 
-class CostAccountModel(BaseModel):
+class CostAccountModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -156,7 +159,7 @@ class CostAccountModel(BaseModel):
     isTravelTypeDefault: Optional[bool] = None
 
 
-class CostCenterModel(BaseModel):
+class CostCenterModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -168,29 +171,29 @@ class CostCenterModel(BaseModel):
     isDefault: Optional[bool] = None
 
 
-class CurrencyBaseModel(BaseModel):
+class CurrencyBaseModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     code: Optional[str] = None
     symbol: Optional[str] = None
 
 
-class CountryLanguage(BaseModel):
+class CountryLanguage(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
 
 
-class CountryTimezone(BaseModel):
+class CountryTimezone(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
 
 
-class CountryRegionTimezoneModel(BaseModel):
+class CountryRegionTimezoneModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
 
 
-class MarketSegmentSubModel(BaseModel):
+class MarketSegmentSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     isActive: Optional[bool] = None
@@ -215,7 +218,7 @@ class ReferenceType(Enum):
     Other = "Other"
 
 
-class InvoiceFileModel(BaseModel):
+class InvoiceFileModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     size: Optional[float] = None
     description: Optional[str] = None
@@ -238,12 +241,12 @@ class TravelReimbursementAttachmentSource(Enum):
     Google = "Google"
 
 
-class FlextimeModel(BaseModel):
+class FlextimeModel(Parent):
     totalFlextimeBalance: Optional[float] = None
     monthFlextimeBalance: Optional[float] = None
 
 
-class FormattingCultureModel(BaseModel):
+class FormattingCultureModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
@@ -251,7 +254,7 @@ class FormattingCultureModel(BaseModel):
     isActive: Optional[bool] = True
 
 
-class HolidayModel(BaseModel):
+class HolidayModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     date: date
@@ -262,7 +265,7 @@ class HolidayModel(BaseModel):
     isPublicHoliday: Optional[bool] = None
 
 
-class IndustryModel(BaseModel):
+class IndustryModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -273,7 +276,7 @@ class IndustryModel(BaseModel):
     code: Optional[str] = None
 
 
-class InvoiceStatusModel(BaseModel):
+class InvoiceStatusModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -291,7 +294,7 @@ class InvoiceStatusModel(BaseModel):
     sortOrder: Optional[int] = None
 
 
-class InvoiceTemplateModel(BaseModel):
+class InvoiceTemplateModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -314,7 +317,7 @@ class InvoicePdfGetOptions(Enum):
     AttachmentAndBreakdown = "AttachmentAndBreakdown"
 
 
-class PermissionProfileModel(BaseModel):
+class PermissionProfileModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
@@ -322,7 +325,7 @@ class PermissionProfileModel(BaseModel):
     isAccessible: Optional[bool] = None
 
 
-class PriceListCurrency(BaseModel):
+class PriceListCurrency(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     symbol: Optional[str] = None
@@ -336,7 +339,7 @@ class KeywordCategory(Enum):
     File = "File"
 
 
-class ProjectKeywordModel(BaseModel):
+class ProjectKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     createdDateTime: Optional[datetime] = None
@@ -347,7 +350,7 @@ class ProjectKeywordModel(BaseModel):
     category: Optional[KeywordCategory] = "Case"
 
 
-class FileKeywordModel(BaseModel):
+class FileKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     createdDateTime: Optional[datetime] = None
@@ -358,7 +361,7 @@ class FileKeywordModel(BaseModel):
     category: Optional[KeywordCategory] = KeywordCategory.File
 
 
-class UserKeywordModel(BaseModel):
+class UserKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     createdDateTime: Optional[datetime] = None
@@ -393,7 +396,7 @@ class KpiFormulaCategory(Enum):
     Invoice = "Invoice"
 
 
-class LeadSourceModel(BaseModel):
+class LeadSourceModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -403,7 +406,7 @@ class LeadSourceModel(BaseModel):
     isActive: Optional[bool] = True
 
 
-class MarketSegmentModel(BaseModel):
+class MarketSegmentModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -462,20 +465,20 @@ class ReferenceNumberDisplay(Enum):
     Kid = "Kid"
 
 
-class UserWithFirstNameLastNameModel(BaseModel):
+class UserWithFirstNameLastNameModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     firstName: Optional[str] = None
     lastName: Optional[str] = None
 
 
-class FreeTextModel(BaseModel):
+class FreeTextModel(Parent):
     value: Optional[str] = None
     text: Optional[str] = None
     allowTags: Optional[bool] = None
     tagContext: Optional[str] = None
 
 
-class ProductCategoryModel(BaseModel):
+class ProductCategoryModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -487,7 +490,7 @@ class ProductCategoryModel(BaseModel):
     code: Optional[str] = None
 
 
-class WorkTypeSubModel(BaseModel):
+class WorkTypeSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     code: Optional[str] = None
@@ -495,7 +498,7 @@ class WorkTypeSubModel(BaseModel):
     isProductive: Optional[bool] = None
 
 
-class SalesAccountModel(BaseModel):
+class SalesAccountModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -524,7 +527,7 @@ class MemberStatus(Enum):
     Declined = "Declined"
 
 
-class FlatrateProjectSubModel(BaseModel):
+class FlatrateProjectSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     number: Optional[int] = None
@@ -543,7 +546,7 @@ class CurrencyPurpose(Enum):
     ExpenseCost = "ExpenseCost"
 
 
-class ContactKeywordModel(BaseModel):
+class ContactKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     createdDateTime: Optional[datetime] = None
@@ -554,11 +557,11 @@ class ContactKeywordModel(BaseModel):
     category: Optional[KeywordCategory] = "Contact"
 
 
-class ModelBase(BaseModel):
+class ModelBase(Parent):
     guid: Optional[str] = None
 
 
-class TemplateFreeTextModel(BaseModel):
+class TemplateFreeTextModel(Parent):
     value: Optional[str] = None
     allowTags: Optional[bool] = None
     tagContext: Optional[str] = None
@@ -582,11 +585,11 @@ class InvoiceSkin(Enum):
     Yellow = "Yellow"
 
 
-class SimpleInputRequiredModel(BaseModel):
+class SimpleInputRequiredModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
 
 
-class ProjectSubModel(BaseModel):
+class ProjectSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     number: Optional[int] = None
@@ -599,22 +602,22 @@ class TypeOfProduct(Enum):
     Travels = "Travels"
 
 
-class ProjectProductInputModel(BaseModel):
+class ProjectProductInputModel(Parent):
     guid: Optional[str] = None
     project: SimpleInputRequiredModel
     product: SimpleInputRequiredModel
 
 
-class SimpleInputModel(BaseModel):
+class SimpleInputModel(Parent):
     guid: Optional[str] = None
 
 
-class MoneyInputModel(BaseModel):
+class MoneyInputModel(Parent):
     amount: float
     currencyCode: Annotated[str, Field(min_length=1)]
 
 
-class ProposalSubtotalOutputModel(BaseModel):
+class ProposalSubtotalOutputModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     proposal: Optional[ModelBase] = None
@@ -625,7 +628,7 @@ class ProposalSubtotalOutputModel(BaseModel):
     isShownOnProposal: Optional[bool] = None
 
 
-class ProposalSubtotalInputModel(BaseModel):
+class ProposalSubtotalInputModel(Parent):
     name: Annotated[str, Field(min_length=0, max_length=200)]
     proposal: SimpleInputRequiredModel
     phase: Optional[ModelBase] = None
@@ -634,7 +637,7 @@ class ProposalSubtotalInputModel(BaseModel):
     isShownOnProposal: Optional[bool] = True
 
 
-class ProposalFeeRowInputModel(BaseModel):
+class ProposalFeeRowInputModel(Parent):
     name: Annotated[str, Field(min_length=0, max_length=200)]
     product: Optional[SimpleInputModel] = None
     projectFee: Optional[SimpleInputModel] = None
@@ -650,7 +653,7 @@ class ProposalFeeRowInputModel(BaseModel):
     vatRate: Optional[float] = None
 
 
-class ProposalStatusOutputModel(BaseModel):
+class ProposalStatusOutputModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     isActive: Optional[bool] = None
@@ -660,12 +663,12 @@ class ProposalStatusOutputModel(BaseModel):
     isDefault: Optional[bool] = None
 
 
-class UsageModel2(BaseModel):
+class UsageModel2(Parent):
     context: Optional[str] = None
     count: Optional[int] = None
 
 
-class ProposalStatusInputModel(BaseModel):
+class ProposalStatusInputModel(Parent):
     name: Annotated[str, Field(min_length=0, max_length=200)]
     isActive: Optional[bool] = True
     sortOrder: Optional[int] = None
@@ -674,38 +677,38 @@ class ProposalStatusInputModel(BaseModel):
     isDefault: Optional[bool] = None
 
 
-class ProposalLanguageSubModel(BaseModel):
+class ProposalLanguageSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
     code: Optional[str] = None
 
 
-class FormattingCultureSubModel(BaseModel):
+class FormattingCultureSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
     code: Optional[str] = None
 
 
-class ProposalCustomerSubModel(BaseModel):
+class ProposalCustomerSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class CustomerContactPersonSubModel(BaseModel):
+class CustomerContactPersonSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
 
 
-class ProposalProjectSubModel(BaseModel):
+class ProposalProjectSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class ProposalBillingAddressSubModel(BaseModel):
+class ProposalBillingAddressSubModel(Parent):
     guid: Optional[str] = None
     addressline: Optional[str] = None
     postalCode: Optional[str] = None
@@ -713,7 +716,7 @@ class ProposalBillingAddressSubModel(BaseModel):
     country: Optional[str] = None
 
 
-class FreeTextModel2(BaseModel):
+class FreeTextModel2(Parent):
     value: Optional[str] = None
     text: Optional[str] = None
     plainText: Optional[str] = None
@@ -721,7 +724,7 @@ class FreeTextModel2(BaseModel):
     tagContext: Optional[str] = None
 
 
-class FreeTextInputModel(BaseModel):
+class FreeTextInputModel(Parent):
     value: Optional[str] = None
 
 
@@ -731,7 +734,7 @@ class PrintToPdf(Enum):
     PrintToProposalBoth = "PrintToProposalBoth"
 
 
-class ProposalWorkhourRowInputModel(BaseModel):
+class ProposalWorkhourRowInputModel(Parent):
     name: Annotated[str, Field(min_length=0, max_length=200)]
     quantity: float
     workType: SimpleInputRequiredModel
@@ -743,7 +746,7 @@ class ProposalWorkhourRowInputModel(BaseModel):
     isShownOnProposal: Optional[bool] = True
 
 
-class ProjectSalesNoteOutputModel(BaseModel):
+class ProjectSalesNoteOutputModel(Parent):
     note: Optional[str] = None
     isDeleted: Optional[bool] = None
     user: Optional[ModelBase] = None
@@ -755,7 +758,7 @@ class ProjectSalesNoteOutputModel(BaseModel):
     project: Optional[ModelBase] = None
 
 
-class CustomerSalesNoteOutputModel(BaseModel):
+class CustomerSalesNoteOutputModel(Parent):
     note: Optional[str] = None
     isDeleted: Optional[bool] = None
     user: Optional[ModelBase] = None
@@ -767,7 +770,7 @@ class CustomerSalesNoteOutputModel(BaseModel):
     customer: Optional[ModelBase] = None
 
 
-class SalesNoteOutputModel(BaseModel):
+class SalesNoteOutputModel(Parent):
     note: Optional[str] = None
     isDeleted: Optional[bool] = None
     user: Optional[ModelBase] = None
@@ -780,19 +783,19 @@ class SalesNoteOutputModel(BaseModel):
     customer: Optional[ModelBase] = None
 
 
-class ProjectSalesNoteInputModel(BaseModel):
+class ProjectSalesNoteInputModel(Parent):
     user: SimpleInputRequiredModel
     note: Optional[str] = None
     project: SimpleInputRequiredModel
 
 
-class CustomerSalesNoteInputModel(BaseModel):
+class CustomerSalesNoteInputModel(Parent):
     user: SimpleInputRequiredModel
     note: Optional[str] = None
     customer: SimpleInputRequiredModel
 
 
-class UserWithPhotoFileModelAndRequiredGuid(BaseModel):
+class UserWithPhotoFileModelAndRequiredGuid(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     code: Optional[str] = None
@@ -816,14 +819,14 @@ class CustomPropertyType(Enum):
     Email = "Email"
 
 
-class CustomPropertyShortModel(BaseModel):
+class CustomPropertyShortModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     type: Optional[CustomPropertyType] = None
     parameters: Optional[str] = None
 
 
-class ProjectCustomValueModel(BaseModel):
+class ProjectCustomValueModel(Parent):
     customProperty: CustomPropertyShortModel
     value: Optional[str] = None
     createdDateTime: Optional[datetime] = None
@@ -842,7 +845,7 @@ class ActivityCategory(Enum):
     Task = "Task"
 
 
-class InvoiceStatusSubModel(BaseModel):
+class InvoiceStatusSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     isSent: Optional[bool] = None
@@ -850,26 +853,26 @@ class InvoiceStatusSubModel(BaseModel):
     isPaid: Optional[bool] = None
 
 
-class InvoiceCustomerSubModel(BaseModel):
+class InvoiceCustomerSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class InvoiceProjectSubModel(BaseModel):
+class InvoiceProjectSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class CurrencySubModel(BaseModel):
+class CurrencySubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     code: Optional[str] = None
     symbol: Optional[str] = None
 
 
-class InvoiceReceiverAddressSubModel(BaseModel):
+class InvoiceReceiverAddressSubModel(Parent):
     addressline: Optional[str] = None
     postalCode: Optional[str] = None
     city: Optional[str] = None
@@ -877,7 +880,7 @@ class InvoiceReceiverAddressSubModel(BaseModel):
     country: Optional[str] = None
 
 
-class InvoiceSenderAddressSubModel(BaseModel):
+class InvoiceSenderAddressSubModel(Parent):
     addressline: Optional[str] = None
     postalCode: Optional[str] = None
     city: Optional[str] = None
@@ -885,43 +888,43 @@ class InvoiceSenderAddressSubModel(BaseModel):
     country: Optional[str] = None
 
 
-class RelatedInvoiceSubModel(BaseModel):
+class RelatedInvoiceSubModel(Parent):
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class FormattingCultureSubModel2(BaseModel):
+class FormattingCultureSubModel2(Parent):
     name: Optional[str] = None
     englishName: Optional[str] = None
     code: Optional[str] = None
 
 
-class InvoiceLanguageSubModel(BaseModel):
+class InvoiceLanguageSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
     code: Optional[str] = None
 
 
-class CreateInvoiceProjectModel(BaseModel):
+class CreateInvoiceProjectModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
 
 
-class CustomerLanguage(BaseModel):
+class CustomerLanguage(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
     code: Optional[str] = None
 
 
-class CustomerCurrency(BaseModel):
+class CustomerCurrency(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     symbol: Optional[str] = None
     code: Optional[str] = None
 
 
-class CustomerHeadquarterAddress(BaseModel):
+class CustomerHeadquarterAddress(Parent):
     guid: Optional[str] = None
     addressline: Optional[str] = None
     postalCode: Optional[str] = None
@@ -929,13 +932,13 @@ class CustomerHeadquarterAddress(BaseModel):
     country: Optional[str] = None
 
 
-class CustomerInvoicingVat(BaseModel):
+class CustomerInvoicingVat(Parent):
     guid: Optional[str] = None
     percentage: Optional[float] = None
     code: Optional[str] = None
 
 
-class InvoiceSettingsOutputModel(BaseModel):
+class InvoiceSettingsOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -982,7 +985,7 @@ class InvoiceRowType(Enum):
     TravelExpenses = "TravelExpenses"
 
 
-class InvoiceRowAccountingSubModel(BaseModel):
+class InvoiceRowAccountingSubModel(Parent):
     number: Optional[str] = None
     name: Optional[str] = None
 
@@ -993,7 +996,7 @@ class InvoiceRowCategory(Enum):
     Travels = "Travels"
 
 
-class LanguageModel(BaseModel):
+class LanguageModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
@@ -1001,39 +1004,39 @@ class LanguageModel(BaseModel):
     isInvoiceLanguage: Optional[bool] = None
 
 
-class OrganizationDetailsCountrySubModel(BaseModel):
+class OrganizationDetailsCountrySubModel(Parent):
     name: Optional[str] = None
     code: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
 
 
-class UserWithNameAndPhotoFileModel(BaseModel):
+class UserWithNameAndPhotoFileModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     code: Optional[str] = None
 
 
-class OrganizationDetailsLanguageSubModel(BaseModel):
+class OrganizationDetailsLanguageSubModel(Parent):
     name: Optional[str] = None
     code: Optional[str] = None
     guid: Optional[str] = None
 
 
-class OrganizationDetailsFormattingSubModel(BaseModel):
+class OrganizationDetailsFormattingSubModel(Parent):
     name: Optional[str] = None
     code: Optional[str] = None
     guid: Optional[str] = None
 
 
-class CompanyCountry(BaseModel):
+class CompanyCountry(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     code3: Optional[str] = None
     englishName: Optional[str] = None
 
 
-class PhaseMemberOutputModel(BaseModel):
+class PhaseMemberOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -1045,7 +1048,7 @@ class PhaseMemberOutputModel(BaseModel):
     phase: Optional[ModelWithName] = None
 
 
-class DeletedPhaseMemberOutputModel(BaseModel):
+class DeletedPhaseMemberOutputModel(Parent):
     deletedDateTime: Optional[datetime] = None
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
@@ -1058,11 +1061,11 @@ class DeletedPhaseMemberOutputModel(BaseModel):
     phase: Optional[ModelBase] = None
 
 
-class ModelBaseReadOnly(BaseModel):
+class ModelBaseReadOnly(Parent):
     guid: Optional[str] = None
 
 
-class PhaseProjectSubModel(BaseModel):
+class PhaseProjectSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     number: Optional[int] = None
@@ -1070,42 +1073,42 @@ class PhaseProjectSubModel(BaseModel):
     isClosed: Optional[bool] = None
 
 
-class PhaseStatusOutputModel(BaseModel):
+class PhaseStatusOutputModel(Parent):
     description: Optional[str] = None
     phaseStatusTypeGuid: Optional[str] = None
     name: Optional[str] = None
 
 
-class PhaseStatusInputModel(BaseModel):
+class PhaseStatusInputModel(Parent):
     description: Optional[str] = None
     phaseStatusTypeGuid: Optional[str] = None
 
 
-class PhaseCustomerSubModel(BaseModel):
+class PhaseCustomerSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
     isInternal: Optional[bool] = None
 
 
-class ActivityActivityType(BaseModel):
+class ActivityActivityType(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     category: Optional[ActivityCategory] = None
 
 
-class ActivityOwnerKeyword(BaseModel):
+class ActivityOwnerKeyword(Parent):
     guid: Optional[str] = None
     value: Optional[str] = None
 
 
-class ActivityCustomer(BaseModel):
+class ActivityCustomer(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class ActivityPhase(BaseModel):
+class ActivityPhase(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     isLocked: Optional[bool] = None
@@ -1122,12 +1125,12 @@ class RecurrenceFrequency(Enum):
     Yearly = "Yearly"
 
 
-class DailyModel(BaseModel):
+class DailyModel(Parent):
     interval: Optional[int] = None
     everyWeekday: Optional[bool] = None
 
 
-class WeeklyModel(BaseModel):
+class WeeklyModel(Parent):
     interval: Optional[int] = None
     monday: Optional[bool] = None
     tuesday: Optional[bool] = None
@@ -1174,7 +1177,7 @@ class Months(Enum):
     December = "December"
 
 
-class RecurrenceRange(BaseModel):
+class RecurrenceRange(Parent):
     maxOccurrences: Optional[int] = None
     recursUntilDate: Optional[date] = None
 
@@ -1186,7 +1189,7 @@ class RecurrenceType(Enum):
     Series = "Series"
 
 
-class PhaseStatusTypeModel(BaseModel):
+class PhaseStatusTypeModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     sortOrder: Optional[int] = None
     isActive: Optional[bool] = True
@@ -1197,19 +1200,19 @@ class PhaseStatusTypeModel(BaseModel):
     guid: Optional[str] = None
 
 
-class ProjectFeeProjectSubModel(BaseModel):
+class ProjectFeeProjectSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     companyGuid: Optional[str] = None
 
 
-class ProjectFeeCustomerSubModel(BaseModel):
+class ProjectFeeCustomerSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class ProjectFeeProductSubModel(BaseModel):
+class ProjectFeeProductSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     code: Optional[str] = None
@@ -1221,20 +1224,20 @@ class ProductType(Enum):
     Subcontracting = "Subcontracting"
 
 
-class UserSubModel(BaseModel):
+class UserSubModel(Parent):
     code: Optional[str] = None
     name: Optional[str] = None
     guid: Optional[str] = None
     companyGuid: Optional[str] = None
 
 
-class ProjectCostCenterSubModel(BaseModel):
+class ProjectCostCenterSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     identifier: Optional[str] = None
 
 
-class ProjectSalesAccountSubModel(BaseModel):
+class ProjectSalesAccountSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[str] = None
@@ -1247,19 +1250,19 @@ class ProjectFeeBillingScheduleType(Enum):
     Recurring = "Recurring"
 
 
-class ProjectFeePhaseSubModel(BaseModel):
+class ProjectFeePhaseSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     isCompleted: Optional[bool] = None
 
 
-class ProjectFeeInvoiceSubModel(BaseModel):
+class ProjectFeeInvoiceSubModel(Parent):
     guid: Optional[str] = None
     date: Optional[date] = None
     number: Optional[int] = None
 
 
-class DeletedProjectFeeModel(BaseModel):
+class DeletedProjectFeeModel(Parent):
     deletedDateTime: Optional[datetime] = None
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[ModelBaseReadOnly] = None
@@ -1277,13 +1280,13 @@ class DeletedProjectFeeModel(BaseModel):
     measurementUnit: Optional[str] = None
 
 
-class ProductSalesAccountSubModel(BaseModel):
+class ProductSalesAccountSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[str] = None
 
 
-class ProductCountrySettingsModel(BaseModel):
+class ProductCountrySettingsModel(Parent):
     country: ModelBaseWithRequiredGuid
     product: ModelBaseWithRequiredGuid
     vatRate: Optional[float] = None
@@ -1294,27 +1297,27 @@ class ProductCountrySettingsModel(BaseModel):
     guid: Optional[str] = None
 
 
-class BillingCustomerModel(BaseModel):
+class BillingCustomerModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     eInvoiceAddress: Optional[str] = None
     eInvoiceOperator: Optional[str] = None
 
 
-class ProjectStatusSubModel(BaseModel):
+class ProjectStatusSubModel(Parent):
     name: Optional[str] = None
     description: Optional[str] = None
     projectStatusTypeGuid: Optional[str] = None
     guid: Optional[str] = None
 
 
-class ProjectCustomerSubModel(BaseModel):
+class ProjectCustomerSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     number: Optional[int] = None
 
 
-class BusinessUnitSubModel(BaseModel):
+class BusinessUnitSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     companyGuid: Optional[str] = None
@@ -1325,14 +1328,14 @@ class BusinessUnitSubModel(BaseModel):
     code: Optional[str] = None
 
 
-class CurrencySubModel2(BaseModel):
+class CurrencySubModel2(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     code: Optional[str] = None
     symbol: Optional[str] = None
 
 
-class CustomerContactSubModel(BaseModel):
+class CustomerContactSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     firstName: Optional[str] = None
@@ -1340,45 +1343,45 @@ class CustomerContactSubModel(BaseModel):
     isDeleted: Optional[bool] = None
 
 
-class SalesStatusSubModel(BaseModel):
+class SalesStatusSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     salesStatusTypeGuid: Optional[str] = None
 
 
-class ProjectPricelistSubModel(BaseModel):
+class ProjectPricelistSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     isCustom: Optional[bool] = None
     isVolumePricing: Optional[bool] = None
 
 
-class ProjectInvoiceTemplateSubModel(BaseModel):
+class ProjectInvoiceTemplateSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     templateInvoiceGuid: Optional[str] = None
 
 
-class InvoiceTemplateSubModel(BaseModel):
+class InvoiceTemplateSubModel(Parent):
     guid: Optional[str] = None
     templateInvoiceGuid: Optional[str] = None
 
 
-class SimpleSalesStatusInputModel(BaseModel):
+class SimpleSalesStatusInputModel(Parent):
     salesStatusTypeGuid: Optional[str] = None
 
 
-class SimpleProjectStatusInputModel(BaseModel):
+class SimpleProjectStatusInputModel(Parent):
     projectStatusTypeGuid: Optional[str] = None
     description: Optional[str] = None
 
 
-class MoneyInputModelWithNullableAmount(BaseModel):
+class MoneyInputModelWithNullableAmount(Parent):
     amount: Optional[float] = None
     currencyCode: Annotated[str, Field(min_length=1)]
 
 
-class ProjectTravelExpenseProjectSubModel(BaseModel):
+class ProjectTravelExpenseProjectSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     companyGuid: Optional[str] = None
@@ -1386,7 +1389,7 @@ class ProjectTravelExpenseProjectSubModel(BaseModel):
     number: Optional[int] = None
 
 
-class UserRequiredSubModel(BaseModel):
+class UserRequiredSubModel(Parent):
     code: Optional[str] = None
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
@@ -1399,7 +1402,7 @@ class ExpensesClass(Enum):
     OtherTravelExpense = "OtherTravelExpense"
 
 
-class TravelReimbursementSubModel(BaseModel):
+class TravelReimbursementSubModel(Parent):
     guid: Optional[str] = None
     isApproved: Optional[bool] = None
     isLocked: Optional[bool] = None
@@ -1412,13 +1415,13 @@ class ProjectTravelExpenseBillingScheduleType(Enum):
     OnDate = "OnDate"
 
 
-class InvoiceSubModel(BaseModel):
+class InvoiceSubModel(Parent):
     guid: Optional[str] = None
     date: Optional[date] = None
     number: Optional[int] = None
 
 
-class DeletedProjectTravelExpenseModel(BaseModel):
+class DeletedProjectTravelExpenseModel(Parent):
     deletedDateTime: Optional[datetime] = None
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[ModelBaseReadOnly] = None
@@ -1438,7 +1441,7 @@ class DeletedProjectTravelExpenseModel(BaseModel):
     travelEndTime: Optional[datetime] = None
 
 
-class PublicAuthenticationOutputModel(BaseModel):
+class PublicAuthenticationOutputModel(Parent):
     access_token: Optional[str] = None
     scope: Optional[str] = None
     refresh_token: Optional[str] = None
@@ -1449,7 +1452,7 @@ class PublicAuthenticationOutputModel(BaseModel):
     access_token_expires_utc: Optional[datetime] = None
 
 
-class ClientCredentials(BaseModel):
+class ClientCredentials(Parent):
     client_id: Annotated[str, Field(min_length=1)]
     client_secret: Annotated[str, Field(min_length=1)]
     scope: Optional[str] = None
@@ -1461,7 +1464,7 @@ class GrantType(Enum):
     refresh_token = "refresh_token"
 
 
-class ReimbursedProjectFeeProjectSubModel(BaseModel):
+class ReimbursedProjectFeeProjectSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[str] = None
@@ -1473,7 +1476,7 @@ class SalesStatusType(Enum):
     Lost = "Lost"
 
 
-class SalesStatusTypeInputModel(BaseModel):
+class SalesStatusTypeInputModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     salesState: SalesStatusType
@@ -1481,7 +1484,7 @@ class SalesStatusTypeInputModel(BaseModel):
     isProposalDefault: Optional[bool] = False
 
 
-class TravelExpenseTypeCountrySettingsModel(BaseModel):
+class TravelExpenseTypeCountrySettingsModel(Parent):
     country: ModelBaseWithRequiredGuid
     product: ModelBaseWithRequiredGuid
     vatRate: Optional[float] = None
@@ -1493,7 +1496,7 @@ class TravelExpenseTypeCountrySettingsModel(BaseModel):
     purchaseVatRate: Optional[float] = None
 
 
-class UserCountrySubModel(BaseModel):
+class UserCountrySubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     code3: Optional[str] = None
@@ -1501,28 +1504,28 @@ class UserCountrySubModel(BaseModel):
     hasRegions: Optional[CountryRegionsStatus] = None
 
 
-class UserCultureSubModel(BaseModel):
+class UserCultureSubModel(Parent):
     code: Optional[str] = None
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
 
 
-class UserLanguageSubModel(BaseModel):
+class UserLanguageSubModel(Parent):
     code: Optional[str] = None
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
 
 
-class TimezoneModel(BaseModel):
+class TimezoneModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     systemName: Optional[str] = None
     ianaName: Optional[str] = None
 
 
-class UserKeywordSubModel(BaseModel):
+class UserKeywordSubModel(Parent):
     value: Optional[str] = None
 
 
@@ -1552,7 +1555,7 @@ class GroupByType(Enum):
     Project = "Project"
 
 
-class TravelReimbursementInputModel(BaseModel):
+class TravelReimbursementInputModel(Parent):
     title: Optional[str] = None
     advancePayment: Optional[MoneyInputModelWithNullableAmount] = None
     groupBy: Optional[GroupByType] = None
@@ -1560,7 +1563,7 @@ class TravelReimbursementInputModel(BaseModel):
     user: ModelBaseWithRequiredGuid
 
 
-class WorkdayModel(BaseModel):
+class WorkdayModel(Parent):
     date: Optional[date] = None
     userGuid: Optional[str] = None
     isReadOnly: Optional[bool] = None
@@ -1576,7 +1579,7 @@ class WorkdayModel(BaseModel):
     enteredTimeEntries: Optional[float] = None
 
 
-class VatRateOutputModel(BaseModel):
+class VatRateOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -1589,7 +1592,7 @@ class VatRateOutputModel(BaseModel):
     countryGuid: Optional[str] = None
 
 
-class VatRateInputModel(BaseModel):
+class VatRateInputModel(Parent):
     percentage: float
     code: Optional[Annotated[str, Field(min_length=0, max_length=10)]] = None
     isActive: Optional[bool] = True
@@ -1597,29 +1600,29 @@ class VatRateInputModel(BaseModel):
     countryGuid: Optional[str] = None
 
 
-class WorkHourPhaseSubModel(BaseModel):
+class WorkHourPhaseSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     isCompleted: Optional[bool] = None
     isLocked: Optional[bool] = None
 
 
-class WorkHourCustomerSubModel(BaseModel):
+class WorkHourCustomerSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class WorkHourWorkTypeSubModel(BaseModel):
+class WorkHourWorkTypeSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     code: Optional[str] = None
 
 
-class WorkHourInvoiceSubModel(BaseModel):
-    guid: Optional[str] = None
-    date: Optional[date] = None
-    number: Optional[int] = None
+class WorkHourInvoiceSubModel(Parent):
+    guid: str
+    date: date
+    number: int | None = None
 
 
 class BillableStatusType(Enum):
@@ -1628,7 +1631,7 @@ class BillableStatusType(Enum):
     RemovedFromInvoice = "RemovedFromInvoice"
 
 
-class UserWithFirstNameLastNamePhotoFileModelAndRequiredGuid(BaseModel):
+class UserWithFirstNameLastNamePhotoFileModelAndRequiredGuid(Parent):
     code: Optional[str] = None
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
@@ -1636,7 +1639,7 @@ class UserWithFirstNameLastNamePhotoFileModelAndRequiredGuid(BaseModel):
     lastName: Optional[str] = None
 
 
-class WorkHourProjectSubModel(BaseModel):
+class WorkHourProjectSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
@@ -1644,7 +1647,7 @@ class WorkHourProjectSubModel(BaseModel):
     isClosed: Optional[bool] = None
 
 
-class DeletedWorkHourModel(BaseModel):
+class DeletedWorkHourModel(Parent):
     deletedDateTime: Optional[datetime] = None
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[ModelBaseReadOnly] = None
@@ -1663,7 +1666,7 @@ class DeletedWorkHourModel(BaseModel):
     endTime: Optional[datetime] = None
 
 
-class WorkHourInputModel(BaseModel):
+class WorkHourInputModel(Parent):
     description: Optional[str] = None
     endTime: Optional[datetime] = None
     eventDate: date
@@ -1683,7 +1686,7 @@ class WorkHourInputModel(BaseModel):
     workType: SimpleInputRequiredModel
 
 
-class ProjectStatusTypeModel(BaseModel):
+class ProjectStatusTypeModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     sortOrder: Optional[int] = None
@@ -1694,7 +1697,7 @@ class ProjectStatusTypeModel(BaseModel):
     guid: Optional[str] = None
 
 
-class SalesStatusHistoryOutputModel(BaseModel):
+class SalesStatusHistoryOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -1705,7 +1708,7 @@ class SalesStatusHistoryOutputModel(BaseModel):
     timeStamp: Optional[datetime] = None
 
 
-class ProjectForecastInputModel(BaseModel):
+class ProjectForecastInputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -1729,7 +1732,7 @@ class BankAccountFormat(Enum):
     Bankgiro = "Bankgiro"
 
 
-class CurrencyOutputModel(BaseModel):
+class CurrencyOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -1743,7 +1746,7 @@ class CurrencyOutputModel(BaseModel):
     isOrganizationCurrency: Optional[bool] = None
 
 
-class FlatRateInputModel(BaseModel):
+class FlatRateInputModel(Parent):
     phase: SimpleInputRequiredModel
     billingSchedule: BillingScheduleType
     plannedBillingDate: Optional[date] = None
@@ -1753,7 +1756,7 @@ class FlatRateInputModel(BaseModel):
     pricePerAdditionalHour: Optional[MoneyInputModelWithNullableAmount] = None
 
 
-class PricelistVersionOutputModel(BaseModel):
+class PricelistVersionOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -1769,7 +1772,7 @@ class PriceSource(Enum):
     Project = "Project"
 
 
-class ProductPriceProductOutputSubModel(BaseModel):
+class ProductPriceProductOutputSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     productCode: Optional[str] = None
@@ -1777,7 +1780,7 @@ class ProductPriceProductOutputSubModel(BaseModel):
     productCategory: Optional[ModelWithName] = None
 
 
-class ProductInputModel(BaseModel):
+class ProductInputModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     code: Optional[str] = None
     unitPrice: Optional[MoneyInputModelWithNullableAmount] = None
@@ -1791,7 +1794,7 @@ class ProductInputModel(BaseModel):
     proposalDescription: Optional[str] = None
 
 
-class ProjectFeeInputModel(BaseModel):
+class ProjectFeeInputModel(Parent):
     name: Optional[str] = None
     billingDependencyPhase: Optional[SimpleInputModel] = None
     billingSchedule: Optional[ProjectFeeBillingScheduleType] = None
@@ -1819,20 +1822,20 @@ class ProjectFeeInputModel(BaseModel):
     vatRate: Optional[float] = None
 
 
-class ProjectMemberCostExceptionProjectCustomerSubModel(BaseModel):
+class ProjectMemberCostExceptionProjectCustomerSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     number: Optional[int] = None
 
 
-class ProjectMemberCostExceptionProjectSubModel(BaseModel):
+class ProjectMemberCostExceptionProjectSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     number: Optional[int] = None
     isClosed: Optional[bool] = None
 
 
-class ProjectMemberCostExceptionInputModel(BaseModel):
+class ProjectMemberCostExceptionInputModel(Parent):
     user: SimpleInputRequiredModel
     project: SimpleInputRequiredModel
     cost: Optional[MoneyInputModelWithNullableAmount] = None
@@ -1852,7 +1855,7 @@ class BillablePeriod(Enum):
     NowAndFuture = "NowAndFuture"
 
 
-class ProjectRecurringFeeRuleInputModel(BaseModel):
+class ProjectRecurringFeeRuleInputModel(Parent):
     frequency: int
     recurrenceStartDate: Optional[date] = None
     recurrenceEndType: Optional[RecurrenceEndTypes] = None
@@ -1877,7 +1880,7 @@ class ProjectRecurringFeeRuleInputModel(BaseModel):
     salesAccount: Optional[SimpleInputModel] = None
 
 
-class ProjectTravelExpenseInputModel(BaseModel):
+class ProjectTravelExpenseInputModel(Parent):
     billingDependencyPhase: Optional[SimpleInputModel] = None
     billingSchedule: Optional[ProjectTravelExpenseBillingScheduleType] = None
     costAccount: Optional[SimpleInputModel] = None
@@ -1907,25 +1910,25 @@ class ProjectTravelExpenseInputModel(BaseModel):
     vatRate: Optional[float] = None
 
 
-class ReimbursedWorkHourProjectSubModel(BaseModel):
+class ReimbursedWorkHourProjectSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class TravelExpenseCostAccountSubModel(BaseModel):
+class TravelExpenseCostAccountSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[str] = None
 
 
-class ProductSalesAccountSubModel2(BaseModel):
+class ProductSalesAccountSubModel2(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[str] = None
 
 
-class TravelExpenseTypeInputModel(BaseModel):
+class TravelExpenseTypeInputModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     expenseClass: ExpensesClass
     purchaseVatRate: Optional[float] = None
@@ -1940,14 +1943,14 @@ class TravelExpenseTypeInputModel(BaseModel):
     salesAccount: Optional[SimpleInputModel] = None
 
 
-class TravelPriceProductSubModel(BaseModel):
+class TravelPriceProductSubModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     productCode: Optional[str] = None
     expenseClass: Optional[ExpensesClass] = None
 
 
-class UserInputModel(BaseModel):
+class UserInputModel(Parent):
     firstName: Annotated[str, Field(min_length=1, max_length=100)]
     lastName: Annotated[str, Field(min_length=1, max_length=100)]
     salutation: Optional[SalutationType] = None
@@ -1977,12 +1980,12 @@ class UserInputModel(BaseModel):
     createDefaultWorkContract: Optional[bool] = True
 
 
-class MoneyInputModelWithNotNegativeAmount(BaseModel):
+class MoneyInputModelWithNotNegativeAmount(Parent):
     amount: Optional[float] = None
     currencyCode: Annotated[str, Field(min_length=1)]
 
 
-class WorkTypeInputModel(BaseModel):
+class WorkTypeInputModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     isProductive: Optional[bool] = None
@@ -1992,12 +1995,12 @@ class WorkTypeInputModel(BaseModel):
     hourCost: Optional[MoneyInputModelWithNullableAmount] = None
 
 
-class VismaFinancialsCompanyModel(BaseModel):
+class VismaFinancialsCompanyModel(Parent):
     id: Optional[int] = None
     name: Optional[str] = None
 
 
-class OvertimePriceModel(BaseModel):
+class OvertimePriceModel(Parent):
     guid: Optional[str] = None
     overtime: ModelBaseWithRequiredGuid
     pricingMultiplier: Optional[float] = None
@@ -2006,7 +2009,7 @@ class OvertimePriceModel(BaseModel):
     priceSource: Optional[PriceSource] = None
 
 
-class OvertimeModel(BaseModel):
+class OvertimeModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2020,7 +2023,7 @@ class OvertimeModel(BaseModel):
     multipliesUnitCost: Optional[bool] = False
 
 
-class PhaseMemberModel(BaseModel):
+class PhaseMemberModel(Parent):
     phaseGuid: Annotated[str, Field(min_length=1)]
     user: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
@@ -2034,7 +2037,7 @@ class PhaseMemberModel(BaseModel):
     guid: Optional[str] = None
 
 
-class PhaseMembersFromBusinessUnitUsersModel(BaseModel):
+class PhaseMembersFromBusinessUnitUsersModel(Parent):
     phaseGuid: Annotated[str, Field(min_length=1)]
     businessUnitGuid: Annotated[str, Field(min_length=1)]
 
@@ -2045,7 +2048,7 @@ class ResourceAllocationAction(Enum):
     Transfer = "Transfer"
 
 
-class BillingAddressModel(BaseModel):
+class BillingAddressModel(Parent):
     guid: Optional[str] = None
     addressline: Optional[str] = None
     postalCode: Optional[str] = None
@@ -2053,7 +2056,7 @@ class BillingAddressModel(BaseModel):
     country: Optional[str] = None
 
 
-class ProjectTaskStatusModel(BaseModel):
+class ProjectTaskStatusModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2066,13 +2069,13 @@ class ProjectTaskStatusModel(BaseModel):
     sortOrder: Optional[int] = None
 
 
-class TimeEntryProject(BaseModel):
+class TimeEntryProject(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     number: Optional[int] = None
 
 
-class TimeEntryTypeModel(BaseModel):
+class TimeEntryTypeModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2083,7 +2086,7 @@ class TimeEntryTypeModel(BaseModel):
     identifier: Optional[str] = None
 
 
-class TravelReimbursementStatusModel(BaseModel):
+class TravelReimbursementStatusModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2097,14 +2100,14 @@ class TravelReimbursementStatusModel(BaseModel):
     isDefault: Optional[bool] = None
 
 
-class ResourceAllocationProjectSubModel(BaseModel):
+class ResourceAllocationProjectSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     isInternal: Optional[bool] = None
     number: Optional[int] = None
 
 
-class ResourceAllocationPhaseSubModel(BaseModel):
+class ResourceAllocationPhaseSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     startDate: Optional[date] = None
@@ -2118,7 +2121,7 @@ class SalesProgress(Enum):
     Lost = "Lost"
 
 
-class ResourceAllocationInputModel(BaseModel):
+class ResourceAllocationInputModel(Parent):
     startDate: Optional[date] = None
     endDate: Optional[date] = None
     allocationPercentage: Optional[int] = None
@@ -2128,27 +2131,27 @@ class ResourceAllocationInputModel(BaseModel):
     phase: Optional[SimpleInputModel] = None
 
 
-class AddressCountry(BaseModel):
+class AddressCountry(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
     hasRegions: Optional[CountryRegionsStatus] = None
 
 
-class ExceptionLocationModel(BaseModel):
+class ExceptionLocationModel(Parent):
     type: Optional[ExceptionLocationTypeEnum] = None
     name: Optional[str] = None
     identifier: Optional[str] = None
 
 
-class PatchOperation(BaseModel):
+class PatchOperation(Parent):
     op: PatchOperationType
     path: Optional[str] = None
     value: Optional[str] = None
     from_: Optional[str] = Field(None, alias="from")
 
 
-class BusinessUnitModel(BaseModel):
+class BusinessUnitModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2168,7 +2171,7 @@ class BusinessUnitModel(BaseModel):
     code: Optional[str] = None
 
 
-class CommunicationTypeModel(BaseModel):
+class CommunicationTypeModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2179,12 +2182,12 @@ class CommunicationTypeModel(BaseModel):
     type: Optional[CommunicationMethodType] = None
 
 
-class KeyValuePairOfStringAndSortDirection(BaseModel):
+class KeyValuePairOfStringAndSortDirection(Parent):
     key: Optional[str] = None
     value: Optional[SortDirection] = None
 
 
-class ContactCommunicationModel(BaseModel):
+class ContactCommunicationModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2196,7 +2199,7 @@ class ContactCommunicationModel(BaseModel):
     communicationType: CommunicationTypeSubModel
 
 
-class ContactModel(BaseModel):
+class ContactModel(Parent):
     firstName: Annotated[str, Field(min_length=1)]
     lastName: Annotated[str, Field(min_length=1)]
     salutation: Optional[SalutationType] = None
@@ -2222,7 +2225,7 @@ class ContactModel(BaseModel):
     isEmailAllowed: Optional[bool] = False
 
 
-class CountryModel(BaseModel):
+class CountryModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     englishName: Optional[str] = None
@@ -2238,14 +2241,14 @@ class CountryModel(BaseModel):
     timezone: Optional[CountryTimezone] = None
 
 
-class CountryRegionModel(BaseModel):
+class CountryRegionModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     code: Optional[str] = None
     timezone: Optional[CountryRegionTimezoneModel] = None
 
 
-class CustomerMarketSegmentModel(BaseModel):
+class CustomerMarketSegmentModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2256,7 +2259,7 @@ class CustomerMarketSegmentModel(BaseModel):
     parentMarketSegment: Optional[MarketSegmentSubModel] = None
 
 
-class FileModel(BaseModel):
+class FileModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     size: Optional[float] = None
     description: Optional[str] = None
@@ -2270,14 +2273,14 @@ class FileModel(BaseModel):
     guid: Optional[str] = None
 
 
-class UsageModel(BaseModel):
+class UsageModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     type: Optional[ReferenceType] = None
     isReadOnly: Optional[bool] = None
 
 
-class ProjectTravelExpenseFileModel(BaseModel):
+class ProjectTravelExpenseFileModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     size: Optional[float] = None
     description: Optional[str] = None
@@ -2294,7 +2297,7 @@ class ProjectTravelExpenseFileModel(BaseModel):
     source: Optional[TravelReimbursementAttachmentSource] = None
 
 
-class PriceListModel(BaseModel):
+class PriceListModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2308,7 +2311,7 @@ class PriceListModel(BaseModel):
     currency: PriceListCurrency
 
 
-class KeywordModel(BaseModel):
+class KeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     createdDateTime: Optional[datetime] = None
@@ -2319,7 +2322,7 @@ class KeywordModel(BaseModel):
     category: KeywordCategory
 
 
-class KpiFormulaModelBase(BaseModel):
+class KpiFormulaModelBase(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     unit: Optional[str] = None
@@ -2328,7 +2331,7 @@ class KpiFormulaModelBase(BaseModel):
     category: Optional[KpiFormulaCategory] = None
 
 
-class OrganizationSettingsModel(BaseModel):
+class OrganizationSettingsModel(Parent):
     quickSearchSetting: Optional[QuickSearchOptions] = None
     projectNameDisplaySetting: Optional[ProjectNameDisplayOptions] = None
     displayProjectNumber: Optional[bool] = None
@@ -2375,14 +2378,14 @@ class OrganizationSettingsModel(BaseModel):
     isEnteringHourPlannedInvoiceQuantityAllowed: Optional[bool] = False
 
 
-class ProjectWorkTypeModel(BaseModel):
+class ProjectWorkTypeModel(Parent):
     guid: Optional[str] = None
     projectGuid: Annotated[str, Field(min_length=1)]
     worktype: WorkTypeSubModel
     isDefault: Optional[bool] = None
 
 
-class ActivityParticipantModel(BaseModel):
+class ActivityParticipantModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     type: Optional[ParticipantType] = None
@@ -2395,13 +2398,13 @@ class ActivityParticipantModel(BaseModel):
     isActive: Optional[bool] = None
 
 
-class MultiCurrencyInfoModel(BaseModel):
+class MultiCurrencyInfoModel(Parent):
     amount: Optional[float] = None
     currencyCode: Optional[str] = None
     purpose: Optional[List[CurrencyPurpose]] = None
 
 
-class ProjectInvoiceSettingsOutputModel(BaseModel):
+class ProjectInvoiceSettingsOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2440,7 +2443,7 @@ class ProjectInvoiceSettingsOutputModel(BaseModel):
     style: Optional[InvoiceSkin] = None
 
 
-class ProjectInvoiceSettingsInputModel(BaseModel):
+class ProjectInvoiceSettingsInputModel(Parent):
     project: SimpleInputRequiredModel
     freeText1: Optional[TemplateFreeTextModel] = None
     htmlText1: Optional[TemplateFreeTextModel] = None
@@ -2474,7 +2477,7 @@ class ProjectInvoiceSettingsInputModel(BaseModel):
     style: Optional[InvoiceSkin] = None
 
 
-class ProjectProductSubModel(BaseModel):
+class ProjectProductSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     productCategory: Optional[str] = None
@@ -2483,7 +2486,7 @@ class ProjectProductSubModel(BaseModel):
     isActive: Optional[bool] = None
 
 
-class ProjectWorkHourPriceInputModel(BaseModel):
+class ProjectWorkHourPriceInputModel(Parent):
     phase: Optional[SimpleInputRequiredModel] = None
     isBillable: Optional[bool] = True
     user: Optional[SimpleInputModel] = None
@@ -2492,7 +2495,7 @@ class ProjectWorkHourPriceInputModel(BaseModel):
     project: SimpleInputModel
 
 
-class ProposalInputModel(BaseModel):
+class ProposalInputModel(Parent):
     name: Annotated[str, Field(min_length=0, max_length=50)]
     proposalDate: Optional[date] = None
     language: Optional[SimpleInputModel] = None
@@ -2505,7 +2508,7 @@ class ProposalInputModel(BaseModel):
     freeText2: Optional[FreeTextInputModel] = None
 
 
-class ProposalSettingsOutputModel(BaseModel):
+class ProposalSettingsOutputModel(Parent):
     isTaxFree: Optional[bool] = False
     showQuantity: Optional[bool] = True
     showUnit: Optional[bool] = True
@@ -2530,7 +2533,7 @@ class ProposalSettingsOutputModel(BaseModel):
     guid: Optional[str] = None
 
 
-class CustomPropertyModel(BaseModel):
+class CustomPropertyModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2543,7 +2546,7 @@ class CustomPropertyModel(BaseModel):
     usageCount: Optional[int] = None
 
 
-class CustomerCustomValueModel(BaseModel):
+class CustomerCustomValueModel(Parent):
     customProperty: CustomPropertyShortModel
     value: Optional[str] = None
     createdDateTime: Optional[datetime] = None
@@ -2554,7 +2557,7 @@ class CustomerCustomValueModel(BaseModel):
     customerGuid: Optional[str] = None
 
 
-class ActivityTypeModel(BaseModel):
+class ActivityTypeModel(Parent):
     isActive: Optional[bool] = True
     isDefault: Optional[bool] = None
     isPaidLeave: Optional[bool] = None
@@ -2568,7 +2571,7 @@ class ActivityTypeModel(BaseModel):
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
 
 
-class CreateInvoiceModel(BaseModel):
+class CreateInvoiceModel(Parent):
     projects: List[CreateInvoiceProjectModel]
     groupProjects: Optional[bool] = None
     invoiceStatusGuid: Optional[str] = None
@@ -2576,7 +2579,7 @@ class CreateInvoiceModel(BaseModel):
     date: Optional[date] = None
 
 
-class CustomerModel(BaseModel):
+class CustomerModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2608,7 +2611,7 @@ class CustomerModel(BaseModel):
     invoiceTemplate: Optional[ModelWithName] = None
 
 
-class CompanyModel(BaseModel):
+class CompanyModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     rootBusinessUnitGuid: Optional[str] = None
@@ -2619,7 +2622,7 @@ class CompanyModel(BaseModel):
     currencySymbol: Optional[str] = None
 
 
-class PhaseOutputModel(BaseModel):
+class PhaseOutputModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -2643,7 +2646,7 @@ class PhaseOutputModel(BaseModel):
     phaseStatus: Optional[PhaseStatusOutputModel] = None
 
 
-class PhaseInputModel(BaseModel):
+class PhaseInputModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     project: Optional[ModelBaseWithRequiredGuid] = None
     parentPhase: ModelBaseWithRequiredGuid
@@ -2662,7 +2665,7 @@ class PhaseInputModel(BaseModel):
     isLocked: Optional[bool] = False
 
 
-class PhaseModelWithHierarchyInfo(BaseModel):
+class PhaseModelWithHierarchyInfo(Parent):
     project: Optional[PhaseProjectSubModel] = None
     parentPhase: Optional[ModelBaseWithRequiredGuid] = None
     isCompleted: Optional[bool] = False
@@ -2689,28 +2692,28 @@ class PhaseModelWithHierarchyInfo(BaseModel):
     level: Optional[int] = None
 
 
-class ActivityOwnerModel(BaseModel):
+class ActivityOwnerModel(Parent):
     code: Optional[str] = None
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     keywords: Optional[List[ActivityOwnerKeyword]] = None
 
 
-class MonthlyModel(BaseModel):
+class MonthlyModel(Parent):
     interval: Optional[int] = None
     dayOfMonth: Optional[int] = None
     dayOrdinal: Optional[DayOrdinal] = None
     dayOrdinalOption: Optional[DayOrdinalOption] = None
 
 
-class YearlyModel(BaseModel):
+class YearlyModel(Parent):
     dayOfMonth: Optional[int] = None
     month: Optional[Months] = None
     dayOrdinal: Optional[DayOrdinal] = None
     dayOrdinalOption: Optional[DayOrdinalOption] = None
 
 
-class ProjectBillingCustomerModel(BaseModel):
+class ProjectBillingCustomerModel(Parent):
     project: ModelBaseWithRequiredGuid
     billingCustomer: BillingCustomerModel
     isDefault: Optional[bool] = None
@@ -2722,7 +2725,7 @@ class ProjectBillingCustomerModel(BaseModel):
     guid: Optional[str] = None
 
 
-class ProjectInputModelBase(BaseModel):
+class ProjectInputModelBase(Parent):
     name: Annotated[str, Field(min_length=1)]
     customer: SimpleInputRequiredModel
     projectOwner: SimpleInputModel
@@ -2758,7 +2761,7 @@ class ProjectInputModelBase(BaseModel):
     expectedValue: Optional[MoneyInputModelWithNullableAmount] = None
 
 
-class TravelExpenseSubModel(BaseModel):
+class TravelExpenseSubModel(Parent):
     guid: Annotated[str, Field(min_length=1)]
     name: Optional[str] = None
     expenseClass: Optional[ExpensesClass] = None
@@ -2766,7 +2769,7 @@ class TravelExpenseSubModel(BaseModel):
     code: Optional[str] = None
 
 
-class AccessTokenCredentials(BaseModel):
+class AccessTokenCredentials(Parent):
     grant_type: Optional[GrantType] = None
     code: Optional[str] = None
     redirect_uri: Optional[str] = None
@@ -2777,7 +2780,7 @@ class AccessTokenCredentials(BaseModel):
     refresh_token: Optional[str] = None
 
 
-class SalesStatusTypeOutputModel(BaseModel):
+class SalesStatusTypeOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2790,7 +2793,7 @@ class SalesStatusTypeOutputModel(BaseModel):
     isProposalDefault: Optional[bool] = None
 
 
-class BankAccountOutputModel(BaseModel):
+class BankAccountOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2805,7 +2808,7 @@ class BankAccountOutputModel(BaseModel):
     company: Optional[ModelWithName] = None
 
 
-class WorkContractInputModel(BaseModel):
+class WorkContractInputModel(Parent):
     title: Annotated[str, Field(min_length=1)]
     startDate: date
     endDate: Optional[date] = None
@@ -2818,7 +2821,7 @@ class WorkContractInputModel(BaseModel):
     workWeek: Optional[List[Workweek]] = None
 
 
-class ProjectBillingCustomerModel2(BaseModel):
+class ProjectBillingCustomerModel2(Parent):
     project: ModelBaseWithRequiredGuid
     billingCustomer: BillingCustomerModel
     isDefault: Optional[bool] = None
@@ -2832,7 +2835,7 @@ class ProjectBillingCustomerModel2(BaseModel):
     billingContact: Optional[ModelWithName] = None
 
 
-class TimeEntryModel(BaseModel):
+class TimeEntryModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2850,7 +2853,7 @@ class TimeEntryModel(BaseModel):
     endTime: Optional[datetime] = None
 
 
-class ResourceAllocationOutputModel(BaseModel):
+class ResourceAllocationOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2870,7 +2873,7 @@ class ResourceAllocationOutputModel(BaseModel):
     phase: Optional[ResourceAllocationPhaseSubModel] = None
 
 
-class ResourceAllocationCriteriaModel(BaseModel):
+class ResourceAllocationCriteriaModel(Parent):
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
     userGuids: Optional[List[str]] = None
@@ -2891,7 +2894,7 @@ class ResourceAllocationCriteriaModel(BaseModel):
     resourceAllocationGuids: Optional[List[str]] = None
 
 
-class AddressModel(BaseModel):
+class AddressModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -2911,13 +2914,13 @@ class AddressModel(BaseModel):
     contacts: Optional[List[ModelWithName]] = None
 
 
-class ExceptionDetailModel(BaseModel):
+class ExceptionDetailModel(Parent):
     message: Optional[str] = None
     url: Optional[str] = None
     location: Optional[ExceptionLocationModel] = None
 
 
-class ProjectFileModel(BaseModel):
+class ProjectFileModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     size: Optional[float] = None
     description: Optional[str] = None
@@ -2935,19 +2938,19 @@ class ProjectFileModel(BaseModel):
     projectGuid: Annotated[str, Field(min_length=1)]
 
 
-class MoneyOutputModel(BaseModel):
+class MoneyOutputModel(Parent):
     amount: Optional[float] = None
     currencyCode: Optional[str] = None
     multiCurrencyInfo: Optional[List[MultiCurrencyInfoModel]] = None
 
 
-class ProjectProductOutputModel(BaseModel):
+class ProjectProductOutputModel(Parent):
     guid: Optional[str] = None
     project: Optional[ProjectSubModel] = None
     product: ProjectProductSubModel
 
 
-class ProjectWorkHourPriceOutputModel(BaseModel):
+class ProjectWorkHourPriceOutputModel(Parent):
     phase: Optional[ModelBaseWithRequiredGuid] = None
     isAvailable: Optional[bool] = None
     isBillable: Optional[bool] = None
@@ -2962,7 +2965,7 @@ class ProjectWorkHourPriceOutputModel(BaseModel):
     project: Optional[ProjectSubModel] = None
 
 
-class ProposalFeeRowOutputModel(BaseModel):
+class ProposalFeeRowOutputModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     product: Optional[ModelBase] = None
@@ -2979,7 +2982,7 @@ class ProposalFeeRowOutputModel(BaseModel):
     vatRate: Optional[float] = None
 
 
-class ProposalOutputModel(BaseModel):
+class ProposalOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3002,7 +3005,7 @@ class ProposalOutputModel(BaseModel):
     pricelist: Optional[ModelWithName] = None
 
 
-class ProposalWorkhourRowOutputModel(BaseModel):
+class ProposalWorkhourRowOutputModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
     workType: Optional[ModelBase] = None
@@ -3018,7 +3021,7 @@ class ProposalWorkhourRowOutputModel(BaseModel):
     isShownOnProposal: Optional[bool] = True
 
 
-class WorkContractOutputModel(BaseModel):
+class WorkContractOutputModel(Parent):
     title: Annotated[str, Field(min_length=1)]
     startDate: date
     endDate: Optional[date] = None
@@ -3036,7 +3039,7 @@ class WorkContractOutputModel(BaseModel):
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
 
 
-class InvoiceOutputModel(BaseModel):
+class InvoiceOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3094,7 +3097,7 @@ class InvoiceOutputModel(BaseModel):
     workHourValueAddedTax: Optional[float] = None
 
 
-class InvoiceRowOutputModel(BaseModel):
+class InvoiceRowOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3119,7 +3122,7 @@ class InvoiceRowOutputModel(BaseModel):
     code: Optional[List[str]] = None
 
 
-class OrganizationDetailsOutputModel(BaseModel):
+class OrganizationDetailsOutputModel(Parent):
     guid: Optional[str] = None
     name: Optional[str] = None
     vatNumber: Optional[str] = None
@@ -3144,14 +3147,14 @@ class OrganizationDetailsOutputModel(BaseModel):
     activeAddons: Optional[List[str]] = None
 
 
-class RecurrencePattern(BaseModel):
+class RecurrencePattern(Parent):
     daily: Optional[DailyModel] = None
     weekly: Optional[WeeklyModel] = None
     monthly: Optional[MonthlyModel] = None
     yearly: Optional[YearlyModel] = None
 
 
-class ProjectFeeOutputModel(BaseModel):
+class ProjectFeeOutputModel(Parent):
     name: Optional[str] = None
     project: Optional[ProjectFeeProjectSubModel] = None
     phase: Optional[ModelWithName] = None
@@ -3188,7 +3191,7 @@ class ProjectFeeOutputModel(BaseModel):
     recurrenceRuleGuid: Optional[str] = None
 
 
-class ProductOutputModel(BaseModel):
+class ProductOutputModel(Parent):
     code: Optional[str] = None
     unitPrice: Optional[MoneyOutputModel] = None
     unitCost: Optional[MoneyOutputModel] = None
@@ -3207,12 +3210,12 @@ class ProductOutputModel(BaseModel):
     proposalDescription: Optional[str] = None
 
 
-class ProductForProjectOutputModel(BaseModel):
+class ProductForProjectOutputModel(Parent):
     product: Optional[ProductOutputModel] = None
     isVolumePriced: Optional[bool] = None
 
 
-class ProjectOutputModel(BaseModel):
+class ProjectOutputModel(Parent):
     projectStatus: Optional[ProjectStatusSubModel] = None
     isInternal: Optional[bool] = None
     internalName: Optional[str] = None
@@ -3262,7 +3265,7 @@ class ProjectOutputModel(BaseModel):
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
 
 
-class ProjectTravelExpenseOutputModel(BaseModel):
+class ProjectTravelExpenseOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3301,7 +3304,7 @@ class ProjectTravelExpenseOutputModel(BaseModel):
     attachmentCount: Optional[int] = None
 
 
-class ReimbursedProjectFeeOutputModel(BaseModel):
+class ReimbursedProjectFeeOutputModel(Parent):
     name: Optional[str] = None
     eventDate: Optional[date] = None
     phase: Optional[ModelWithName] = None
@@ -3326,7 +3329,7 @@ class ReimbursedProjectFeeOutputModel(BaseModel):
     productType: Optional[ProductType] = None
 
 
-class UserWorkContractSubModel(BaseModel):
+class UserWorkContractSubModel(Parent):
     title: Annotated[str, Field(min_length=1)]
     startDate: date
     endDate: Optional[date] = None
@@ -3339,7 +3342,7 @@ class UserWorkContractSubModel(BaseModel):
     hourCost: Optional[MoneyOutputModel] = None
 
 
-class TravelReimbursementOutputModel(BaseModel):
+class TravelReimbursementOutputModel(Parent):
     user: Optional[ModelWithName] = None
     title: Optional[str] = None
     number: Optional[int] = None
@@ -3359,7 +3362,7 @@ class TravelReimbursementOutputModel(BaseModel):
     travelReimbursementStatus: Optional[ModelWithName] = None
 
 
-class WorkTypeOutputModel(BaseModel):
+class WorkTypeOutputModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -3374,7 +3377,7 @@ class WorkTypeOutputModel(BaseModel):
     hourCost: Optional[MoneyOutputModel] = None
 
 
-class WorkHourOutputModel(BaseModel):
+class WorkHourOutputModel(Parent):
     phase: Optional[WorkHourPhaseSubModel] = None
     customer: Optional[WorkHourCustomerSubModel] = None
     workType: Optional[WorkHourWorkTypeSubModel] = None
@@ -3406,7 +3409,7 @@ class WorkHourOutputModel(BaseModel):
     project: Optional[WorkHourProjectSubModel] = None
 
 
-class ProjectForecastOutputModel(BaseModel):
+class ProjectForecastOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3425,7 +3428,7 @@ class ProjectForecastOutputModel(BaseModel):
     laborExpenseForecastNotes: Optional[str] = None
 
 
-class ProductPriceModel(BaseModel):
+class ProductPriceModel(Parent):
     price: Optional[MoneyOutputModel] = None
     pricelistVersionGuid: Optional[str] = None
     projectGuid: Optional[str] = None
@@ -3434,7 +3437,7 @@ class ProductPriceModel(BaseModel):
     quantity: Optional[float] = None
 
 
-class ProjectMemberCostExceptionOutputModel(BaseModel):
+class ProjectMemberCostExceptionOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3446,7 +3449,7 @@ class ProjectMemberCostExceptionOutputModel(BaseModel):
     cost: Optional[MoneyOutputModel] = None
 
 
-class ProjectRecurringFeeRuleOutputModel(BaseModel):
+class ProjectRecurringFeeRuleOutputModel(Parent):
     name: Optional[str] = None
     project: Optional[ProjectFeeProjectSubModel] = None
     phase: Optional[ModelWithName] = None
@@ -3479,7 +3482,7 @@ class ProjectRecurringFeeRuleOutputModel(BaseModel):
     isActive: Optional[bool] = True
 
 
-class ReimbursedProjectTravelExpenseOutputModel(BaseModel):
+class ReimbursedProjectTravelExpenseOutputModel(Parent):
     name: Optional[str] = None
     eventDate: Optional[date] = None
     phase: Optional[ModelWithName] = None
@@ -3505,7 +3508,7 @@ class ReimbursedProjectTravelExpenseOutputModel(BaseModel):
     travelEndTime: Optional[datetime] = None
 
 
-class ReimbursedWorkHourOutputModel(BaseModel):
+class ReimbursedWorkHourOutputModel(Parent):
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
@@ -3532,7 +3535,7 @@ class ReimbursedWorkHourOutputModel(BaseModel):
     plannedInvoiceQuantity: Optional[float] = None
 
 
-class TeamProductivityOutputModel(BaseModel):
+class TeamProductivityOutputModel(Parent):
     guid: Optional[str] = None
     projectGuid: Optional[str] = None
     user: Optional[UserWithNameAndPhotoFileModel] = None
@@ -3547,7 +3550,7 @@ class TeamProductivityOutputModel(BaseModel):
     billableHoursPercentage: Optional[float] = None
 
 
-class TravelExpenseTypeOutputModel(BaseModel):
+class TravelExpenseTypeOutputModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
@@ -3569,7 +3572,7 @@ class TravelExpenseTypeOutputModel(BaseModel):
     salesAccount: Optional[ProductSalesAccountSubModel2] = None
 
 
-class PriceModelBase(BaseModel):
+class PriceModelBase(Parent):
     guid: Optional[str] = None
     price: Optional[MoneyOutputModel] = None
     pricelistVersionGuid: Optional[str] = None
@@ -3577,19 +3580,19 @@ class PriceModelBase(BaseModel):
     priceSource: Optional[PriceSource] = None
 
 
-class WorktypeForProjectOutputModel(BaseModel):
+class WorktypeForProjectOutputModel(Parent):
     worktype: Optional[WorkTypeOutputModel] = None
     hourPrice: Optional[MoneyOutputModel] = None
 
 
-class ErrorModel(BaseModel):
+class ErrorModel(Parent):
     httpStatusCode: Optional[int] = None
     type: Optional[ExceptionTypeEnum] = None
     details: Optional[List[ExceptionDetailModel]] = None
     stack: Optional[str] = None
 
 
-class FlatRateOutputModel(BaseModel):
+class FlatRateOutputModel(Parent):
     guid: Optional[str] = None
     project: Optional[FlatrateProjectSubModel] = None
     phase: Optional[ModelBaseWithRequiredGuid] = None
@@ -3602,7 +3605,7 @@ class FlatRateOutputModel(BaseModel):
     invoiceGuid: Optional[str] = None
 
 
-class ActivityRecurrenceModel(BaseModel):
+class ActivityRecurrenceModel(Parent):
     frequency: RecurrenceFrequency
     pattern: Optional[RecurrencePattern] = None
     range: Optional[RecurrenceRange] = None
@@ -3610,7 +3613,7 @@ class ActivityRecurrenceModel(BaseModel):
     lastOccurrenceDateTime: Optional[datetime] = None
 
 
-class UserOutputModel(BaseModel):
+class UserOutputModel(Parent):
     firstName: Annotated[str, Field(min_length=1)]
     lastName: Annotated[str, Field(min_length=1)]
     salutation: Optional[SalutationType] = None
@@ -3648,23 +3651,23 @@ class UserOutputModel(BaseModel):
     userType: Optional[UserType] = None
 
 
-class ProductPriceOutputModel(BaseModel):
+class ProductPriceOutputModel(Parent):
     prices: Optional[List[ProductPriceModel]] = None
     product: Optional[ProductPriceProductOutputSubModel] = None
     isAvailable: Optional[bool] = None
     isVolumePriced: Optional[bool] = None
 
 
-class TravelPriceOutputModel(BaseModel):
+class TravelPriceOutputModel(Parent):
     prices: Optional[List[PriceModelBase]] = None
     product: Optional[TravelPriceProductSubModel] = None
 
 
-class ExceptionModel(BaseModel):
+class ExceptionModel(Parent):
     error: Optional[ErrorModel] = None
 
 
-class ActivityModel(BaseModel):
+class ActivityModel(Parent):
     startDateTime: datetime
     endDateTime: Optional[datetime] = None
     isClosed: Optional[bool] = None

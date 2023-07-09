@@ -7,8 +7,8 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.80.0"
-uvicorn = "^0.18.3"
+fastapi = "^0.100.0"
+uvicorn = "^0.22.0"
 
 [tool.poetry.dev-dependencies]
 
@@ -48,3 +48,12 @@ ignore = [
 pythonpath = [
   "."
 ]
+
+
+[tool.mypy]
+python_version = "3.11"
+
+exclude = [
+    'severa/models\.py$',
+    'severa/fetch\.py$',
+ ]

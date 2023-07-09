@@ -3,6 +3,7 @@ from datetime import datetime
 import arrow
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from typing import Any
 
 from src.database.database import Base
 
@@ -22,7 +23,9 @@ async def fetch_pressure(
     """
     Fetch 'kiirekysely' results from the database.
     """
-    filter_query = {"date": {"$gte": start.datetime, "$lte": end.datetime}}
+    filter_query: dict[str, Any] = {
+        "date": {"$gte": start.datetime, "$lte": end.datetime}
+    }
 
     if users:
         filter_query["user"] = {"$in": users}
