@@ -206,7 +206,7 @@ async def run_cronjob(timing: Cronjob, app: APIRouter):
         if isinstance(timing.endpoint, str):
             async with httpx.AsyncClient(
                 app=app,
-                base_url=os.getenv("PUBLIC_URL"),
+                base_url=os.environ["PUBLIC_URL"],
                 http2=True,
                 follow_redirects=True,
             ) as client:
