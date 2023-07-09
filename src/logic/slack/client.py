@@ -53,7 +53,7 @@ class Client:
 
         except SlackApiError as err:
             logger.error(err)
-            return str(err)
+            raise
 
     def filter_messages_by_reaction(
         self, response: SlackResponse, reaction_to_filter: str
@@ -179,7 +179,7 @@ class Client:
 
         logger.debug("posting message...")
 
-        self.chat_postMessage(
+        self._client.chat_postMessage(
             channel=channel,
             text=openai_response,
             thread_ts=ts,

@@ -44,8 +44,8 @@ class Client:
         self._client = BaseClient()
         self._users: dict[str, models.UserOutputModel] = {}
 
-        self._sales_cache = None
-        self._projects_cache = None
+        self._sales_cache: pd.DataFrame | None = None
+        self._projects_cache: pd.DataFrame | None = None
 
         self._sales_cache_refresh_time = 0.0
         self._projects_cache_refresh_time = 0.0
@@ -713,7 +713,7 @@ class Client:
             time.monotonic() - self._projects_cache_refresh_time
             < PROJECTS_CACHE_REFRESH_AFTER_SECONDS
         ):
-            return self._sales_cache
+            return self._projects_cache
 
         projects_json = await self._client.get_all(
             "projects",

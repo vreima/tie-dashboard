@@ -19,8 +19,8 @@ class Parent(BaseModel):
 class UserWithFirstNameLastNameAndPhotoFileModel(Parent):
     code: Optional[str] = None
     name: Optional[str] = None
-    guid: Optional[str] = None
-    firstName: Optional[str] = None
+    guid: str
+    firstName: str
     lastName: Optional[str] = None
 
 
@@ -3226,12 +3226,12 @@ class ProjectOutputModel(Parent):
     closedDate: Optional[date] = None
     isJoiningAllowed: Optional[bool] = True
     customer: Optional[ProjectCustomerSubModel] = None
-    projectOwner: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
+    projectOwner: UserWithFirstNameLastNameAndPhotoFileModel
     businessUnit: Optional[BusinessUnitSubModel] = None
     currency: Optional[CurrencySubModel2] = None
     customerContact: Optional[CustomerContactSubModel] = None
     salesStatus: Optional[SalesStatusSubModel] = None
-    salesPerson: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
+    salesPerson: UserWithFirstNameLastNameAndPhotoFileModel
     probability: Optional[int] = None
     expectedOrderDate: Optional[date] = None
     expectedValue: Optional[MoneyOutputModel] = None
@@ -3258,7 +3258,7 @@ class ProjectOutputModel(Parent):
     keywords: Optional[List[ModelWithName]] = None
     completionEstimatePercentage: Optional[int] = None
     calculatedCompletionPercentage: Optional[int] = None
-    guid: Optional[str] = None
+    guid: str
     name: Annotated[str, Field(min_length=1)]
     createdDateTime: Optional[datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
@@ -3415,10 +3415,10 @@ class ProjectForecastOutputModel(Parent):
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     lastUpdatedDateTime: Optional[datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    guid: Optional[str] = None
+    guid: str
     project: Optional[ModelBaseWithRequiredGuid] = None
-    month: Optional[int] = None
-    year: Optional[int] = None
+    month: int
+    year: int
     billingForecast: Optional[MoneyOutputModel] = None
     billingForecastNotes: Optional[str] = None
     expenseForecast: Optional[MoneyOutputModel] = None
