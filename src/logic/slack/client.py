@@ -138,7 +138,7 @@ class Client:
     # Events API / OpenAI integration #
     ###################################
 
-    async def fetch_replies(self, channel: str, ts: str) -> Iterable[dict[str, str]]:
+    def fetch_replies(self, channel: str, ts: str) -> Iterable[dict[str, str]]:
         """
         Get replies by channel and thread id (timestamp) in OpenAI chat format.
         """
@@ -170,7 +170,7 @@ class Client:
                 "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat. "
                 "Vastaa seuraavaan viestiketjuun.",
             },
-            *await self.fetch_replies(channel, ts),
+            *self.fetch_replies(channel, ts),
         ]
 
         logger.debug(chat)
