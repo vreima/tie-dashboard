@@ -177,6 +177,8 @@ class Client:
 
         openai_response = await openai_chat(messages=chat)
 
+        logger.debug("posting message...")
+
         self.chat_postMessage(
             channel=channel,
             text=openai_response,

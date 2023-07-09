@@ -11,7 +11,7 @@ import arrow
 import croniter
 import httpx
 import pandas as pd
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger
@@ -295,6 +295,7 @@ async def send_debug_message():
 @slack_router.post("/event")
 async def handle_slack_event(
     event: slack_models.ChallengeModel | slack_models.AppMentionWrapperModel,
+    bg: BackgroundTasks
 ):
     """
     Main Slack Event API handler.
@@ -303,9 +304,9 @@ async def handle_slack_event(
         # Return plain text challenge string to handle verification.
         return event.challenge
     else:
-        slack = SlackClient()
+        bg.add_task(SlackClient.process_app_mention_event, SlackClient(), event)
+
         logger.debug(event.model_dump(mode="json"))
-        slack.process_app_mention_event(event)
 
 
 default_router.include_router(slack_router)
