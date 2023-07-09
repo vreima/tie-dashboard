@@ -60,8 +60,8 @@ def unravel_subset(data_subset: pd.DataFrame) -> pd.DataFrame:
 
 def unravel(
     data: pd.DataFrame,
-    date_span_start: datetime.datetime = None,
-    date_span_end: datetime.datetime = None,
+    date_span_start: datetime.datetime | None = None,
+    date_span_end: datetime.datetime | None = None,
 ) -> pd.DataFrame:
     date_cols = ["start_date", "end_date", "date", "forecast_date"]
     for date_col in date_cols:

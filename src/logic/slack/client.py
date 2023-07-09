@@ -38,6 +38,62 @@ class Client:
     def __init__(self):
         self._client = WebClient(token=os.environ["SLACK_TOKEN_BOT"])
 
+    def user_by_id(self, user_id: str) -> str | None:
+        """
+        Get username from user id, or None if not known.
+        """
+        return self._users[0].get(user_id, None)
+
+    def user_by_name(self, user_name: str) -> str | None:
+        """
+        Get user id from username or None if not known.
+        """
+        return self._users[1].get(user_name, None)
+
+    def _users(
+        self, _cache={}, _reversed={}  # noqa: B006
+    ) -> tuple[dict[str, str], dict[str, str]]:
+        """
+        Get a dict of user IDs and their display names (ID -> name). Cached.
+        """
+        if _cache:
+            return _cache, _reversed
+
+        response = self._client.users_list()
+
+        for batch in response:
+            for user in batch["members"]:
+                if user["deleted"] or user["is_bot"] or user["is_app_user"]:
+                    continue
+
+                if "real_name" not in user or not user["real_name"]:
+                    logger.warning(user)
+
+                username = user.get("real_name", "")
+
+                if (
+                    "display_name" in user["profile"]
+                    and user["profile"]["display_name"]
+                ):
+                    username = user["profile"]["display_name"]
+
+                _cache[user["id"]] = username
+                _reversed[username] = user["id"]
+
+        # Hardcoded special cases, ie. the onyl bot user we want to acknowledge
+        _cache["U048USFG5B2"] = "tie_botti"
+        _reversed["tie_botti"] = "U048USFG5B2"
+
+        # Validation, in case the usernames are not unique
+        for user_id, username in zip(_cache.keys(), _reversed.keys(), strict=True):
+            if user_id != _reversed[username] or username != _cache[user_id]:
+                logger.critical(user_id, _cache[user_id])
+                logger.critical(_reversed[username], username)
+
+        logger.info(_cache)
+
+        return _cache, _reversed
+
     ###################
     # General methods #
     ###################
@@ -80,6 +136,7 @@ class Client:
             channel=channel,
             blocks=blocks,
             text=message_text,
+            link_names=True,
             unfurl_links=False,
             unfurl_media=False,
         )
@@ -101,6 +158,24 @@ class Client:
         strip_italics = re.sub(r"_([^_]*)_", r"\1", strip_bold)
 
         return strip_italics
+
+    def user_ids_to_names(self, text: str) -> str:
+        """
+        Convert known Slack <@USER_ID>s to plain text names.
+        """
+        for user_id, name in self._users()[0].items():
+            text = re.sub(rf"<@{user_id}>", f"@{name}", text)
+
+        return text
+
+    def names_to_user_ids(self, text: str) -> str:
+        """
+        Convert known plain text names to corresponding <@USER_ID>s.
+        """
+        for name, user_id in self._users()[1].items():
+            text = re.sub(rf"@{name}\b", f"<@{user_id}>", text)
+
+        return text
 
     ###################
     # Business logic  #
@@ -146,10 +221,10 @@ class Client:
 
         for batch in batches:
             for reply in batch["messages"]:
-                user = reply["user"]
-                message = self.unformat(reply["text"])
+                user = self.user_by_id(reply["user"])
+                message = self.user_ids_to_names(self.unformat(reply["text"]))
 
-                yield {"role": "user", "content": f"{user} ||| {message}"}
+                yield {"role": "user", "content": f"@{user}: {message}"}
 
     async def process_app_mention_event(
         self, event: src.logic.slack.models.AppMentionWrapperModel
@@ -184,6 +259,7 @@ class Client:
             thread_ts=ts,
             unfurl_links=False,
             unfurl_media=False,
+            link_names=True,
         )
 
 

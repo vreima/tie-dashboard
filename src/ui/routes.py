@@ -295,7 +295,7 @@ async def send_debug_message():
 @slack_router.post("/event")
 async def handle_slack_event(
     event: slack_models.ChallengeModel | slack_models.AppMentionWrapperModel,
-    bg: BackgroundTasks
+    bg: BackgroundTasks,
 ):
     """
     Main Slack Event API handler.

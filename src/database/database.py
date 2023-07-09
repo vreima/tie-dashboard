@@ -23,7 +23,7 @@ class Base:
     """
 
     def __init__(self, base: str, collection: str):
-        self._client = MongoClient(f"{os.getenv('MONGO_URL')}/")
+        self._client: MongoClient = MongoClient(f"{os.getenv('MONGO_URL')}/")
         self._coll = self._client[base][collection]
 
     def create_index(self, expiration: float):
