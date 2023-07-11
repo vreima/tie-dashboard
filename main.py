@@ -22,8 +22,8 @@ async def lifespan(app: FastAPI):
             routes.Cronjob(*params)
             for params in [
                 (routes.save_sparse, "0 2 * * *"),
-                (send_weekly_slack_update, "0 5 * * 1"),
-                (send_weekly_slack_update_debug, "0 5/3 * * 1-5"),
+                (send_weekly_slack_update, "0 5 * * MON"),
+                (send_weekly_slack_update_debug, "10 5/3 * * MON-FRI"),
             ]
         ]
     )
