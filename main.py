@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import anyio
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import ORJSONResponse
 
 from src.logic.kpi import kpi
 from src.logic.slack.client import (
@@ -36,11 +37,8 @@ async def lifespan(app: FastAPI):
             scope.cancel()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
 
-
-app.include_router(kpi.router)
 app.include_router(routes.default_router)
-
 
 app.mount("/static", StaticFiles(directory="src/static"), name="static")

@@ -275,7 +275,7 @@ async def format_pressure_as_slack_block():
         [
             dict(model)
             for model in await fetch_pressure(
-                now.shift(weeks=-2).floor("week"), now.shift(weeks=0).ceil("week"), None
+                now.shift(weeks=-2).floor("week"), now.shift(weeks=-1).ceil("week"), None
             )
         ]
     )

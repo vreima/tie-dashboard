@@ -3,9 +3,12 @@
 #   filename:  openapi.json
 #   timestamp: 2023-04-28T13:51:26+00:00
 
-from __future__ import annotations
+# from __future__ import annotations
 
-from datetime import date, datetime
+# from datetime import date, datetime
+import datetime
+
+
 from enum import Enum
 from typing import Annotated, List, Optional
 
@@ -117,9 +120,9 @@ class CommunicationTypeSubModel(Parent):
 class ContactRoleModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
 
@@ -151,9 +154,9 @@ class KeyValuePairOfStringAndObject(Parent):
 class CostAccountModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     number: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
@@ -163,9 +166,9 @@ class CostAccountModel(Parent):
 class CostCenterModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     identifier: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
@@ -226,9 +229,9 @@ class InvoiceFileModel(Parent):
     contentType: Optional[str] = None
     category: Optional[FileCategory] = None
     isInternal: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     fileGuid: Optional[str] = None
@@ -258,7 +261,7 @@ class FormattingCultureModel(Parent):
 class HolidayModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    date: date
+    date: datetime.date
     countryGuid: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     isRecurringYearly: Optional[bool] = None
@@ -269,9 +272,9 @@ class HolidayModel(Parent):
 class IndustryModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     code: Optional[str] = None
@@ -280,9 +283,9 @@ class IndustryModel(Parent):
 class InvoiceStatusModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     isDefault: Optional[bool] = None
@@ -296,9 +299,9 @@ class InvoiceStatusModel(Parent):
 
 
 class InvoiceTemplateModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     title: Annotated[str, Field(min_length=1)]
@@ -343,9 +346,9 @@ class KeywordCategory(Enum):
 class ProjectKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     category: Optional[KeywordCategory] = "Case"
@@ -354,9 +357,9 @@ class ProjectKeywordModel(Parent):
 class FileKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     category: Optional[KeywordCategory] = KeywordCategory.File
@@ -365,9 +368,9 @@ class FileKeywordModel(Parent):
 class UserKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     category: Optional[KeywordCategory] = KeywordCategory.User
@@ -400,9 +403,9 @@ class KpiFormulaCategory(Enum):
 class LeadSourceModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
 
@@ -410,9 +413,9 @@ class LeadSourceModel(Parent):
 class MarketSegmentModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     parentMarketSegment: Optional[ModelWithName] = None
@@ -482,9 +485,9 @@ class FreeTextModel(Parent):
 class ProductCategoryModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     isDefault: Optional[bool] = None
@@ -502,9 +505,9 @@ class WorkTypeSubModel(Parent):
 class SalesAccountModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     number: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
@@ -550,9 +553,9 @@ class CurrencyPurpose(Enum):
 class ContactKeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     category: Optional[KeywordCategory] = "Contact"
@@ -751,9 +754,9 @@ class ProjectSalesNoteOutputModel(Parent):
     note: Optional[str] = None
     isDeleted: Optional[bool] = None
     user: Optional[ModelBase] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[ModelBase] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[ModelBase] = None
     guid: Optional[str] = None
     project: Optional[ModelBase] = None
@@ -763,9 +766,9 @@ class CustomerSalesNoteOutputModel(Parent):
     note: Optional[str] = None
     isDeleted: Optional[bool] = None
     user: Optional[ModelBase] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[ModelBase] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[ModelBase] = None
     guid: Optional[str] = None
     customer: Optional[ModelBase] = None
@@ -775,9 +778,9 @@ class SalesNoteOutputModel(Parent):
     note: Optional[str] = None
     isDeleted: Optional[bool] = None
     user: Optional[ModelBase] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[ModelBase] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[ModelBase] = None
     guid: Optional[str] = None
     project: Optional[ModelBase] = None
@@ -830,9 +833,9 @@ class CustomPropertyShortModel(Parent):
 class ProjectCustomValueModel(Parent):
     customProperty: CustomPropertyShortModel
     value: Optional[str] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     projectGuid: Optional[str] = None
@@ -940,13 +943,13 @@ class CustomerInvoicingVat(Parent):
 
 
 class InvoiceSettingsOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
-    entryDate: Optional[date] = None
-    paymentDate: Optional[date] = None
+    entryDate: Optional[datetime.date] = None
+    paymentDate: Optional[datetime.date] = None
     isReverseCharged: Optional[bool] = None
     reverseChargeDescription: Optional[str] = None
     style: Optional[InvoiceSkin] = None
@@ -1038,9 +1041,9 @@ class CompanyCountry(Parent):
 
 
 class PhaseMemberOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     user: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
@@ -1050,10 +1053,10 @@ class PhaseMemberOutputModel(Parent):
 
 
 class DeletedPhaseMemberOutputModel(Parent):
-    deletedDateTime: Optional[datetime] = None
-    createdDateTime: Optional[datetime] = None
+    deletedDateTime: Optional[datetime.datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     user: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
@@ -1180,7 +1183,7 @@ class Months(Enum):
 
 class RecurrenceRange(Parent):
     maxOccurrences: Optional[int] = None
-    recursUntilDate: Optional[date] = None
+    recursUntilDate: Optional[datetime.date] = None
 
 
 class RecurrenceType(Enum):
@@ -1194,9 +1197,9 @@ class PhaseStatusTypeModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     sortOrder: Optional[int] = None
     isActive: Optional[bool] = True
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
@@ -1264,10 +1267,10 @@ class ProjectFeeInvoiceSubModel(Parent):
 
 
 class DeletedProjectFeeModel(Parent):
-    deletedDateTime: Optional[datetime] = None
-    createdDateTime: Optional[datetime] = None
+    deletedDateTime: Optional[datetime.datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[ModelBaseReadOnly] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[ModelBaseReadOnly] = None
     guid: Optional[str] = None
     phase: Optional[ModelBaseReadOnly] = None
@@ -1276,7 +1279,7 @@ class DeletedProjectFeeModel(Parent):
     user: Optional[ModelBaseReadOnly] = None
     product: Optional[ModelBaseReadOnly] = None
     name: Optional[str] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     quantity: Optional[float] = None
     measurementUnit: Optional[str] = None
 
@@ -1291,9 +1294,9 @@ class ProductCountrySettingsModel(Parent):
     country: ModelBaseWithRequiredGuid
     product: ModelBaseWithRequiredGuid
     vatRate: Optional[float] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
@@ -1423,10 +1426,10 @@ class InvoiceSubModel(Parent):
 
 
 class DeletedProjectTravelExpenseModel(Parent):
-    deletedDateTime: Optional[datetime] = None
-    createdDateTime: Optional[datetime] = None
+    deletedDateTime: Optional[datetime.datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[ModelBaseReadOnly] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[ModelBaseReadOnly] = None
     guid: Optional[str] = None
     phase: Optional[ModelBaseReadOnly] = None
@@ -1435,11 +1438,11 @@ class DeletedProjectTravelExpenseModel(Parent):
     user: Optional[ModelBaseReadOnly] = None
     travelExpense: Optional[ModelBaseReadOnly] = None
     description: Optional[str] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     quantity: Optional[float] = None
     measurementUnit: Optional[str] = None
-    travelStartTime: Optional[datetime] = None
-    travelEndTime: Optional[datetime] = None
+    travelStartTime: Optional[datetime.datetime] = None
+    travelEndTime: Optional[datetime.datetime] = None
 
 
 class PublicAuthenticationOutputModel(Parent):
@@ -1447,10 +1450,10 @@ class PublicAuthenticationOutputModel(Parent):
     scope: Optional[str] = None
     refresh_token: Optional[str] = None
     refresh_token_expires_in: Optional[int] = None
-    refresh_token_expires_utc: Optional[datetime] = None
+    refresh_token_expires_utc: Optional[datetime.datetime] = None
     access_token_type: Optional[str] = None
     access_token_expires_in: Optional[int] = None
-    access_token_expires_utc: Optional[datetime] = None
+    access_token_expires_utc: Optional[datetime.datetime] = None
 
 
 class ClientCredentials(Parent):
@@ -1489,9 +1492,9 @@ class TravelExpenseTypeCountrySettingsModel(Parent):
     country: ModelBaseWithRequiredGuid
     product: ModelBaseWithRequiredGuid
     vatRate: Optional[float] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     purchaseVatRate: Optional[float] = None
@@ -1581,9 +1584,9 @@ class WorkdayModel(Parent):
 
 
 class VatRateOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     percentage: Optional[float] = None
@@ -1622,7 +1625,7 @@ class WorkHourWorkTypeSubModel(Parent):
 
 class WorkHourInvoiceSubModel(Parent):
     guid: str
-    date: date
+    date: datetime.date
     number: int | None = None
 
 
@@ -1649,10 +1652,10 @@ class WorkHourProjectSubModel(Parent):
 
 
 class DeletedWorkHourModel(Parent):
-    deletedDateTime: Optional[datetime] = None
-    createdDateTime: Optional[datetime] = None
+    deletedDateTime: Optional[datetime.datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[ModelBaseReadOnly] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[ModelBaseReadOnly] = None
     guid: Optional[str] = None
     phase: Optional[ModelBaseReadOnly] = None
@@ -1660,17 +1663,17 @@ class DeletedWorkHourModel(Parent):
     customer: Optional[ModelBaseReadOnly] = None
     user: Optional[ModelBaseReadOnly] = None
     workType: Optional[ModelBaseReadOnly] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     quantity: Optional[float] = None
     plannedInvoiceQuantity: Optional[float] = None
-    startTime: Optional[datetime] = None
-    endTime: Optional[datetime] = None
+    startTime: Optional[datetime.datetime] = None
+    endTime: Optional[datetime.datetime] = None
 
 
 class WorkHourInputModel(Parent):
     description: Optional[str] = None
-    endTime: Optional[datetime] = None
-    eventDate: date
+    endTime: Optional[datetime.datetime] = None
+    eventDate: datetime.date
     invoice: Optional[SimpleInputModel] = None
     invoiceQuantity: Optional[float] = None
     plannedInvoiceQuantity: Optional[float] = None
@@ -1681,7 +1684,7 @@ class WorkHourInputModel(Parent):
     overtime: Optional[SimpleInputModel] = None
     phase: SimpleInputRequiredModel
     quantity: Optional[float] = None
-    startTime: Optional[datetime] = None
+    startTime: Optional[datetime.datetime] = None
     unitPrice: Optional[MoneyInputModel] = None
     user: SimpleInputRequiredModel
     workType: SimpleInputRequiredModel
@@ -1691,28 +1694,28 @@ class ProjectStatusTypeModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
     sortOrder: Optional[int] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
 
 class SalesStatusHistoryOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     salesStatusType: Optional[ModelWithName] = None
     project: Optional[ModelWithName] = None
-    timeStamp: Optional[datetime] = None
+    timeStamp: Optional[datetime.datetime] = None
 
 
 class ProjectForecastInputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     project: SimpleInputRequiredModel
@@ -1734,9 +1737,9 @@ class BankAccountFormat(Enum):
 
 
 class CurrencyOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     name: Optional[str] = None
@@ -1750,7 +1753,7 @@ class CurrencyOutputModel(Parent):
 class FlatRateInputModel(Parent):
     phase: SimpleInputRequiredModel
     billingSchedule: BillingScheduleType
-    plannedBillingDate: Optional[date] = None
+    plannedBillingDate: Optional[datetime.date] = None
     price: Optional[MoneyInputModelWithNullableAmount] = None
     includesHours: Optional[float] = 0
     billAdditionalHours: Optional[bool] = True
@@ -1758,13 +1761,13 @@ class FlatRateInputModel(Parent):
 
 
 class PricelistVersionOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     pricelistGuid: Optional[str] = None
-    startDate: Optional[date] = None
+    startDate: Optional[datetime.date] = None
 
 
 class PriceSource(Enum):
@@ -1801,8 +1804,8 @@ class ProjectFeeInputModel(Parent):
     billingSchedule: Optional[ProjectFeeBillingScheduleType] = None
     costCenter: Optional[SimpleInputModel] = None
     description: Optional[str] = None
-    displayPeriodStartDate: Optional[date] = None
-    eventDate: Optional[date] = None
+    displayPeriodStartDate: Optional[datetime.date] = None
+    eventDate: Optional[datetime.date] = None
     hasVolumePricing: Optional[bool] = None
     invoice: Optional[SimpleInputModel] = None
     invoiceQuantity: Optional[float] = None
@@ -1811,7 +1814,7 @@ class ProjectFeeInputModel(Parent):
     isBillable: Optional[bool] = None
     measurementUnit: Optional[str] = None
     phase: Optional[SimpleInputModel] = None
-    plannedBillingDate: Optional[date] = None
+    plannedBillingDate: Optional[datetime.date] = None
     product: Optional[SimpleInputModel] = None
     productType: Optional[ProductType] = None
     project: SimpleInputRequiredModel
@@ -1858,9 +1861,9 @@ class BillablePeriod(Enum):
 
 class ProjectRecurringFeeRuleInputModel(Parent):
     frequency: int
-    recurrenceStartDate: Optional[date] = None
+    recurrenceStartDate: Optional[datetime.date] = None
     recurrenceEndType: Optional[RecurrenceEndTypes] = None
-    recurrenceEndDate: Optional[date] = None
+    recurrenceEndDate: Optional[datetime.date] = None
     recurrenceTimes: Optional[int] = None
     recurringSalesAccount: Optional[SimpleInputModel] = None
     isActive: Optional[bool] = True
@@ -1875,7 +1878,7 @@ class ProjectRecurringFeeRuleInputModel(Parent):
     hasVolumePricing: Optional[bool] = None
     productType: Optional[ProductType] = None
     vatRate: Optional[float] = None
-    displayPeriodStartDate: Optional[date] = None
+    displayPeriodStartDate: Optional[datetime.date] = None
     user: Optional[SimpleInputModel] = None
     costCenter: Optional[SimpleInputModel] = None
     salesAccount: Optional[SimpleInputModel] = None
@@ -1887,7 +1890,7 @@ class ProjectTravelExpenseInputModel(Parent):
     costAccount: Optional[SimpleInputModel] = None
     costCenter: Optional[SimpleInputModel] = None
     description: Optional[str] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     invoice: Optional[SimpleInputModel] = None
     invoiceQuantity: Optional[float] = None
     invoiceRowComment: Optional[str] = None
@@ -1895,16 +1898,16 @@ class ProjectTravelExpenseInputModel(Parent):
     isBillable: Optional[bool] = None
     measurementUnit: Optional[str] = None
     phase: SimpleInputRequiredModel
-    plannedBillingDate: Optional[date] = None
+    plannedBillingDate: Optional[datetime.date] = None
     project: SimpleInputRequiredModel
     purchaseVatRate: Optional[float] = None
     quantity: float
     salesAccount: Optional[SimpleInputModel] = None
-    travelEndTime: Optional[datetime] = None
+    travelEndTime: Optional[datetime.datetime] = None
     travelExpense: SimpleInputRequiredModel
     travelReimbursement: Optional[SimpleInputModel] = None
     travelReimbursementRequired: Optional[bool] = True
-    travelStartTime: Optional[datetime] = None
+    travelStartTime: Optional[datetime.datetime] = None
     unitCost: Optional[MoneyInputModel] = None
     unitPrice: Optional[MoneyInputModel] = None
     user: SimpleInputRequiredModel
@@ -1972,7 +1975,7 @@ class UserInputModel(Parent):
     culture: Optional[SimpleInputModel] = None
     language: Optional[SimpleInputModel] = None
     timezone: Optional[TimezoneModel] = None
-    birthDate: Optional[datetime] = None
+    birthDate: Optional[datetime.datetime] = None
     bankAccountNumber: Optional[str] = None
     notes: Optional[str] = None
     defaultActivityType: Optional[SimpleInputModel] = None
@@ -2013,9 +2016,9 @@ class OvertimePriceModel(Parent):
 class OvertimeModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     percentage: Optional[float] = None
     isActive: Optional[bool] = True
@@ -2031,9 +2034,9 @@ class PhaseMemberModel(Parent):
     workHoursIncludingChildPhases: Optional[float] = None
     workHours: Optional[float] = None
     currentWorkcontractTitle: Optional[str] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
@@ -2060,9 +2063,9 @@ class BillingAddressModel(Parent):
 class ProjectTaskStatusModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     isDefault: Optional[bool] = None
@@ -2079,9 +2082,9 @@ class TimeEntryProject(Parent):
 class TimeEntryTypeModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     identifier: Optional[str] = None
@@ -2090,9 +2093,9 @@ class TimeEntryTypeModel(Parent):
 class TravelReimbursementStatusModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     sortOrder: Optional[int] = None
     isLocked: Optional[bool] = False
@@ -2111,8 +2114,8 @@ class ResourceAllocationProjectSubModel(Parent):
 class ResourceAllocationPhaseSubModel(Parent):
     name: Optional[str] = None
     guid: Optional[str] = None
-    startDate: Optional[date] = None
-    endDate: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    endDate: Optional[datetime.date] = None
 
 
 class SalesProgress(Enum):
@@ -2123,8 +2126,8 @@ class SalesProgress(Enum):
 
 
 class ResourceAllocationInputModel(Parent):
-    startDate: Optional[date] = None
-    endDate: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    endDate: Optional[datetime.date] = None
     allocationPercentage: Optional[int] = None
     allocationHours: Optional[float] = None
     user: SimpleInputRequiredModel
@@ -2155,9 +2158,9 @@ class PatchOperation(Parent):
 class BusinessUnitModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     parentGuid: Optional[str] = None
     isActive: Optional[bool] = True
@@ -2175,9 +2178,9 @@ class BusinessUnitModel(Parent):
 class CommunicationTypeModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     type: Optional[CommunicationMethodType] = None
@@ -2189,9 +2192,9 @@ class KeyValuePairOfStringAndSortDirection(Parent):
 
 
 class ContactCommunicationModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     value: Annotated[str, Field(min_length=1)]
@@ -2204,9 +2207,9 @@ class ContactModel(Parent):
     firstName: Annotated[str, Field(min_length=1)]
     lastName: Annotated[str, Field(min_length=1)]
     salutation: Optional[SalutationType] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     name: Optional[str] = None
@@ -2220,7 +2223,7 @@ class ContactModel(Parent):
     emails: Optional[List[str]] = None
     satisfactionLevel: Optional[SatisfactionLevelType] = None
     timeZone: Optional[ModelWithName] = None
-    dateOfBirth: Optional[date] = None
+    dateOfBirth: Optional[datetime.date] = None
     role: Optional[ModelWithName] = None
     language: Optional[ModelWithName] = None
     isEmailAllowed: Optional[bool] = False
@@ -2250,9 +2253,9 @@ class CountryRegionModel(Parent):
 
 
 class CustomerMarketSegmentModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     customer: Optional[ModelWithName] = None
@@ -2267,9 +2270,9 @@ class FileModel(Parent):
     contentType: Optional[str] = None
     category: Optional[FileCategory] = None
     isInternal: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
@@ -2288,9 +2291,9 @@ class ProjectTravelExpenseFileModel(Parent):
     contentType: Optional[str] = None
     category: Optional[FileCategory] = None
     isInternal: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     fileGuid: Optional[str] = None
@@ -2301,9 +2304,9 @@ class ProjectTravelExpenseFileModel(Parent):
 class PriceListModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isDefault: Optional[bool] = None
     isActive: Optional[bool] = True
@@ -2315,9 +2318,9 @@ class PriceListModel(Parent):
 class KeywordModel(Parent):
     keyword: Annotated[str, Field(min_length=1)]
     isActive: Optional[bool] = True
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     category: KeywordCategory
@@ -2345,8 +2348,8 @@ class OrganizationSettingsModel(Parent):
     lastTravelReimbursementNumber: Optional[int] = None
     travelReimbursementInstructions: Optional[str] = None
     isTravelExpenseImmediatelyInvoiceable: Optional[bool] = None
-    travelEntryClosingDate: Optional[date] = None
-    travelExpenseReimbursementStartDate: Optional[date] = None
+    travelEntryClosingDate: Optional[datetime.date] = None
+    travelExpenseReimbursementStartDate: Optional[datetime.date] = None
     nextPurchaseOrderNumber: Optional[int] = None
     lastPurchaseOrderNumber: Optional[int] = None
     purchaseOrderNumberPrefix: Optional[
@@ -2360,7 +2363,7 @@ class OrganizationSettingsModel(Parent):
     workWeek: List[Workweek]
     workHourApprovalMode: Optional[WorkHourApprovalMode] = None
     workHourEntryFormat: Optional[EntryFormat] = None
-    worktimeEntryClosingDate: Optional[date] = None
+    worktimeEntryClosingDate: Optional[datetime.date] = None
     paymentReferenceNumberDisplaySetting: Optional[ReferenceNumberDisplay] = None
     uniqueIdentifierForProductsAndWorktypes: Optional[bool] = None
     isAddingNewKeywordsFromProjectAllowed: Optional[bool] = None
@@ -2368,10 +2371,10 @@ class OrganizationSettingsModel(Parent):
     isWorkHourDescriptionMandatory: Optional[bool] = False
     setCreditNoteInvoiceNumber: Optional[bool] = None
     isCustomerSearchAllowed: Optional[bool] = None
-    flextimeCalculationStartDate: Optional[date] = None
+    flextimeCalculationStartDate: Optional[datetime.date] = None
     maxFlextimeBalanceLimit: Optional[confloat(ge=0.0, le=1000.0)] = None
     minFlextimeBalanceLimit: Optional[confloat(ge=-1000.0, le=0.0)] = None
-    lastFlextimeCalculationEndTime: Optional[datetime] = None
+    lastFlextimeCalculationEndTime: Optional[datetime.datetime] = None
     lastFlextimeCalculationUser: Optional[UserWithFirstNameLastNameModel] = None
     defaultFooterColumn1: Optional[FreeTextModel] = None
     defaultFooterColumn2: Optional[FreeTextModel] = None
@@ -2406,9 +2409,9 @@ class MultiCurrencyInfoModel(Parent):
 
 
 class ProjectInvoiceSettingsOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     project: Optional[ModelBase] = None
@@ -2498,7 +2501,7 @@ class ProjectWorkHourPriceInputModel(Parent):
 
 class ProposalInputModel(Parent):
     name: Annotated[str, Field(min_length=0, max_length=50)]
-    proposalDate: Optional[date] = None
+    proposalDate: Optional[datetime.date] = None
     language: Optional[SimpleInputModel] = None
     culture: Optional[SimpleInputModel] = None
     customerContactPerson: Optional[SimpleInputModel] = None
@@ -2527,9 +2530,9 @@ class ProposalSettingsOutputModel(Parent):
     showPaymentTerms: Optional[bool] = False
     style: Optional[InvoiceSkin] = None
     printTotalInPdf: Optional[PrintToPdf] = "PrintToProposalBoth"
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
@@ -2537,9 +2540,9 @@ class ProposalSettingsOutputModel(Parent):
 class CustomPropertyModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     type: Optional[CustomPropertyType] = "Unknown"
     parameters: Optional[str] = None
@@ -2550,9 +2553,9 @@ class CustomPropertyModel(Parent):
 class CustomerCustomValueModel(Parent):
     customProperty: CustomPropertyShortModel
     value: Optional[str] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     customerGuid: Optional[str] = None
@@ -2566,9 +2569,9 @@ class ActivityTypeModel(Parent):
     code: Optional[str] = None
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
 
 
@@ -2583,9 +2586,9 @@ class CreateInvoiceModel(Parent):
 class CustomerModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     number: Optional[int] = None
     isActive: Optional[bool] = True
@@ -2626,20 +2629,20 @@ class CompanyModel(Parent):
 class PhaseOutputModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     project: Optional[PhaseProjectSubModel] = None
     parentPhase: Optional[ModelBaseWithRequiredGuid] = None
     isCompleted: Optional[bool] = False
     isLocked: Optional[bool] = False
-    startDate: Optional[date] = None
-    deadline: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    deadline: Optional[datetime.date] = None
     workHoursEstimate: Optional[float] = None
     originalWorkHoursEstimate: Optional[float] = None
-    originalStartDate: Optional[date] = None
-    originalDeadline: Optional[date] = None
+    originalStartDate: Optional[datetime.date] = None
+    originalDeadline: Optional[datetime.date] = None
     sortOrder: Optional[int] = None
     defaultWorkType: Optional[ModelWithName] = None
     code: Optional[str] = None
@@ -2651,12 +2654,12 @@ class PhaseInputModel(Parent):
     name: Annotated[str, Field(min_length=1)]
     project: Optional[ModelBaseWithRequiredGuid] = None
     parentPhase: ModelBaseWithRequiredGuid
-    startDate: Optional[date] = None
-    deadline: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    deadline: Optional[datetime.date] = None
     workHoursEstimate: Optional[float] = None
     originalWorkHoursEstimate: Optional[float] = None
-    originalStartDate: Optional[date] = None
-    originalDeadline: Optional[date] = None
+    originalStartDate: Optional[datetime.date] = None
+    originalDeadline: Optional[datetime.date] = None
     sortOrder: Optional[int] = None
     defaultWorkType: Optional[ModelWithName] = None
     code: Optional[str] = None
@@ -2671,12 +2674,12 @@ class PhaseModelWithHierarchyInfo(Parent):
     parentPhase: Optional[ModelBaseWithRequiredGuid] = None
     isCompleted: Optional[bool] = False
     isLocked: Optional[bool] = False
-    startDate: Optional[date] = None
-    deadline: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    deadline: Optional[datetime.date] = None
     workHoursEstimate: Optional[float] = None
     originalWorkHoursEstimate: Optional[float] = None
-    originalStartDate: Optional[date] = None
-    originalDeadline: Optional[date] = None
+    originalStartDate: Optional[datetime.date] = None
+    originalDeadline: Optional[datetime.date] = None
     sortOrder: Optional[int] = None
     defaultWorkType: Optional[ModelWithName] = None
     code: Optional[str] = None
@@ -2684,9 +2687,9 @@ class PhaseModelWithHierarchyInfo(Parent):
     phaseStatus: Optional[PhaseStatusOutputModel] = None
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     customer: Optional[PhaseCustomerSubModel] = None
     hasChildren: Optional[bool] = None
@@ -2719,9 +2722,9 @@ class ProjectBillingCustomerModel(Parent):
     billingCustomer: BillingCustomerModel
     isDefault: Optional[bool] = None
     canBeDeleted: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
 
@@ -2739,8 +2742,8 @@ class ProjectInputModelBase(Parent):
     businessUnit: Optional[SimpleInputRequiredModel] = None
     customerContact: Optional[SimpleInputModel] = None
     salesPerson: Optional[SimpleInputModel] = None
-    startDate: Optional[date] = None
-    deadline: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    deadline: Optional[datetime.date] = None
     leadSource: Optional[SimpleInputModel] = None
     costCenter: Optional[SimpleInputModel] = None
     paymentTerm: Optional[int] = None
@@ -2758,7 +2761,7 @@ class ProjectInputModelBase(Parent):
     projectStatus: Optional[SimpleProjectStatusInputModel] = None
     currency: Optional[SimpleInputRequiredModel] = None
     probability: Optional[int] = None
-    expectedOrderDate: Optional[date] = None
+    expectedOrderDate: Optional[datetime.date] = None
     expectedValue: Optional[MoneyInputModelWithNullableAmount] = None
 
 
@@ -2782,9 +2785,9 @@ class AccessTokenCredentials(Parent):
 
 
 class SalesStatusTypeOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     name: Optional[str] = None
     guid: Optional[str] = None
@@ -2795,9 +2798,9 @@ class SalesStatusTypeOutputModel(Parent):
 
 
 class BankAccountOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     bankName: Annotated[str, Field(min_length=1)]
@@ -2811,8 +2814,8 @@ class BankAccountOutputModel(Parent):
 
 class WorkContractInputModel(Parent):
     title: Annotated[str, Field(min_length=1)]
-    startDate: date
-    endDate: Optional[date] = None
+    startDate: datetime.date
+    endDate: Optional[datetime.date] = None
     dailyHours: Optional[float] = None
     isOvertimeAllowed: Optional[bool] = None
     isFlextimeActive: Optional[bool] = True
@@ -2827,9 +2830,9 @@ class ProjectBillingCustomerModel2(Parent):
     billingCustomer: BillingCustomerModel
     isDefault: Optional[bool] = None
     canBeDeleted: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     billingAddress: Optional[BillingAddressModel] = None
@@ -2837,9 +2840,9 @@ class ProjectBillingCustomerModel2(Parent):
 
 
 class TimeEntryModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     user: ModelBaseWithRequiredGuid
@@ -2848,22 +2851,22 @@ class TimeEntryModel(Parent):
     phase: ModelBaseWithRequiredGuid
     timeEntryType: ModelBaseWithRequiredGuid
     description: Optional[str] = None
-    eventDate: date
+    eventDate: datetime.date
     quantity: Optional[float] = None
-    startTime: Optional[datetime] = None
-    endTime: Optional[datetime] = None
+    startTime: Optional[datetime.datetime] = None
+    endTime: Optional[datetime.datetime] = None
 
 
 class ResourceAllocationOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
-    startDate: Optional[date] = None
-    endDate: Optional[date] = None
-    derivedStartDate: Optional[date] = None
-    derivedEndDate: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    endDate: Optional[datetime.date] = None
+    derivedStartDate: Optional[datetime.date] = None
+    derivedEndDate: Optional[datetime.date] = None
     allocationPercentage: Optional[int] = None
     allocationHours: Optional[float] = None
     calculatedAllocationHours: Optional[float] = None
@@ -2875,8 +2878,8 @@ class ResourceAllocationOutputModel(Parent):
 
 
 class ResourceAllocationCriteriaModel(Parent):
-    startDate: Optional[datetime] = None
-    endDate: Optional[datetime] = None
+    startDate: Optional[datetime.datetime] = None
+    endDate: Optional[datetime.datetime] = None
     userGuids: Optional[List[str]] = None
     userLicenseTypes: Optional[List[UserType]] = None
     phaseGuids: Optional[List[str]] = None
@@ -2896,9 +2899,9 @@ class ResourceAllocationCriteriaModel(Parent):
 
 
 class AddressModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     addressline: Optional[str] = None
@@ -2928,9 +2931,9 @@ class ProjectFileModel(Parent):
     contentType: Optional[str] = None
     category: Optional[FileCategory] = None
     isInternal: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     fileGuid: Optional[str] = None
@@ -2958,9 +2961,9 @@ class ProjectWorkHourPriceOutputModel(Parent):
     user: Optional[ModelWithName] = None
     workType: Optional[ModelWithName] = None
     unitPrice: Optional[MoneyOutputModel] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     project: Optional[ProjectSubModel] = None
@@ -2984,13 +2987,13 @@ class ProposalFeeRowOutputModel(Parent):
 
 
 class ProposalOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     name: Optional[str] = None
-    proposalDate: Optional[date] = None
+    proposalDate: Optional[datetime.date] = None
     number: Optional[str] = None
     language: Optional[ProposalLanguageSubModel] = None
     culture: Optional[FormattingCultureSubModel] = None
@@ -3024,8 +3027,8 @@ class ProposalWorkhourRowOutputModel(Parent):
 
 class WorkContractOutputModel(Parent):
     title: Annotated[str, Field(min_length=1)]
-    startDate: date
-    endDate: Optional[date] = None
+    startDate: datetime.date
+    endDate: Optional[datetime.date] = None
     dailyHours: Optional[float] = None
     isOvertimeAllowed: Optional[bool] = None
     isFlextimeActive: Optional[bool] = True
@@ -3034,16 +3037,16 @@ class WorkContractOutputModel(Parent):
     guid: Optional[str] = None
     hourCost: Optional[MoneyOutputModel] = None
     user: Optional[UserWithPhotoFileModelAndRequiredGuid] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
 
 
 class InvoiceOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     number: Optional[int] = None
@@ -3051,10 +3054,10 @@ class InvoiceOutputModel(Parent):
     status: Optional[InvoiceStatusSubModel] = None
     customer: Optional[InvoiceCustomerSubModel] = None
     projects: Optional[List[InvoiceProjectSubModel]] = None
-    date: Optional[date] = None
-    dueDate: Optional[date] = None
-    paymentDate: Optional[date] = None
-    entryDate: Optional[date] = None
+    date: datetime.date | None = None
+    dueDate: datetime.date | None = None
+    paymentDate: Optional[datetime.date] = None
+    entryDate: datetime.date | None = None
     paymentTerm: Optional[int] = None
     overdueInterest: Optional[float] = None
     ourReference: Optional[str] = None
@@ -3099,9 +3102,9 @@ class InvoiceOutputModel(Parent):
 
 
 class InvoiceRowOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     invoiceGuid: Optional[str] = None
@@ -3169,18 +3172,18 @@ class ProjectFeeOutputModel(Parent):
     hasVolumePricing: Optional[bool] = None
     productType: Optional[ProductType] = None
     vatRate: Optional[float] = None
-    displayPeriodStartDate: Optional[date] = None
+    displayPeriodStartDate: Optional[datetime.date] = None
     user: Optional[UserSubModel] = None
     costCenter: Optional[ProjectCostCenterSubModel] = None
     salesAccount: Optional[ProjectSalesAccountSubModel] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     billingSchedule: Optional[ProjectFeeBillingScheduleType] = None
-    plannedBillingDate: Optional[date] = None
+    plannedBillingDate: Optional[datetime.date] = None
     billingDependencyPhase: Optional[ProjectFeePhaseSubModel] = None
     isBillable: Optional[bool] = None
     invoice: Optional[ProjectFeeInvoiceSubModel] = None
@@ -3203,9 +3206,9 @@ class ProductOutputModel(Parent):
     salesAccount: Optional[ProductSalesAccountSubModel] = None
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     type: Optional[ProductType] = None
     proposalDescription: Optional[str] = None
@@ -3223,7 +3226,7 @@ class ProjectOutputModel(Parent):
     number: Optional[int] = None
     description: Optional[str] = None
     isClosed: Optional[bool] = None
-    closedDate: Optional[date] = None
+    closedDate: Optional[datetime.date] = None
     isJoiningAllowed: Optional[bool] = True
     customer: Optional[ProjectCustomerSubModel] = None
     projectOwner: UserWithFirstNameLastNameAndPhotoFileModel
@@ -3231,12 +3234,12 @@ class ProjectOutputModel(Parent):
     currency: Optional[CurrencySubModel2] = None
     customerContact: Optional[CustomerContactSubModel] = None
     salesStatus: Optional[SalesStatusSubModel] = None
-    salesPerson: UserWithFirstNameLastNameAndPhotoFileModel
+    salesPerson: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     probability: Optional[int] = None
-    expectedOrderDate: Optional[date] = None
+    expectedOrderDate: Optional[datetime.date] = None
     expectedValue: Optional[MoneyOutputModel] = None
-    startDate: Optional[date] = None
-    deadline: Optional[date] = None
+    startDate: Optional[datetime.date] = None
+    deadline: Optional[datetime.date] = None
     leadSource: Optional[ModelWithName] = None
     rootPhase: Optional[ModelWithName] = None
     pricelist: Optional[ProjectPricelistSubModel] = None
@@ -3260,16 +3263,16 @@ class ProjectOutputModel(Parent):
     calculatedCompletionPercentage: Optional[int] = None
     guid: str
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
 
 
 class ProjectTravelExpenseOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     project: Optional[ProjectTravelExpenseProjectSubModel] = None
@@ -3285,14 +3288,14 @@ class ProjectTravelExpenseOutputModel(Parent):
     measurementUnit: Optional[str] = None
     vatRate: Optional[float] = None
     purchaseVatRate: Optional[float] = None
-    eventDate: Optional[date] = None
-    travelStartTime: Optional[datetime] = None
-    travelEndTime: Optional[datetime] = None
+    eventDate: Optional[datetime.date] = None
+    travelStartTime: Optional[datetime.datetime] = None
+    travelEndTime: Optional[datetime.datetime] = None
     travelReimbursementRequired: Optional[bool] = True
     travelReimbursement: Optional[TravelReimbursementSubModel] = None
     isBillable: Optional[bool] = None
     billingSchedule: Optional[ProjectTravelExpenseBillingScheduleType] = None
-    plannedBillingDate: Optional[date] = None
+    plannedBillingDate: Optional[datetime.date] = None
     billingDependencyPhase: Optional[ModelWithName] = None
     invoice: Optional[InvoiceSubModel] = None
     invoiceQuantity: Optional[float] = None
@@ -3307,7 +3310,7 @@ class ProjectTravelExpenseOutputModel(Parent):
 
 class ReimbursedProjectFeeOutputModel(Parent):
     name: Optional[str] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     phase: Optional[ModelWithName] = None
     project: Optional[ReimbursedProjectFeeProjectSubModel] = None
     product: Optional[ModelWithName] = None
@@ -3322,9 +3325,9 @@ class ReimbursedProjectFeeOutputModel(Parent):
     invoiceQuantity: Optional[float] = None
     invoiceRowGuid: Optional[str] = None
     invoiceRowDescription: Optional[str] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     productType: Optional[ProductType] = None
@@ -3332,8 +3335,8 @@ class ReimbursedProjectFeeOutputModel(Parent):
 
 class UserWorkContractSubModel(Parent):
     title: Annotated[str, Field(min_length=1)]
-    startDate: date
-    endDate: Optional[date] = None
+    startDate: datetime.date
+    endDate: Optional[datetime.date] = None
     dailyHours: Optional[float] = None
     isOvertimeAllowed: Optional[bool] = None
     isFlextimeActive: Optional[bool] = True
@@ -3347,17 +3350,17 @@ class TravelReimbursementOutputModel(Parent):
     user: Optional[ModelWithName] = None
     title: Optional[str] = None
     number: Optional[int] = None
-    date: Optional[datetime] = None
-    approvalDate: Optional[datetime] = None
+    date: Optional[datetime.datetime] = None
+    approvalDate: Optional[datetime.datetime] = None
     approvedByUser: Optional[ModelWithName] = None
     advancePayment: Optional[MoneyOutputModel] = None
     total: Optional[MoneyOutputModel] = None
     totalExpenses: Optional[MoneyOutputModel] = None
     groupBy: Optional[GroupByType] = None
     canChangeApproval: Optional[bool] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     travelReimbursementStatus: Optional[ModelWithName] = None
@@ -3366,9 +3369,9 @@ class TravelReimbursementOutputModel(Parent):
 class WorkTypeOutputModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isActive: Optional[bool] = True
     isProductive: Optional[bool] = None
@@ -3398,22 +3401,22 @@ class WorkHourOutputModel(Parent):
     invoiceRowComment: Optional[str] = None
     user: Optional[UserWithFirstNameLastNamePhotoFileModelAndRequiredGuid] = None
     overtime: Optional[ModelWithName] = None
-    eventDate: date
+    eventDate: datetime.date
     quantity: Optional[float] = None
-    startTime: Optional[datetime] = None
-    endTime: Optional[datetime] = None
-    createdDateTime: Optional[datetime] = None
+    startTime: Optional[datetime.datetime] = None
+    endTime: Optional[datetime.datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     project: Optional[WorkHourProjectSubModel] = None
 
 
 class ProjectForecastOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: str
     project: Optional[ModelBaseWithRequiredGuid] = None
@@ -3439,9 +3442,9 @@ class ProductPriceModel(Parent):
 
 
 class ProjectMemberCostExceptionOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     user: Optional[UserWithFirstNameLastNamePhotoFileModelAndRequiredGuid] = None
@@ -3464,19 +3467,19 @@ class ProjectRecurringFeeRuleOutputModel(Parent):
     hasVolumePricing: Optional[bool] = None
     productType: Optional[ProductType] = None
     vatRate: Optional[float] = None
-    displayPeriodStartDate: Optional[date] = None
+    displayPeriodStartDate: Optional[datetime.date] = None
     user: Optional[UserSubModel] = None
     costCenter: Optional[ProjectCostCenterSubModel] = None
     salesAccount: Optional[ProjectSalesAccountSubModel] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     frequency: Optional[int] = None
-    recurrenceStartDate: Optional[date] = None
+    recurrenceStartDate: Optional[datetime.date] = None
     recurrenceEndType: Optional[RecurrenceEndTypes] = None
-    recurrenceEndDate: Optional[date] = None
+    recurrenceEndDate: Optional[datetime.date] = None
     recurrenceTimes: Optional[int] = None
     recurringSalesAccount: Optional[ProjectSalesAccountSubModel] = None
     generatedTimes: Optional[int] = None
@@ -3485,7 +3488,7 @@ class ProjectRecurringFeeRuleOutputModel(Parent):
 
 class ReimbursedProjectTravelExpenseOutputModel(Parent):
     name: Optional[str] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     phase: Optional[ModelWithName] = None
     project: Optional[ReimbursedProjectFeeProjectSubModel] = None
     product: Optional[ModelWithName] = None
@@ -3500,27 +3503,27 @@ class ReimbursedProjectTravelExpenseOutputModel(Parent):
     invoiceQuantity: Optional[float] = None
     invoiceRowGuid: Optional[str] = None
     invoiceRowDescription: Optional[str] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
-    travelStartTime: Optional[datetime] = None
-    travelEndTime: Optional[datetime] = None
+    travelStartTime: Optional[datetime.datetime] = None
+    travelEndTime: Optional[datetime.datetime] = None
 
 
 class ReimbursedWorkHourOutputModel(Parent):
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     user: Optional[ModelWithName] = None
     overtime: Optional[ModelWithName] = None
-    eventDate: Optional[date] = None
+    eventDate: Optional[datetime.date] = None
     quantity: Optional[float] = None
-    startTime: Optional[datetime] = None
-    endTime: Optional[datetime] = None
+    startTime: Optional[datetime.datetime] = None
+    endTime: Optional[datetime.datetime] = None
     phase: Optional[ModelWithName] = None
     project: Optional[ReimbursedWorkHourProjectSubModel] = None
     customer: Optional[ModelWithName] = None
@@ -3554,9 +3557,9 @@ class TeamProductivityOutputModel(Parent):
 class TravelExpenseTypeOutputModel(Parent):
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     isMileage: Optional[bool] = None
     isDailyAllowance: Optional[bool] = None
@@ -3598,7 +3601,7 @@ class FlatRateOutputModel(Parent):
     project: Optional[FlatrateProjectSubModel] = None
     phase: Optional[ModelBaseWithRequiredGuid] = None
     billingSchedule: Optional[BillingScheduleType] = None
-    plannedBillingDate: Optional[date] = None
+    plannedBillingDate: Optional[datetime.date] = None
     price: Optional[MoneyOutputModel] = None
     includesHours: Optional[float] = 0
     billAdditionalHours: Optional[bool] = True
@@ -3610,17 +3613,17 @@ class ActivityRecurrenceModel(Parent):
     frequency: RecurrenceFrequency
     pattern: Optional[RecurrencePattern] = None
     range: Optional[RecurrenceRange] = None
-    exceptions: Optional[List[datetime]] = None
-    lastOccurrenceDateTime: Optional[datetime] = None
+    exceptions: Optional[List[datetime.datetime]] = None
+    lastOccurrenceDateTime: Optional[datetime.datetime] = None
 
 
 class UserOutputModel(Parent):
     firstName: Annotated[str, Field(min_length=1)]
     lastName: Annotated[str, Field(min_length=1)]
     salutation: Optional[SalutationType] = None
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
     guid: Optional[str] = None
     isActive: Optional[bool] = True
@@ -3632,7 +3635,7 @@ class UserOutputModel(Parent):
     permissionProfile: Optional[ModelWithName] = None
     superiorUser: Optional[ModelBaseWithRequiredGuid] = None
     workContract: Optional[UserWorkContractSubModel] = None
-    lastLogin: Optional[datetime] = None
+    lastLogin: Optional[datetime.datetime] = None
     title: Optional[str] = None
     satisfaction: Optional[SatisfactionLevelType] = None
     code: Optional[str] = None
@@ -3644,7 +3647,7 @@ class UserOutputModel(Parent):
     culture: Optional[UserCultureSubModel] = None
     language: Optional[UserLanguageSubModel] = None
     timezone: Optional[TimezoneModel] = None
-    birthDate: Optional[datetime] = None
+    birthDate: Optional[datetime.datetime] = None
     bankAccountNumber: Optional[str] = None
     notes: Optional[str] = None
     keywords: Optional[List[UserKeywordSubModel]] = None
@@ -3669,8 +3672,8 @@ class ExceptionModel(Parent):
 
 
 class ActivityModel(Parent):
-    startDateTime: datetime
-    endDateTime: Optional[datetime] = None
+    startDateTime: datetime.datetime
+    endDateTime: Optional[datetime.datetime] = None
     isClosed: Optional[bool] = None
     isAllDay: Optional[bool] = None
     hasDuration: Optional[bool] = None
@@ -3689,7 +3692,7 @@ class ActivityModel(Parent):
     recurrenceType: Optional[RecurrenceType] = None
     guid: Optional[str] = None
     name: Annotated[str, Field(min_length=1)]
-    createdDateTime: Optional[datetime] = None
+    createdDateTime: Optional[datetime.datetime] = None
     createdBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None
-    lastUpdatedDateTime: Optional[datetime] = None
+    lastUpdatedDateTime: Optional[datetime.datetime] = None
     lastUpdatedBy: Optional[UserWithFirstNameLastNameAndPhotoFileModel] = None

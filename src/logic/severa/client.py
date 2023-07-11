@@ -292,6 +292,24 @@ class Client:
         return saleshours[saleshours.id == "saleswork"]
 
     async def fetch_hours(self, span: DateRange) -> pd.DataFrame:
+        if not span:
+            return pd.DataFrame(
+                {
+                    "user": pd.Series(dtype=str),
+                    "id": pd.Series(dtype=str),
+                    "value": pd.Series(dtype=float),
+                    "internal_guid": pd.Series(dtype=str),
+                    "project": pd.Series(dtype=str),
+                    "phase": pd.Series(dtype=str),
+                    "date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "start_date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "end_date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "forecast_date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "productive": pd.Series(dtype=bool),
+                    "_id": pd.Series(dtype=str),
+                }
+            )
+
         span_past, span_future = span.cut(arrow.utcnow())
 
         awaitables = [(self.fetch_absences, span)]
@@ -533,18 +551,44 @@ class Client:
     ###########################
 
     async def fetch_billing(self, span: DateRange) -> pd.DataFrame:
+        if not span:
+            return pd.DataFrame(
+                {
+                    "user": pd.Series(dtype=str),
+                    "id": pd.Series(dtype=str),
+                    "internal_guid": pd.Series(dtype=str),
+                    "date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "forecast_date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "start_date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "end_date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "project": pd.Series(dtype=str),
+                    "value": pd.Series(dtype=float),
+                    "billing": pd.Series(dtype=float),
+                    "expense": pd.Series(dtype=float),
+                    "revenue": pd.Series(dtype=float),
+                    "labor_expense": pd.Series(dtype=float),
+                    "_id": pd.Series(dtype=str),
+                }
+            )
+
         projects_mapping = await self.fetch_projects_with_cache()
 
         span_past, span_future = span.cut(arrow.utcnow())
+        logger.info(span_past)
+        logger.info(span_future)
         awaitables = []
 
         if span_past:
+            logger.debug("past")
             awaitables += [(self.fetch_realized_billing, span_past)]
 
         if span_future:
+            logger.debug("future")
             awaitables += [(self.fetch_forecasted_billing, span_future)]
 
         result = pd.concat(await gather(awaitables), ignore_index=True)
+        logger.warning(result.columns)
+        logger.warning(f"{result=}")
         result["user"] = result["project"].apply(
             lambda x: projects_mapping[x].projectOwner.guid
             if x in projects_mapping
@@ -569,6 +613,19 @@ class Client:
             )
         ]
 
+        if not all_invoices:
+            logger.warning(f"no invoices for span {span}")
+            return pd.DataFrame(
+                {
+                    "id": pd.Series(dtype=str),
+                    "internal_guid": pd.Series(dtype=str),
+                    "date": pd.Series(dtype="datetime64[ns, UTC]"),
+                    "project": pd.Series(dtype=str),
+                    "value": pd.Series(dtype=float),
+                    "status": pd.Series(dtype=str)
+                }
+            )
+
         billing_df = pd.DataFrame(
             [
                 {
@@ -592,9 +649,12 @@ class Client:
             await gather(
                 (self.fetch_project_forecasts, project, span)
                 for project in all_projects
+                if not project.isClosed and not project.isInternal
             ),
             start=[],
         )
+
+        logger.warning(forecasts)
 
         result = pd.DataFrame(
             [
@@ -648,9 +708,6 @@ class Client:
             for forecast_json in await self._client.get_all(
                 f"projects/{project.guid}/projectforecasts", {**span}
             )
-            if not project.isClosed
-            and not project.isInternal
-            and project.lastUpdatedDateTime > span.start.shift(months=-4).datetime
         ]
 
     ###########################

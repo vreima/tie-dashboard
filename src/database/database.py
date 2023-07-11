@@ -93,6 +93,9 @@ class Base:
         )
         return result.convert_dtypes()
 
+    def find_max_value(self, key: str):
+        return next(self._coll.find({}).sort(key, -1).limit(1))[key]
+
     def delete(self, query):
         result = self._coll.delete_many(query)
         logger.info(

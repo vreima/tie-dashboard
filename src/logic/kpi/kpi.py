@@ -9,39 +9,9 @@ from src.logic.severa.client import Client
 from src.util.daterange import DateRange
 from src.util.process import cull_before, sanitize_dates, unravel
 
-router = APIRouter(prefix="/kpi", tags=["kpi"])
 
-templates = Jinja2Templates(directory="src/static")
-
-
-@router.get("/salesmargin")
-async def get_salesmargin(request: Request):
-    return templates.TemplateResponse(
-        "kpi_template.html",
-        {"request": request, "base_url": request.base_url, "kpi": "salesmargin"},
-    )
-
-
-@router.get("/salesmargin.json")
-async def get_salesmargin_data(request: Request):  # noqa: ARG001
-    return (await sales_margin_db()).to_dict(orient="records")
-
-
-@router.get("/hours.json")
-async def get_hours_data(request: Request):  # noqa: ARG001
-    return (await hours()).to_dict(orient="records")
-
-
-#
-# *****
-#
-
-
-async def hours() -> pd.DataFrame:
+async def hours(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     today = arrow.utcnow()
-    start = today.shift(months=-4).floor("month")
-    end = today.shift(months=2).ceil("month")
-
     span = DateRange(start, end)
 
     async with Client() as client:
@@ -71,11 +41,35 @@ async def hours() -> pd.DataFrame:
     return total_hours
 
 
-async def sales_margin_db() -> pd.DataFrame:
-    today = arrow.utcnow()
-    start = today.shift(months=-4).floor("month")
-    end = today.shift(months=2).ceil("month")
+async def hours_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
+    """ """
+    data = await hours(start, end)
+    return data.pivot_table(
+        "value",
+        index=["username"],
+        columns="id",
+        aggfunc="sum",
+        fill_value=0,
+        dropna=False,
+        margins=True
+    ).reset_index()
 
+async def sales_margin_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
+    """ """
+    data = await sales_margin(start, end)
+    return data.pivot_table(
+        "value",
+        index=["username"],
+        columns="id",
+        aggfunc="sum",
+        fill_value=0,
+        dropna=False,
+        margins=True
+    ).reset_index()
+
+
+async def sales_margin(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
+    today = arrow.utcnow()
     span_past, span_future = DateRange(start, end).cut(today)
 
     async with Client() as client:
@@ -86,19 +80,16 @@ async def sales_margin_db() -> pd.DataFrame:
         # sales = await f.fetch_billing(span)
 
     # us = {user.guid: user.firstName for user in await client.users()}
-    logger.debug("Fetching done")
     cost_by_user = {user.guid: user.workContract.hourCost.amount for user in users}
     username_by_user = {user.guid: user.firstName for user in users}
 
     base = Base("kpi-dev-02", "billing")
-    billing_f = base.find({"forecast_date": today.floor("day").datetime})
-
-    logger.debug("Billing done")
+    latest_date = base.find_max_value("forecast_date")
+    logger.warning(f"{latest_date=}")
+    billing_f = base.find({"forecast_date": latest_date})
 
     base = Base("kpi-dev-02", "hours")
-    hours_f = base.find({"forecast_date": today.floor("day").datetime})
-
-    logger.debug("Fetching hours done")
+    hours_f = base.find({"forecast_date": latest_date})
 
     total_billing = (
         cull_before(
@@ -112,14 +103,10 @@ async def sales_margin_db() -> pd.DataFrame:
         .reset_index()
     )
 
-    logger.debug("Total billing done")
-
     cols = list(set(hours.columns) & set(hours_f.columns))
     h1 = sanitize_dates(hours, ["date", "start_date", "end_date", "forecast_date"])
     h2 = sanitize_dates(hours_f, ["date", "start_date", "end_date", "forecast_date"])
     h3 = h1.merge(h2, on=cols, how="outer")
-
-    logger.debug("Hours merged")
 
     total_hours = (
         cull_before(
@@ -133,15 +120,11 @@ async def sales_margin_db() -> pd.DataFrame:
         .reset_index()
     )
 
-    logger.debug("Total hours done")
-
     combined = pd.concat(
         [total_billing[total_billing.value != 0], total_hours],
         ignore_index=True,
     )
     combined = combined[combined.date.between(start.datetime, end.datetime)]
-
-    logger.debug("Combination done")
 
     realized_total_hours = (
         combined[
@@ -168,9 +151,10 @@ async def sales_margin_db() -> pd.DataFrame:
     cost["hourly_cost"] = cost.user.map(cost_by_user)
     cost["value"] = cost.value * cost.hourly_cost
 
-    logger.debug("Cost calc done")
-
-    result = pd.concat([combined[combined.id == "billing"], cost], ignore_index=True)
+    result = pd.concat(
+        [combined[combined.id == "billing"], cost.drop("hourly_cost", axis=1)],
+        ignore_index=True,
+    )
 
     result["username"] = result.user.map(username_by_user)
 

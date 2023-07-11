@@ -452,3 +452,77 @@ async def save_user_pressure(
 
 
 default_router.include_router(pressure_router)
+
+
+##############
+# KPI routes #
+##############
+
+import src.logic.kpi.kpi as kpi
+
+
+kpi_router = APIRouter(prefix="/kpi", tags=["kpi"])
+
+
+class Datespan:
+    def __init__(
+        self, start: datetime.date | None = None, end: datetime.date | None = None
+    ):
+        today = arrow.utcnow()
+
+        if start is None:
+            self.start = today.shift(months=-4).floor("month")
+        else:
+            self.start = arrow.get(start, tzinfo="UTC")
+
+        if end is None:
+            self.end = today.shift(months=2).ceil("month")
+        else:
+            self.end = arrow.get(end, tzinfo="UTC")
+
+
+DatespanDep = Annotated[Datespan, Depends()]
+
+
+@kpi_router.get("/salesmargin")
+async def get_salesmargin(request: Request):
+    return templates.TemplateResponse(
+        "kpi_template.html",
+        {"request": request, "base_url": request.base_url, "kpi": "salesmargin"},
+    )
+
+
+@kpi_router.get("/totals")
+async def dbg(span: DatespanDep):
+    salesmargin = await kpi.sales_margin_totals(span.start, span.end)
+    hours = await kpi.hours_totals(span.start, span.end)
+
+    logger.debug("\n" + str(salesmargin))
+    logger.debug("\n" + str(hours))
+
+    data = salesmargin.merge(hours, how="outer", on="username")
+    data["margin"] = data["billing"] - data["cost"]
+    data["margin_percent"] = data["margin"] / data["billing"]
+    logger.debug("\n" + str(data))
+    return data.to_dict(orient="records")
+
+@kpi_router.get("/dbg_hours")
+async def dbg(span: DatespanDep):
+    data = await kpi.hours_totals(span.start, span.end)
+    logger.debug(data)
+    return data.to_dict(orient="records")
+
+
+@kpi_router.get("/salesmargin.json")
+async def get_salesmargin_data(request: Request, span: DatespanDep):  # noqa: ARG001
+    data = await kpi.sales_margin(span.start, span.end)
+    json = data.to_dict(orient="records")
+    return json
+
+
+@kpi_router.get("/hours.json")
+async def get_hours_data(request: Request, span: DatespanDep):  # noqa: ARG001
+    return (await kpi.hours(span.start, span.end)).to_dict(orient="records")
+
+
+default_router.include_router(kpi_router)

@@ -2,6 +2,7 @@ import os
 import time
 import typing
 from types import TracebackType
+import asyncio
 
 import anyio
 import arrow
@@ -25,31 +26,46 @@ JSON = dict[str, typing.Any]
 
 
 class RateLimiter:
-    def __init__(self, max_items: int, in_seconds: float):
-        self._queue = SortedList()
-        self._max_items = max_items
-        self._time = in_seconds
+    def __init__(self, amount: int, rate: float):
+        self._amount = amount
+        self._rate = rate
+        self._timestamps = [0.0]
 
     async def wait(self) -> None:
-        ts_now = time.monotonic()
-        last_n_items = self._queue[-self._max_items : -1]
+        """
+        Wait if there's need to limit the rate, otherwise return instantly.
+        """
+        nth_last_ts = self._timestamps[-self._amount :][0]
+        time_since_nth_ping = time.monotonic() - nth_last_ts
 
-        if not last_n_items:
-            self._queue.add(ts_now)
-            return
+        if time_since_nth_ping < self._rate:
+            await asyncio.sleep(self._rate - time_since_nth_ping)
 
-        # Timestamp of latest relevant item in queue
-        ts_last_item = last_n_items[-1]
+        self._timestamps.append(time.monotonic())
 
-        logger.debug(f"wait(): {ts_now=}, {ts_last_item=}")
 
-        ts_diff = ts_now - ts_last_item
-        if ts_diff < self._time:
-            logger.debug(f"Waiting for {ts_diff:.1f}s.")
-            await anyio.sleep(ts_diff)
+class Request:
+    def __init__(self, endpoint: str, params, headers):
+        self.endpoint = endpoint
+        self.params = params
+        self.headers = headers
+        self.queue = asyncio.Queue()
 
-        # Recalculate the timestamp
-        self._queue.add(time.monotonic())
+    async def response(self) -> httpx.Response:
+        """
+        Wait for the response from HTTP GET sent in send().
+        """
+        return await self.queue.get()
+
+    async def send(self, client: httpx.AsyncClient) -> None:
+        """
+        Send the HTTP GET using client.
+        """
+        response: httpx.Response = await client.get(
+            self.endpoint, params=self.params, headers=self.headers
+        )
+
+        await self.queue.put(response)
 
 
 class Client:
@@ -67,6 +83,19 @@ class Client:
         self._auth: models.PublicAuthenticationOutputModel | None = None
         self._request_limit = anyio.Semaphore(4)
         self._ratelimit = RateLimiter(10, 1.0)
+        self._request_queue = asyncio.Queue()
+        self._requester_worker = None
+
+    async def _requester_worker_func(self) -> None:
+        """
+        Worker coroutine to send HTTP requests in the queue with rate limiting.
+        """
+        while True:
+            request: Request = await self._request_queue.get()
+
+            await self._ratelimit.wait()
+
+            asyncio.create_task(request.send(self._client))
 
     async def _authenticate(self) -> None:
         payload = {
@@ -120,6 +149,8 @@ class Client:
     async def __aenter__(self: T) -> T:
         await self._client.__aenter__()
 
+        self._requester_worker = asyncio.create_task(self._requester_worker_func())
+
         return self
 
     async def __aexit__(
@@ -128,16 +159,18 @@ class Client:
         exc_value: BaseException | None = None,
         traceback: TracebackType | None = None,
     ) -> None:
+        if self._requester_worker:
+            self._requester_worker.cancel()
+
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
     async def get_with_retries(self, endpoint: str, params, headers):
         retries = 0
 
         while retries < Client.MAX_RETRIES:
-            async with self._request_limit:
-                response: httpx.Response = await self._client.get(
-                    endpoint, params=params, headers=headers
-                )
+            request = Request(endpoint, params, headers)
+            await self._request_queue.put(request)
+            response = await request.response()
 
             try:
                 response.raise_for_status()
@@ -145,7 +178,7 @@ class Client:
                 logger.error(f"{exc}\n{exc.response.text}")
 
                 if exc.response.status_code == Client.HTTP_ERROR_429:
-                    # Too Many Requests
+                    # Too Many Requests, shouldn't happen though
 
                     logger.warning("Got 429, sleeping 2s.")
                     await anyio.sleep(2.0)
@@ -158,9 +191,7 @@ class Client:
                 raise
             else:
                 logger.success(
-                    f"{response.http_version} GET {endpoint} [{retries}]: "
-                    f"{type(response).__name__} "
-                    f"({len(response.json())}) in "
+                    f"{response.http_version} GET {endpoint} {'' if retries < 1 else f'[retry {retries}] '}in "
                     f"{response.elapsed.total_seconds():.2f}s."
                 )
                 return response
