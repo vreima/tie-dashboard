@@ -8,7 +8,7 @@ import arrow
 import httpx
 from loguru import logger
 
-from config import settings
+from src.config import settings
 from src.logic.severa import models
 
 T = typing.TypeVar("T", bound="Client")

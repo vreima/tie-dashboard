@@ -7,7 +7,6 @@ from src.logic.severa.client import Client
 from src.util.daterange import DateRange
 from src.util.process import cull_before, sanitize_dates, unravel
 
-
 # async def totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
 #     data = await kpi.hours_totals(span.start, span.end)
 #     logger.debug("\n" + str(data))
@@ -102,13 +101,13 @@ async def sales_margin_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFr
     ).reset_index()
 
 
-def unravel_and_cull( # noqa: PLR0913
+def unravel_and_cull(  # noqa: PLR0913
     data: pd.DataFrame,
     culling_columns: list[str],
     culling_date: arrow.Arrow | None = None,
     groupby: list[str] | None = None,
     start: arrow.Arrow | None = None,
-    end: arrow.Arrow | None     = None
+    end: arrow.Arrow | None = None,
 ):
     """
     Helper function.
@@ -161,12 +160,12 @@ async def sales_margin(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     h2 = sanitize_dates(hours_f, ["date", "start_date", "end_date", "forecast_date"])
     h3 = h1.merge(h2, on=cols, how="outer")
 
-    total_hours= unravel_and_cull(
+    total_hours = unravel_and_cull(
         h3,
         culling_columns=["workhours", "saleswork"],
         groupby=["user", "id", "date"],
         start=start,
-        end=end
+        end=end,
     )
 
     combined = pd.concat(

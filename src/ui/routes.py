@@ -17,12 +17,12 @@ from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
-from src.logic.kpi import kpi
 import src.logic.severa.models
 import src.logic.slack.models as slack_models
 import src.util.stable_hash
 from src.config import settings
 from src.database.database import Base
+from src.logic.kpi import kpi
 from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa import base_client
 from src.logic.severa.client import Client as SeveraClient

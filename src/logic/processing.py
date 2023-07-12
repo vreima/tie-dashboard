@@ -1,8 +1,8 @@
 import asyncio
+from collections.abc import Sequence
 from datetime import datetime
 from functools import partial
 from typing import Any, Self
-from collections.abc import Sequence
 
 import arrow
 import pandas as pd
