@@ -7,12 +7,10 @@
 
 # from datetime import date, datetime
 import datetime
-
-
 from enum import Enum
 from typing import Annotated, List, Optional
 
-from pydantic import BaseModel, Field, confloat, conint, constr, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, confloat, conint, constr
 
 
 class Parent(BaseModel):

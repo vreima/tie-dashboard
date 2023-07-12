@@ -1,13 +1,18 @@
-import pandas as pd
-from typing import Iterable, Sequence
-from typing import Any
-from typing import Self, Type
+import asyncio
 from datetime import datetime
 from functools import partial
-from workalendar.europe import Finland
-from pandas.api.types import CategoricalDtype
-from loguru import logger
+from typing import Any, Self
+from collections.abc import Sequence
+
 import arrow
+import pandas as pd
+from loguru import logger
+from pandas.api.types import CategoricalDtype
+from workalendar.europe import Finland
+
+import src.logic.severa.client
+from src.database.database import Base
+from src.util.daterange import DateRange
 
 
 class ProcessData:
@@ -40,11 +45,10 @@ class ProcessData:
         for column, dtype in columns_and_dtypes.items():
             if column not in self.data.columns:
                 self.data[column] = pd.Series(dtype=dtype)
+            elif pd.Series(None, dtype=dtype).dtype == pd.DatetimeTZDtype(tz="UTC"):
+                self.data[column] = pd.to_datetime(self.data[column], utc=True)
             else:
-                if pd.Series(None, dtype=dtype).dtype == pd.DatetimeTZDtype(tz="UTC"):
-                    self.data[column] = pd.to_datetime(self.data[column], utc=True)
-                else:
-                    self.data[column] = self.data[column].astype(dtype)
+                self.data[column] = self.data[column].astype(dtype)
 
             if column not in self.unraveled.columns:
                 self.unraveled[column] = pd.Series(dtype=dtype)
@@ -62,7 +66,7 @@ class ProcessData:
         mask = self.data[min_column] > self.data[max_column]
         self.data.loc[mask, [min_column, max_column]] = self.data.loc[
             mask, [max_column, min_column]
-        ].values
+        ].to_numpy()
 
         return self
 
@@ -172,13 +176,15 @@ class ProcessData:
 
         return self
 
-    def unravel(self, date_span_start: datetime, date_span_end: datetime) -> Self:
+    def unravel(
+        self, date_span_start: datetime, date_span_end: datetime  # noqa: ARG002
+    ) -> Self:
         """
         Overridable. Unravel date (by calling _unravel()).
         """
         return self
 
-    def _unravel(
+    def _unravel(  # noqa: PLR0913
         self,
         date_span_start: datetime,
         date_span_end: datetime,
@@ -209,7 +215,10 @@ class ProcessData:
             return self
 
         # Set '_date' column to a daily series
-        dbg_mask = (self.data.loc[unravel_mask, "start_date"].isna() | self.data.loc[unravel_mask, "end_date"].isna())
+        dbg_mask = (
+            self.data.loc[unravel_mask, "start_date"].isna()
+            | self.data.loc[unravel_mask, "end_date"].isna()
+        )
         if not dbg_mask.empty:
             logger.error(self.data.loc[unravel_mask & dbg_mask, :])
         self.data.loc[unravel_mask, "_date"] = self.data.loc[unravel_mask, :].apply(
@@ -304,7 +313,7 @@ class ProcessHours(ProcessData):
             "start_date": "datetime64[ns, UTC]",
             "end_date": "datetime64[ns, UTC]",
             "forecast_date": "datetime64[ns, UTC]",
-            "productive": "boolean", # nullable boolean
+            "productive": "boolean",  # nullable boolean
             "_id": str,
         }
         return (
@@ -442,12 +451,6 @@ class ProcessUsers(ProcessData):
         self._ensure_value_order("start_date", "end_date")
 
 
-import src.logic.severa.client
-import asyncio
-from src.util.daterange import DateRange
-from src.database.database import Base
-
-
 async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
     if forecasts_from_database:
         span_severa, span_future = span.cut(arrow.utcnow())
@@ -495,9 +498,9 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         billing_f = ProcessBilling(billing_f_task).process(
             span.start.datetime, span.end.datetime
         )
-        hours_f = ProcessHours(hours_f_task[hours_f_task.id != "maximum"].copy()).process(
-            span.start.datetime, span.end.datetime
-        )
+        hours_f = ProcessHours(
+            hours_f_task[hours_f_task.id != "maximum"].copy()
+        ).process(span.start.datetime, span.end.datetime)
         dfs += [billing_f.unraveled, hours_f.unraveled]
 
     return pd.concat(

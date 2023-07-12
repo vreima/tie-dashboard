@@ -1,9 +1,11 @@
-import os
+# import os
 import re
 from collections.abc import Iterable
 from datetime import datetime
 
 import arrow
+import httpx
+import openai_async
 import pandas as pd
 
 # import openai_async
@@ -12,18 +14,12 @@ from pydantic import BaseModel
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
-import openai_async
-import httpx
 
 import src.logic.slack.models
-
+from src.config import settings
 from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa.client import fetch_invalid_salescases
 from src.util.process import search_string_for_datetime
-
-CHANNEL_YKS_TIETOMALLINTAMINEN = "C2RTSBH2T"
-CHANNEL_TIE_TARJOUSPYYNNOT = "CSFQ71ANA"
-CHANNEL_KONSU_TESTAUS = "G0190SLGYHY"
 
 
 class OfferListing(BaseModel):
@@ -36,7 +32,7 @@ class OfferListing(BaseModel):
 
 class Client:
     def __init__(self):
-        self._client = WebClient(token=os.environ["SLACK_TOKEN_BOT"])
+        self._client = WebClient(token=settings.slack_token_bot)
 
     def user_by_id(self, user_id: str) -> str | None:
         """
@@ -275,7 +271,9 @@ async def format_pressure_as_slack_block():
         [
             dict(model)
             for model in await fetch_pressure(
-                now.shift(weeks=-2).floor("week"), now.shift(weeks=-1).ceil("week"), None
+                now.shift(weeks=-2).floor("week"),
+                now.shift(weeks=-1).ceil("week"),
+                None,
             )
         ]
     )
@@ -346,14 +344,14 @@ async def format_offers_as_slack_block(slack: Client):
     now = arrow.utcnow().to("Europe/Helsinki")
 
     unmarked_offers = slack.fetch_unmarked_offers(
-        CHANNEL_TIE_TARJOUSPYYNNOT, "k", now.shift(months=-3).floor("month")
+        settings.channel_tie_tarjouspyynnot, "k", now.shift(months=-3).floor("month")
     )
 
     if unmarked_offers:
         newline = "\n"
         fi = "fi"
         formatted_strs = (
-            "📣 Kanavan #tie_tarjouspyynnöt <https://tie.up.railway.app/slack/offers|käsittelemättömät viestit>:\n"
+            f"📣 Kanavan #tie_tarjouspyynnöt <https://{settings.railway_static_url}/slack/offers|käsittelemättömät viestit>:\n"
             + "\n".join(
                 (
                     f"> *<{offer.url}|{arrow.get(float(offer.timestamp)).format('DD.MM.YYYY')}>* | "
@@ -380,8 +378,9 @@ async def send_weekly_slack_update(channel: str | None = None):
     """
     Format and send the weekly 'Viikkopalaveri' message.
     """
+    logger.debug(f"Sending weekly msg to {channel}.")
     if not channel:
-        channel = CHANNEL_YKS_TIETOMALLINTAMINEN
+        channel = settings.channel_yks_tietomallintaminen
 
     now = arrow.utcnow().to("Europe/Helsinki")
     slack = Client()
@@ -443,7 +442,7 @@ async def send_weekly_slack_update_debug() -> None:
     """
     Sends the weekly 'Viikkopalaveri' message to a debugging channel.
     """
-    await send_weekly_slack_update(CHANNEL_KONSU_TESTAUS)
+    await send_weekly_slack_update(settings.channel_tie_testaus)
 
 
 ###########
@@ -460,7 +459,7 @@ async def openai_chat(
 ) -> str:
     try:
         response = await openai_async.chat_complete(
-            os.getenv("OPENAI_API_KEY"),
+            settings.openai_api_key,
             timeout=timeout,
             payload={
                 "model": model,

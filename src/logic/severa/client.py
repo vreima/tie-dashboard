@@ -14,7 +14,6 @@ from src.logic.severa.base_client import Client as BaseClient
 from src.util.daterange import DateRange
 from src.util.stable_hash import get_hash
 
-
 T = typing.TypeVar("T", bound="Client")
 
 SALES_CACHE_REFRESH_AFTER_SECONDS = 60 * 60  # Save sales for 1h
@@ -387,7 +386,7 @@ class Client:
                 (self.fetch_forecasted_saleshours, span_future),
             ]
 
-        dfs = await gather(awaitables) # + [await self.fetch_maximums()]
+        dfs = await gather(awaitables)  # + [await self.fetch_maximums()]
         result = pd.concat(dfs, ignore_index=True)
         result["forecast_date"] = arrow.utcnow().floor("day").datetime
         result["_id"] = result.apply(

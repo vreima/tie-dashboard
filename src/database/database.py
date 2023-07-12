@@ -1,9 +1,10 @@
-import os
 import time
 
 import pandas as pd
 from loguru import logger
 from pymongo import InsertOne, MongoClient, ReplaceOne
+
+from src.config import settings
 
 
 class NotNanDict(dict):
@@ -23,7 +24,7 @@ class Base:
     """
 
     def __init__(self, base: str, collection: str):
-        self._client: MongoClient = MongoClient(f"{os.getenv('MONGO_URL')}/")
+        self._client: MongoClient = MongoClient(settings.mongo_url)
         self._coll = self._client[base][collection]
 
     def create_index(self, expiration: float):

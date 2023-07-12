@@ -1,7 +1,5 @@
 import arrow
 import pandas as pd
-from fastapi import APIRouter, Request
-from fastapi.templating import Jinja2Templates
 from loguru import logger
 
 from src.database.database import Base
@@ -10,10 +8,10 @@ from src.util.daterange import DateRange
 from src.util.process import cull_before, sanitize_dates, unravel
 
 
-async def totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
-    data = await kpi.hours_totals(span.start, span.end)
-    logger.debug("\n" + str(data))
-    return data.to_dict(orient="records")
+# async def totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
+#     data = await kpi.hours_totals(span.start, span.end)
+#     logger.debug("\n" + str(data))
+#     return data.to_dict(orient="records")
 
 
 async def hours(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
@@ -104,7 +102,7 @@ async def sales_margin_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFr
     ).reset_index()
 
 
-def unravel_and_cull(
+def unravel_and_cull( # noqa: PLR0913
     data: pd.DataFrame,
     culling_columns: list[str],
     culling_date: arrow.Arrow | None = None,

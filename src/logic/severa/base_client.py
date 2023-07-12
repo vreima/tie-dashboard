@@ -1,25 +1,15 @@
-import os
+import asyncio
 import time
 import typing
 from types import TracebackType
-import asyncio
 
 import anyio
 import arrow
 import httpx
-from dotenv import load_dotenv
 from loguru import logger
-from sortedcontainers import SortedList
 
+from config import settings
 from src.logic.severa import models
-
-load_dotenv(r"C:\Users\vireima\tie-dashboard\.env")
-
-
-SEVERA_CLIENT_ID = os.environ["SEVERA_CLIENT_ID"]
-SEVERA_CLIENT_SECRET = os.environ["SEVERA_CLIENT_SECRET"]
-SEVERA_SCOPE = os.environ["SEVERA_CLIENT_SCOPE"]
-SEVERA_BASE_URL = "https://api.severa.visma.com/rest-api/v1.0/"
 
 T = typing.TypeVar("T", bound="Client")
 JSON = dict[str, typing.Any]
@@ -73,12 +63,12 @@ class Client:
     HTTP_ERROR_429 = 429
 
     def __init__(self: T) -> None:
-        self._client_id: str = SEVERA_CLIENT_ID
-        self._client_secret: str = SEVERA_CLIENT_SECRET
-        self._client_scope: str = SEVERA_SCOPE
+        self._client_id: str = settings.severa_client_id
+        self._client_secret: str = settings.severa_client_secret
+        self._client_scope: str = settings.severa_client_scope
 
         self._client = httpx.AsyncClient(
-            base_url=SEVERA_BASE_URL, http2=True, timeout=120.0
+            base_url=settings.severa_base_url, http2=True, timeout=120.0
         )
         self._auth: models.PublicAuthenticationOutputModel | None = None
         self._request_limit = anyio.Semaphore(4)

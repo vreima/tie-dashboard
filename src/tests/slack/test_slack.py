@@ -1,4 +1,5 @@
 import pytest
+
 from src.logic.slack.client import Client
 
 
@@ -31,6 +32,6 @@ class TestSlackClient:
             MockedWebClient,
         )
 
-        c = Client()
+        Client()
 
         pass

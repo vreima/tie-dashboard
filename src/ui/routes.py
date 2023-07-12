@@ -1,6 +1,7 @@
 import datetime
 import json
-import os
+
+# import os
 import time
 import typing
 from collections import namedtuple
@@ -11,12 +12,16 @@ import arrow
 import croniter
 import httpx
 import pandas as pd
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
+from src.logic.kpi import kpi
+import src.logic.severa.models
 import src.logic.slack.models as slack_models
+import src.util.stable_hash
+from src.config import settings
 from src.database.database import Base
 from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa import base_client
@@ -81,26 +86,22 @@ async def save_sparse():
 
     logger.debug("/save_sparse: Fetching and saving kpis.")
     async with SeveraClient() as client:
-        for kpi in kpis:
+        for kpi_iter in kpis:
             t0 = time.monotonic()
 
             try:
-                data = await kpi.get(client, kpi.span)
+                data = await kpi_iter.get(client, kpi_iter.span)
             except Exception as e:
                 logger.exception(e)
             else:
-                Base(kpi.base_name, kpi.collection_name).upsert(data)
+                Base(kpi_iter.base_name, kpi_iter.collection_name).upsert(data)
                 logger.success(
-                    f"Documents for KPI '{kpi.id}' fetched and upserted in {time.monotonic() - t0:.2f}s."
+                    f"Documents for KPI '{kpi_iter.id}' fetched and upserted in {time.monotonic() - t0:.2f}s."
                 )
 
         inv_collection = Base(BASE, "invalid")
         inv_collection.create_index(23 * 60 * 60)
         inv_collection.upsert(client.get_invalid_sales())
-
-
-import src.util.stable_hash
-import src.logic.severa.models
 
 
 async def save_user_workcontract_information(
@@ -127,7 +128,7 @@ async def save_user_workcontract_information(
 
 
 async def save_user_information():
-    today_string = arrow.utcnow().date().isoformat()
+    arrow.utcnow().date().isoformat()
 
     async with SeveraClient() as client:
         users = await client.users()
@@ -136,7 +137,10 @@ async def save_user_information():
             pd.DataFrame(
                 [
                     await save_user_workcontract_information(
-                        user, src.logic.severa.models.WorkContractOutputModel(**work_contract_json)
+                        user,
+                        src.logic.severa.models.WorkContractOutputModel(
+                            **work_contract_json
+                        ),
                     )
                     for user in users
                     for work_contract_json in await client._client.get_all(
@@ -175,7 +179,7 @@ async def save_user_information():
     #             ),
     #         }
     #     ]
-        # print(items)
+    # print(items)
 
     # max hours
 
@@ -282,7 +286,7 @@ def get_cronjobs(manager: CronjobManager = CronjobManager()):  # noqa: B008
     return manager
 
 
-async def run_cronjob(timing: Cronjob, app: APIRouter):
+async def run_cronjob(timing: Cronjob, app: FastAPI):
     while True:
         timing.advance()
         delay = timing.time_to_next().seconds
@@ -291,7 +295,7 @@ async def run_cronjob(timing: Cronjob, app: APIRouter):
         if isinstance(timing.endpoint, str):
             async with httpx.AsyncClient(
                 app=app,
-                base_url=os.environ["PUBLIC_URL"],
+                base_url=settings.railway_static_url,
                 http2=True,
                 follow_redirects=True,
             ) as client:
@@ -543,8 +547,6 @@ default_router.include_router(pressure_router)
 # KPI routes #
 ##############
 
-import src.logic.kpi.kpi as kpi
-
 
 kpi_router = APIRouter(prefix="/kpi", tags=["kpi"])
 
@@ -593,7 +595,7 @@ async def dbg(span: DatespanDep):
 
 
 @kpi_router.get("/dbg_hours")
-async def dbg(span: DatespanDep):
+async def dbg_hours(span: DatespanDep):
     data = await kpi.hours_totals(span.start, span.end)
     logger.debug("\n" + str(data))
     return data.to_dict(orient="records")

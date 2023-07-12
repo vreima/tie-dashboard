@@ -1,9 +1,9 @@
 from datetime import datetime
+from typing import Any
 
 import arrow
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from typing import Any
 
 from src.database.database import Base
 
