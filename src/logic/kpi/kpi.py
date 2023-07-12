@@ -10,6 +10,12 @@ from src.util.daterange import DateRange
 from src.util.process import cull_before, sanitize_dates, unravel
 
 
+async def totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
+    data = await kpi.hours_totals(span.start, span.end)
+    logger.debug("\n" + str(data))
+    return data.to_dict(orient="records")
+
+
 async def hours(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     today = arrow.utcnow()
     span = DateRange(start, end)
@@ -44,15 +50,45 @@ async def hours(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
 async def hours_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     """ """
     data = await hours(start, end)
-    return data.pivot_table(
+
+    data.loc[data.id == "maximum", "productive"] = False
+
+    table = data.pivot_table(
         "value",
         index=["username"],
-        columns="id",
+        columns=["id", "productive"],
         aggfunc="sum",
         fill_value=0,
         dropna=False,
-        margins=True
-    ).reset_index()
+        margins=True,
+    )
+
+    add = table.loc[
+        :,
+        [
+            i
+            for i in [
+                ("absences", False),
+                ("maximum", False),
+                ("saleswork", False),
+                ("workhours", True),
+                ("workhours", False),
+            ]
+            if i in table.columns
+        ],
+    ].copy()
+    add["workhours, unproductive"] = add[("workhours", False)]
+    add["workhours, productive"] = add[("workhours", True)]
+    add = add.drop("workhours", axis=1)
+
+    logger.debug("\n" + str(table))
+    logger.debug(table.columns)
+
+    logger.debug("res:\n" + str(add))
+    logger.debug("res2:\n" + str(add.droplevel(1, axis="columns")))
+
+    return add.droplevel(1, axis="columns")
+
 
 async def sales_margin_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     """ """
@@ -64,8 +100,35 @@ async def sales_margin_totals(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFr
         aggfunc="sum",
         fill_value=0,
         dropna=False,
-        margins=True
+        margins=True,
     ).reset_index()
+
+
+def unravel_and_cull(
+    data: pd.DataFrame,
+    culling_columns: list[str],
+    culling_date: arrow.Arrow | None = None,
+    groupby: list[str] | None = None,
+    start: arrow.Arrow | None = None,
+    end: arrow.Arrow | None     = None
+):
+    """
+    Helper function.
+    """
+    culling_date = culling_date or arrow.utcnow.floor("day")
+    groupby = groupby or ["user", "id", "date"]
+
+    return (
+        cull_before(
+            unravel(data, start.datetime, end.datetime),
+            culling_date,
+            culling_columns,
+            inclusive=False,
+        )
+        .groupby(groupby, dropna=False)["value"]
+        .sum()
+        .reset_index()
+    )
 
 
 async def sales_margin(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
@@ -77,9 +140,7 @@ async def sales_margin(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
         hours = await client.fetch_hours(span_past)
         billing = await client.fetch_billing(span_past)
         # salesval = await f.fetch_salesvalue(span)
-        # sales = await f.fetch_billing(span)
 
-    # us = {user.guid: user.firstName for user in await client.users()}
     cost_by_user = {user.guid: user.workContract.hourCost.amount for user in users}
     username_by_user = {user.guid: user.firstName for user in users}
 
@@ -91,16 +152,10 @@ async def sales_margin(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     base = Base("kpi-dev-02", "hours")
     hours_f = base.find({"forecast_date": latest_date})
 
-    total_billing = (
-        cull_before(
-            unravel(pd.concat([billing, billing_f], ignore_index=True)),
-            today.floor("day"),
-            ["workhours", "billing"],
-            inclusive=False,
-        )
-        .groupby(["user", "id", "date"], dropna=False)["value"]
-        .sum()
-        .reset_index()
+    total_billing = unravel_and_cull(
+        pd.concat([billing, billing_f], ignore_index=True),
+        culling_columns=["workhours", "billing"],
+        groupby=["user", "id", "date"],
     )
 
     cols = list(set(hours.columns) & set(hours_f.columns))
@@ -108,16 +163,12 @@ async def sales_margin(start: arrow.Arrow, end: arrow.Arrow) -> pd.DataFrame:
     h2 = sanitize_dates(hours_f, ["date", "start_date", "end_date", "forecast_date"])
     h3 = h1.merge(h2, on=cols, how="outer")
 
-    total_hours = (
-        cull_before(
-            unravel(h3, start.datetime, end.datetime),
-            today.floor("day"),
-            ["workhours", "saleswork"],  # absences?
-            inclusive=False,
-        )
-        .groupby(["user", "id", "date"], dropna=False)["value"]
-        .sum()
-        .reset_index()
+    total_hours= unravel_and_cull(
+        h3,
+        culling_columns=["workhours", "saleswork"],
+        groupby=["user", "id", "date"],
+        start=start,
+        end=end
     )
 
     combined = pd.concat(

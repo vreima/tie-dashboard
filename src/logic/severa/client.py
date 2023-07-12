@@ -107,6 +107,70 @@ class Client:
             "6b49ead7-573f-f186-c508-1e8606b5e59a": "VIS",
         }.get(businessunit_guid, "MUU")
 
+    #############################
+    # Fetching user information #
+    #############################
+
+    async def fetch_single_user_information(
+        self, user, work_contract: models.WorkContractOutputModel
+    ):
+        info = {
+            "user": user.guid,
+            "first_name": user.firstName,
+            "last_name": user.lastName,
+            "business_unit": user.businessUnit.guid,
+            "start_date": work_contract.startDate,
+            "end_date": work_contract.endDate,
+        }
+        return [
+            info
+            | {
+                "id": "daily_hours",
+                "value": work_contract.dailyHours,
+                "_id": get_hash(
+                    (
+                        "daily_hours",
+                        user.guid,
+                        work_contract.dailyHours,
+                    )
+                ),
+            },
+            info
+            | {
+                "id": "hour_cost",
+                "value": work_contract.hourCost.amount,
+                "_id": get_hash(
+                    (
+                        "hour_cost",
+                        user.guid,
+                        work_contract.hourCost.amount,
+                    )
+                ),
+            },
+        ]
+
+    async def fetch_all_user_information(self) -> pd.DataFrame:
+        """
+        Fetch user information: history of work contracts, daily work hours,
+        work hour costs etc.
+        """
+        users = await self.users()
+
+        return pd.DataFrame(
+            sum(
+                [
+                    await self.fetch_single_user_information(
+                        user, models.WorkContractOutputModel(**work_contract_json)
+                    )
+                    for user in users
+                    for work_contract_json in await self._client.get_all(
+                        f"users/{user.guid}/workcontracts"
+                    )
+                ],
+                start=[],
+            )
+        )
+
     ###########################
     # Fetching hours          #
     ###########################
@@ -323,7 +387,7 @@ class Client:
                 (self.fetch_forecasted_saleshours, span_future),
             ]
 
-        dfs = [await self.fetch_maximums()] + await gather(awaitables)
+        dfs = await gather(awaitables) # + [await self.fetch_maximums()]
         result = pd.concat(dfs, ignore_index=True)
         result["forecast_date"] = arrow.utcnow().floor("day").datetime
         result["_id"] = result.apply(
@@ -574,21 +638,17 @@ class Client:
         projects_mapping = await self.fetch_projects_with_cache()
 
         span_past, span_future = span.cut(arrow.utcnow())
-        logger.info(span_past)
-        logger.info(span_future)
+
         awaitables = []
 
         if span_past:
-            logger.debug("past")
             awaitables += [(self.fetch_realized_billing, span_past)]
 
         if span_future:
-            logger.debug("future")
             awaitables += [(self.fetch_forecasted_billing, span_future)]
 
         result = pd.concat(await gather(awaitables), ignore_index=True)
-        logger.warning(result.columns)
-        logger.warning(f"{result=}")
+
         result["user"] = result["project"].apply(
             lambda x: projects_mapping[x].projectOwner.guid
             if x in projects_mapping
@@ -622,7 +682,7 @@ class Client:
                     "date": pd.Series(dtype="datetime64[ns, UTC]"),
                     "project": pd.Series(dtype=str),
                     "value": pd.Series(dtype=float),
-                    "status": pd.Series(dtype=str)
+                    "status": pd.Series(dtype=str),
                 }
             )
 
@@ -653,8 +713,6 @@ class Client:
             ),
             start=[],
         )
-
-        logger.warning(forecasts)
 
         result = pd.DataFrame(
             [

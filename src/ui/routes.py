@@ -99,6 +99,91 @@ async def save_sparse():
         inv_collection.upsert(client.get_invalid_sales())
 
 
+import src.util.stable_hash
+import src.logic.severa.models
+
+
+async def save_user_workcontract_information(
+    user, work_contract: src.logic.severa.models.WorkContractOutputModel
+):
+    return {
+        "user": user.guid,
+        "first_name": user.firstName,
+        "last_name": user.lastName,
+        "business_unit": user.businessUnit.guid,
+        "daily_hours": work_contract.dailyHours,
+        "hour_cost": work_contract.hourCost.amount,
+        "start_date": work_contract.startDate,
+        "end_date": work_contract.endDate,
+        "_id": src.util.stable_hash.get_hash(
+            (
+                user.guid,
+                work_contract.dailyHours,
+                work_contract.hourCost.amount,
+                work_contract.guid,
+            )
+        ),
+    }
+
+
+async def save_user_information():
+    today_string = arrow.utcnow().date().isoformat()
+
+    async with SeveraClient() as client:
+        users = await client.users()
+
+        print(
+            pd.DataFrame(
+                [
+                    await save_user_workcontract_information(
+                        user, src.logic.severa.models.WorkContractOutputModel(**work_contract_json)
+                    )
+                    for user in users
+                    for work_contract_json in await client._client.get_all(
+                        f"users/{user.guid}/workcontracts"
+                    )
+                ]
+            )
+        )
+
+    # for user in users:
+    #     print(
+    #         user.firstName,
+    #         user.lastName,
+    #         user.title,
+    #         user.workContract.dailyHours,
+    #         f"{user.workContract.workWeek}",
+    #         user.workContract.hourCost.amount,
+    #         user.workContract.endDate,
+    #     )
+    #     items = [
+    #         {
+    #             "user": user.guid,
+    #             "first_name": user.firstName,
+    #             "last_name": user.lastName,
+    #             "business_unit": user.businessUnit.guid,
+    #             "daily_hours": user.workContract.dailyHours,
+    #             "hour_cost": user.workContract.hourCost,
+    #             "valid_until": today_string,
+    #             "_id": src.util.stable_hash.get_hash(
+    #                 (
+    #                     user.guid,
+    #                     user.workContract.dailyHours,
+    #                     user.workContract.hourCost.amount,
+    #                     user.workContract.guid,
+    #                 )
+    #             ),
+    #         }
+    #     ]
+        # print(items)
+
+    # max hours
+
+    # hourly cost
+
+    # slack name
+
+
 async def save_only_invalid_salescase_info() -> pd.DataFrame:
     async with SeveraClient() as client:
         try:
@@ -506,10 +591,11 @@ async def dbg(span: DatespanDep):
     logger.debug("\n" + str(data))
     return data.to_dict(orient="records")
 
+
 @kpi_router.get("/dbg_hours")
 async def dbg(span: DatespanDep):
     data = await kpi.hours_totals(span.start, span.end)
-    logger.debug(data)
+    logger.debug("\n" + str(data))
     return data.to_dict(orient="records")
 
 
