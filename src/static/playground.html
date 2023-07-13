@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/danfojs@1.1.2/lib/bundle.min.js"></script>
+  </head>
+
+  <body onload="init()">
+    <div id="content"></div>
+    <div id="content2"></div>
+    <input type="date" id="start-date" value="2023-01-01" />
+    <input type="date" id="end-date" value="2023-09-30" />
+
+    <script>
+      async function init() {
+          const start = document.getElementById("start-date").value;
+          const end = document.getElementById("end-date").value;
+        // const response = await fetch(
+        //   `/kpi/totals?startDate=${start}&endDate=${end}`
+        // );
+        const response = await fetch(
+          `/static/temp.json` // ?startDate=${start}&endDate=${end}`
+        );
+        const json_data = await response.json();
+
+        let df = new dfd.DataFrame(json_data);
+        df.loc({ columns: ["date", "first_name", "id"] })
+          .plot("content")
+          .table();
+        df.ctypes.print();
+
+        console.log(df["date"].dt.monthName());
+        //dfd.toDateTime(df["date"]).plot("content2").table();
+        df.addColumn("year", df["date"].dt.year(), { inplace: true });
+        df.addColumn("month", df["date"].dt.month(), { inplace: true });
+
+        // console.log("HOOOOOOOOOOO");
+
+        df.ctypes.print();
+
+        let grp = df.groupby(["year", "month", "first_name", "id"]);
+
+        grp.col(["value"]).sum().plot("content2").table();
+      }
+    </script>
+  </body>
+</html>

@@ -239,7 +239,8 @@ async def read(
 
 
 class Cronjob:
-    def __init__(self, endpoint: typing.Coroutine, cron: str):
+    def __init__(self, endpoint: typing.Coroutine, cron: str, name: str):
+        self.name = name
         self.endpoint = endpoint
         self.cronstring = cron
         self.croniter = croniter.croniter(cron, arrow.utcnow().datetime)
@@ -247,7 +248,12 @@ class Cronjob:
         self.next_run: arrow.Arrow = arrow.Arrow(1900, 1, 1)
 
     def advance(self) -> arrow.Arrow:
+        previous_run = self.next_run
         self.next_run = arrow.get(self.croniter.get_next(float))
+
+        logger.debug(
+            f"Cronjob '{self.name}' advancing from {previous_run} to {self.next_run}."
+        )
         return self.next_run
 
     def time_to_next(self) -> datetime.timedelta:
@@ -267,7 +273,7 @@ class CronjobManager:
             "Service is running.\n" if self.started else "Service is not running.\n"
         )
         result += f"{len(self.jobs)} in queue:\n" + "\n".join(
-            f'   {job.endpoint} running next {job.next_run.humanize()} at {job.next_run.to("Europe/Helsinki").format("HH:mm DD.MM.YYYY")}'
+            f'   [{job.name}] {job.endpoint} running next {job.next_run.humanize()} at {job.next_run.to("Europe/Helsinki").format("HH:mm DD.MM.YYYY")}'
             for job in self.jobs
         )
 
@@ -278,7 +284,7 @@ class CronjobManager:
 
         async with anyio.create_task_group() as tg:
             for cj in self.jobs:
-                logger.debug(f"Starting {cj.endpoint}.")
+                logger.debug(f"[{cj.name}] Starting {cj.endpoint}.")
                 tg.start_soon(run_cronjob, cj, app, name=cj.endpoint)
 
 
@@ -290,7 +296,15 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
     while True:
         timing.advance()
         delay = timing.time_to_next().seconds
+
+        logger.debug(
+            f"[{timing.name}] Cronjob sleeping for "
+            f"{delay}s (={delay / 60 / 24:.1f} days)."
+        )
+
         await anyio.sleep(delay)
+
+        logger.debug(f"[{timing.name}] Cronjob task is called.")
 
         if isinstance(timing.endpoint, str):
             async with httpx.AsyncClient(
@@ -301,13 +315,17 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
             ) as client:
                 try:
                     response = await client.get(timing.endpoint)
-                    logger.debug(f"{timing.endpoint}: response {response.status_code}.")
+                    logger.debug(
+                        f"[{timing.name}] {timing.endpoint}: response {response.status_code}."
+                    )
                 except (httpx.HTTPStatusError, httpx.HTTPError) as e:
                     logger.exception(e)
                 except Exception as e:
                     logger.exception(e)
         else:
             await timing.endpoint()
+
+        logger.debug(f"[{timing.name}] Cronjob task is done.")
 
 
 @default_router.get("/status")
@@ -579,18 +597,24 @@ async def get_salesmargin(request: Request):
     )
 
 
+import src.logic.processing
+
+
 @kpi_router.get("/totals")
 async def dbg(span: DatespanDep):
-    salesmargin = await kpi.sales_margin_totals(span.start, span.end)
-    hours = await kpi.hours_totals(span.start, span.end)
+    # salesmargin = await kpi.sales_margin_totals(span.start, span.end)
+    # hours = await kpi.hours_totals(span.start, span.end)
 
-    logger.debug("\n" + str(salesmargin))
-    logger.debug("\n" + str(hours))
+    # logger.debug("\n" + str(salesmargin))
+    # logger.debug("\n" + str(hours))
 
-    data = salesmargin.merge(hours, how="outer", on="username")
-    data["margin"] = data["billing"] - data["cost"]
-    data["margin_percent"] = data["margin"] / data["billing"]
-    logger.debug("\n" + str(data))
+    # data = salesmargin.merge(hours, how="outer", on="username")
+    # data["margin"] = data["billing"] - data["cost"]
+    # data["margin_percent"] = data["margin"] / data["billing"]
+    # logger.debug("\n" + str(data))
+    data = await src.logic.processing.load_and_merge(
+        DateRange(span.start, span.end), forecasts_from_database=True
+    )
     return data.to_dict(orient="records")
 
 

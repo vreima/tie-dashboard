@@ -198,29 +198,24 @@ class ProcessData:
         copied straight or interpolated by either the number of days or the number
         of working days in the span.
         """
-        min_date: datetime = self.min_date_in_data(
-            ["date", "start_date"],
-            fallback=date_span_start,
-        )
-        max_date: datetime = self.max_date_in_data(
-            ["date", "end_date"],
-            fallback=date_span_end,
-        )
+        # min_date: datetime = self.min_date_in_data(
+        #     ["date", "start_date"],
+        #     fallback=date_span_start,
+        # )
+        # max_date: datetime = self.max_date_in_data(
+        #     ["date", "end_date"],
+        #     fallback=date_span_end,
+        # )
 
-        self.prepare_unravel(min_date, max_date)
+        self.prepare_unravel(date_span_start, date_span_end)
 
         unravel_mask = self.data_to_unravel()
 
         if self.data.loc[unravel_mask, :].empty:
+            self.unraveled = self.data
             return self
 
         # Set '_date' column to a daily series
-        dbg_mask = (
-            self.data.loc[unravel_mask, "start_date"].isna()
-            | self.data.loc[unravel_mask, "end_date"].isna()
-        )
-        if not dbg_mask.empty:
-            logger.error(self.data.loc[unravel_mask & dbg_mask, :])
         self.data.loc[unravel_mask, "_date"] = self.data.loc[unravel_mask, :].apply(
             lambda x: pd.date_range(start=x["start_date"], end=x["end_date"], freq="D"),
             axis=1,
@@ -282,8 +277,10 @@ class ProcessData:
 
         self.unraveled = pd.concat(
             [
-                # unraveled.drop(["_num_workdays", "_is_workday", "_zero_if_holiday"], axis=1),
-                unraveled,
+                unraveled.drop(
+                    [col for col in unraveled.columns if col.startswith("_")],
+                    axis="columns",
+                ),
                 self.data[~unravel_mask],
             ],
             ignore_index=True,
@@ -291,12 +288,26 @@ class ProcessData:
 
         return self
 
+    def merge_with(self, other: Self) -> Self:
+        other.merge_to(self.unraveled)
+        return self
+
+    def merge_to(self, other_data: pd.DataFrame) -> Self:
+        """
+        Overridable. Add columns to 'other'.
+        """
+        return self
+
     def process(self, date_span_start: datetime, date_span_end: datetime) -> Self:
+        logger.debug(f"{self}: {len(self.data)}")
         a = self.validate_data()
-        logger.warning(type(a))
+
+        logger.debug(f"   validate: {len(self.data)}")
         b = a.unravel(date_span_start, date_span_end)
-        logger.warning(type(b))
-        return b.cull_to_span(date_span_start, date_span_end)
+        logger.debug(f"   unravel: {len(self.unraveled)}")
+        c= b.cull_to_span(date_span_start, date_span_end)
+        logger.debug(f"   cull_to_span: {len(self.unraveled)}")
+        return c
 
 
 class ProcessHours(ProcessData):
@@ -372,15 +383,13 @@ class ProcessBilling(ProcessData):
         date_span_start: datetime,
         date_span_end: datetime,
     ) -> Self:
-        x = super()._unravel(
+        return super()._unravel(
             date_span_start,
             date_span_end,
             set_to_zero_if_on_holiday_mask=True,
             scale_with_number_of_days=False,
             scale_with_number_of_workdays=True,
         )
-        logger.warning(f"billing / {type(x)=}")
-        return x
 
     def cull_to_span(self, date_span_start: datetime, date_span_end: datetime) -> Self:
         return (
@@ -404,6 +413,19 @@ class ProcessSales(ProcessData):
             "_id": str,
         }
         return super()._ensure_columns(columns)
+    
+    def unravel(
+        self,
+        date_span_start: datetime,
+        date_span_end: datetime,
+    ) -> Self:
+        return super()._unravel(
+            date_span_start,
+            date_span_end,
+            set_to_zero_if_on_holiday_mask=False,
+            scale_with_number_of_days=False,
+            scale_with_number_of_workdays=False,
+        )
 
 
 class ProcessUsers(ProcessData):
@@ -450,6 +472,45 @@ class ProcessUsers(ProcessData):
         # We might have start and end dates in wrong order in rare cases here
         self._ensure_value_order("start_date", "end_date")
 
+    def merge_to(self, other_data: pd.DataFrame) -> pd.DataFrame:
+        columns_to_merge = ["first_name", "last_name", "business_unit"]
+        key_columns = ["user"]
+
+        usernames = (
+            self.unraveled.copy()
+            .sort_values(["date"])
+            .groupby(key_columns)
+            .last()
+            .reset_index()[key_columns + columns_to_merge]
+        )
+        
+        return other_data.drop(columns_to_merge, axis=1).merge(
+            usernames, how="left", on=key_columns
+        )
+
+
+def concat(*data) -> pd.DataFrame:
+    left = data[0].unraveled
+
+    for right in data[1:]:
+        result = pd.concat([left, right.unraveled], ignore_index=True)
+
+        # Combine categorical dtypes too
+        for column in left.columns.intersection(right.unraveled.columns):
+            dtype_left = left[column].dtype
+            dtype_right = right.unraveled[column].dtype
+
+            if isinstance(dtype_left, pd.CategoricalDtype) and isinstance(
+                dtype_right, pd.CategoricalDtype
+            ):
+                cats = dtype_left.categories.union(dtype_right.categories)
+                result[column] = result[column].astype(pd.CategoricalDtype(cats))
+
+        left = result
+
+
+    return left
+
 
 async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
     if forecasts_from_database:
@@ -458,8 +519,6 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         span_severa = span
 
     forecasts_from_database = forecasts_from_database and bool(span_future)
-
-    dfs = []
 
     async with src.logic.severa.client.Client() as client:
         async with asyncio.TaskGroup() as tg:
@@ -472,16 +531,24 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
             if forecasts_from_database:
                 base = Base("kpi-dev-02", "billing")
                 latest_date = base.find_max_value("forecast_date")
-                logger.warning(f"{latest_date=}")
                 billing_f_task = base.find({"forecast_date": latest_date})
 
                 base = Base("kpi-dev-02", "hours")
                 hours_f_task = base.find({"forecast_date": latest_date})
 
+                base = Base("kpi-dev-02", "sales")
+                sales_f_task = base.find({"forecast_date": latest_date})
+
+    users = ProcessUsers(user_info.result()).process(
+        span.start.datetime, span.end.datetime
+    )
+
+    dfs = [users]
     if span_severa:
-        users = ProcessUsers(user_info.result()).process(
-            span.start.datetime, span.end.datetime
-        )
+        logger.debug(f"{len(hours_p.result())=}")
+        logger.debug(f"{len(billing_p.result())=}")
+        logger.debug(f"{len(sales_p.result())=}")
+
         hours = ProcessHours(hours_p.result()).process(
             span.start.datetime, span.end.datetime
         )
@@ -492,7 +559,7 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
             span.start.datetime, span.end.datetime
         )
 
-        dfs = [users.unraveled, billing.unraveled, hours.unraveled, sales.unraveled]
+        dfs += [billing, hours, sales]
 
     if forecasts_from_database:
         billing_f = ProcessBilling(billing_f_task).process(
@@ -501,9 +568,10 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         hours_f = ProcessHours(
             hours_f_task[hours_f_task.id != "maximum"].copy()
         ).process(span.start.datetime, span.end.datetime)
-        dfs += [billing_f.unraveled, hours_f.unraveled]
 
-    return pd.concat(
-        dfs,
-        ignore_index=True,
-    )
+        sales_f = ProcessSales(sales_f_task).process(
+            span.start.datetime, span.end.datetime
+        )
+        dfs += [billing_f, hours_f, sales_f]
+
+    return users.merge_to(concat(*dfs))

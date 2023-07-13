@@ -435,7 +435,11 @@ async def send_weekly_slack_update(channel: str | None = None):
         await format_pressure_as_slack_block(),
     ]
 
-    slack.post_message(channel=channel, message_text="Viikkopalaveri", blocks=blocks)
+    slack.post_message(
+        channel=channel,
+        message_text=f"Viikkopalaveri {now.format('D.M.YYYY')}",
+        blocks=blocks,
+    )
 
 
 async def send_weekly_slack_update_debug() -> None:
