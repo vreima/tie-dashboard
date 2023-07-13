@@ -252,7 +252,7 @@ class Cronjob:
         self.next_run = arrow.get(self.croniter.get_next(float))
 
         logger.debug(
-            f"Cronjob '{self.name}' advancing from {previous_run} to {self.next_run}."
+            f"[{self.name}] Advancing from {previous_run} to {self.next_run}."
         )
         return self.next_run
 
@@ -299,7 +299,7 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
 
         logger.debug(
             f"[{timing.name}] Cronjob sleeping for "
-            f"{delay}s (={delay / 60 / 24:.1f} days)."
+            f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
         )
 
         await anyio.sleep(delay)
@@ -391,11 +391,12 @@ async def get_offers(
     return templates.TemplateResponse("offers.html", params)
 
 
-@slack_router.get("/debug")
+@slack_router.get("/send_debug_message")
 async def send_debug_message():
     """
     Send weekly Viikkopalaveri msg mor often and to a debug channel.
     """
+    logger.debug("/send_debug_message")
     await send_weekly_slack_update_debug()
 
 
