@@ -78,6 +78,22 @@ class Client:
 
         return list(self._users.values())
 
+    async def fetch_all_users(self) -> list[models.UserOutputModel]:
+        return pd.DataFrame(
+            [
+                {
+                    "user": user_json["guid"],
+                    "first_name": user_json["firstName"],
+                    "last_name": user_json["lastName"],
+                    "business_unit": user_json["businessUnit"]["guid"],
+                }
+                for user_json in await self._client.get_all(
+                    "users",
+                    isActive=True,
+                )
+            ]
+        )
+
     async def user_by_guid(self, user_guid: str) -> models.UserOutputModel:
         if not self._users:
             await self.users()
@@ -110,8 +126,10 @@ class Client:
     # Fetching user information #
     #############################
 
-    async def fetch_single_user_information(
-        self, user, work_contract: models.WorkContractOutputModel
+    def combine_single_user_information(
+        self,
+        user: models.UserOutputModel,
+        work_contract: models.WorkContractOutputModel,
     ):
         info = {
             "user": user.guid,
@@ -121,14 +139,15 @@ class Client:
             "start_date": work_contract.startDate,
             "end_date": work_contract.endDate,
         }
+
         return [
             info
             | {
-                "id": "daily_hours",
+                "id": "maximum",
                 "value": work_contract.dailyHours,
                 "_id": get_hash(
                     (
-                        "daily_hours",
+                        "maximum",
                         user.guid,
                         work_contract.dailyHours,
                     )
@@ -148,24 +167,45 @@ class Client:
             },
         ]
 
+    async def fetch_single_user_information(self, user: models.UserOutputModel):
+        logger.debug(f"Fetching info for {user.firstName}.")
+
+        work_contracts_json = await self._client.get_all(
+            f"users/{user.guid}/workcontracts"
+        )
+
+        return sum(
+            [
+                self.combine_single_user_information(
+                    user, models.WorkContractOutputModel(**work_contract_json)
+                )
+                for work_contract_json in work_contracts_json
+            ],
+            start=[],
+        )
+
     async def fetch_all_user_information(self) -> pd.DataFrame:
         """
         Fetch user information: history of work contracts, daily work hours,
         work hour costs etc.
         """
-        users = await self.users()
+        # all_users = [
+        #     models.UserOutputModel(**user_json)
+        #     for user_json in await self._client.get_all(
+        #         "users",
+        #         isActive=True,
+        #     )
+        # ]
+
+        all_users = await self.users()
+
+        logger.debug("Fetched all users.")
 
         return pd.DataFrame(
             sum(
-                [
-                    await self.fetch_single_user_information(
-                        user, models.WorkContractOutputModel(**work_contract_json)
-                    )
-                    for user in users
-                    for work_contract_json in await self._client.get_all(
-                        f"users/{user.guid}/workcontracts"
-                    )
-                ],
+                await gather(
+                    [(self.fetch_single_user_information, user) for user in all_users],
+                ),
                 start=[],
             )
         )

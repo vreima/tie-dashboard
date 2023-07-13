@@ -3,45 +3,166 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="/static/kpi_table.css" />
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"
+    ></script>
     <script src="https://cdn.jsdelivr.net/npm/danfojs@1.1.2/lib/bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
   </head>
 
   <body onload="init()">
+    <div id="inputs">
+      <input type="date" id="start-date" value="2023-01-01" />
+      <input type="date" id="end-date" value="2023-09-30" />
+      <input type="text" id="id_filter" value="" />
+      <input type="text" id="groupby" value="user, first_name, id" />
+      <button type="button"onclick="load_data()">Lataa aineisto uudelleen</button>
+    </div>
+    <div id="stats"></div>
+    <div id="info"></div>
     <div id="content"></div>
-    <div id="content2"></div>
-    <input type="date" id="start-date" value="2023-01-01" />
-    <input type="date" id="end-date" value="2023-09-30" />
 
     <script>
+      let global_data = null;
+
       async function init() {
-          const start = document.getElementById("start-date").value;
-          const end = document.getElementById("end-date").value;
-        // const response = await fetch(
-        //   `/kpi/totals?startDate=${start}&endDate=${end}`
-        // );
+        load_data();
+
+        const filter_inputs = document.querySelectorAll("input");
+
+        filter_inputs.forEach((input) => {
+          input.addEventListener("change", async (event) => {
+            await update_table();
+          });
+        });
+      }
+
+      async function load_data() {
+        const start = document.getElementById("start-date").value;
+        const end = document.getElementById("end-date").value;
+
         const response = await fetch(
-          `/static/temp.json` // ?startDate=${start}&endDate=${end}`
+          `/kpi/totals?start=${start}&end=${end}`
         );
-        const json_data = await response.json();
 
-        let df = new dfd.DataFrame(json_data);
-        df.loc({ columns: ["date", "first_name", "id"] })
-          .plot("content")
-          .table();
-        df.ctypes.print();
+        global_data = await response.json();
 
-        console.log(df["date"].dt.monthName());
-        //dfd.toDateTime(df["date"]).plot("content2").table();
+        await update_table();
+      }
+
+      async function filter_data(json_data) {
+        // Inputs
+        const start = luxon.DateTime.fromISO(
+          document.getElementById("start-date").value
+        );
+        const end = luxon.DateTime.fromISO(
+          document.getElementById("end-date").value
+        );
+        const id_filter = document
+          .getElementById("id_filter")
+          .value.split(",")
+          .map((e) => e.trim());
+        const groupings = document
+          .getElementById("groupby")
+          .value.split(",")
+          .map((e) => e.trim());
+
+        // Filtering prep
+        const df = new dfd.DataFrame(json_data);
+        const shape_orig = df.shape;
+
         df.addColumn("year", df["date"].dt.year(), { inplace: true });
         df.addColumn("month", df["date"].dt.month(), { inplace: true });
+        df.addColumn("day", df["date"].dt.dayOfMonth(), { inplace: true });
 
-        // console.log("HOOOOOOOOOOO");
+        dates = df["date"].values.map((date_str) => luxon.DateTime.fromISO(date_str));
+        df.addColumn(
+          "week",
+          dates.map((date) => date.weekNumber),
+          { inplace: true }
+        );
 
-        df.ctypes.print();
+        const min_date = luxon.DateTime.min(...dates);
+        const max_date = luxon.DateTime.max(...dates);
 
-        let grp = df.groupby(["year", "month", "first_name", "id"]);
+        document.getElementById(
+          "info"
+        ).innerHTML = `Aineiston aikajänne ${min_date} .. ${max_date}.<br>Arvojen tyyppejä: ${df[
+          "id"
+        ]
+          .unique()
+          .values.join(", ")},<br>sarakkeita: ${df.axis.columns.join(", ")}`;
 
-        grp.col(["value"]).sum().plot("content2").table();
+        console.log(df);
+
+        // Date filtering
+        const interval = luxon.Interval.fromDateTimes(
+          start,
+          end.plus(luxon.Duration.fromISO("P1D"))
+        );
+        console.log(interval);
+        const date_filtered = df.query(
+          df["date"].map((date_str) => {
+            date = luxon.DateTime.fromISO(date_str);
+            return interval.contains(date);
+          })
+        );
+        const shape_date_filtered = date_filtered.shape;
+
+        // ID filtering
+        const id_filtered =
+          !Array.isArray(id_filter) || !id_filter.length || id_filter[0] == ""
+            ? date_filtered
+            : date_filtered.query(
+                df["id"].map((id_str) => id_filter.includes(id_str))
+              );
+        const shape_id_filtered = id_filtered.shape;
+
+        console.log("****");
+        console.log(!Array.isArray(id_filter) || !id_filter.length);
+        console.log(id_filter);
+        console.log(id_filter.length);
+        console.log(shape_id_filtered);
+        console.log(id_filtered);
+
+        // Grouping
+        const grp = id_filtered.groupby(groupings);
+        const grouped = grp.col(["value"]).sum();
+        const shape_grouped = grouped.shape;
+
+        console.log(shape_grouped);
+
+        // Stats
+        const stat_text = `${shape_orig[0]} > ${shape_date_filtered[0]} > ${shape_id_filtered[0]} > ${shape_grouped[0]} riviä dataa`;
+        document.getElementById("stats").innerHTML = stat_text;
+
+        return [dfd.toJSON(grouped, { format: "column" }), groupings];
+      }
+
+      async function update_table() {
+        const [data, groupings] = await filter_data(global_data);
+
+        console.log(data);
+        console.log(groupings);
+
+        let result =
+          "<tr>" +
+          groupings.map((group) => `<th>${group}</th>`).join("") +
+          `<th>value</th></tr>` +
+          data
+            .map(
+              (row) =>
+                "<tr>" +
+                groupings.map((group) => `<td>${row[group]}</td>`).join("") +
+                `<td>${row["value_sum"]}</td></tr>`
+            )
+            .join("\n");
+
+        document.getElementById(
+          "content"
+        ).innerHTML = `<table>${result}</table>`;
       }
     </script>
   </body>

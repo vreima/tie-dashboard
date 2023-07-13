@@ -17,6 +17,7 @@ from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
+import src.logic.processing
 import src.logic.severa.models
 import src.logic.slack.models as slack_models
 import src.util.stable_hash
@@ -251,9 +252,7 @@ class Cronjob:
         previous_run = self.next_run
         self.next_run = arrow.get(self.croniter.get_next(float))
 
-        logger.debug(
-            f"[{self.name}] Advancing from {previous_run} to {self.next_run}."
-        )
+        logger.debug(f"Advancing from {previous_run} to {self.next_run}.")
         return self.next_run
 
     def time_to_next(self) -> datetime.timedelta:
@@ -299,13 +298,12 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
             delay = timing.time_to_next().seconds
 
             logger.debug(
-                f"Cronjob sleeping for "
-                f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
+                f"Cronjob sleeping for " f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
             )
 
             await anyio.sleep(delay)
 
-            logger.debug(f"Cronjob task is called.")
+            logger.debug("Cronjob task is called.")
 
             if isinstance(timing.endpoint, str):
                 async with httpx.AsyncClient(
@@ -326,7 +324,7 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
             else:
                 await timing.endpoint()
 
-            logger.debug(f"Cronjob task is done.")
+            logger.debug("Cronjob task is done.")
 
 
 @default_router.get("/status")
@@ -599,9 +597,6 @@ async def get_salesmargin(request: Request):
     )
 
 
-import src.logic.processing
-
-
 @kpi_router.get("/totals")
 async def dbg(span: DatespanDep):
     # salesmargin = await kpi.sales_margin_totals(span.start, span.end)
@@ -614,6 +609,7 @@ async def dbg(span: DatespanDep):
     # data["margin"] = data["billing"] - data["cost"]
     # data["margin_percent"] = data["margin"] / data["billing"]
     # logger.debug("\n" + str(data))
+    logger.debug(f"/totals: {DateRange(span.start, span.end)}")
     data = await src.logic.processing.load_and_merge(
         DateRange(span.start, span.end), forecasts_from_database=True
     )

@@ -1,0 +1,26 @@
+body, input, button {
+    font-family: monospace;
+}
+
+div {
+    padding: 0.1em;
+}
+
+div#stats, div#info {
+    color: gray;
+}
+
+div#info {
+    font-size: 0.7em;
+}
+
+table {
+    border-collapse: collapse;
+    margin-top: 1em;
+    padding: 0.1em;
+}
+
+td, th, input, button {
+    padding: 0.1em 1em;
+    border: 1px solid lightgray;
+}

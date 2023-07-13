@@ -21,7 +21,7 @@ class UserWithFirstNameLastNameAndPhotoFileModel(Parent):
     code: Optional[str] = None
     name: Optional[str] = None
     guid: str
-    firstName: str
+    firstName: Optional[str] = None
     lastName: Optional[str] = None
 
 

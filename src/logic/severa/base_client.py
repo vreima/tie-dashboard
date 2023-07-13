@@ -51,11 +51,20 @@ class Request:
         """
         Send the HTTP GET using client.
         """
-        response: httpx.Response = await client.get(
-            self.endpoint, params=self.params, headers=self.headers
-        )
+        if client.is_closed:
+            logger.error(f"/{self.endpoint} -> Client is closed.")
+            await self.queue.put(httpx.Response(httpx.codes.INTERNAL_SERVER_ERROR))
+            return
 
-        await self.queue.put(response)
+        try:
+            response: httpx.Response = await client.get(
+                self.endpoint, params=self.params, headers=self.headers
+            )
+        except httpx.WriteError as exc:
+            logger.error(f"/{self.endpoint} -> httpx.WriteError: {exc}")
+            await self.queue.put(httpx.Response(httpx.codes.INTERNAL_SERVER_ERROR))
+        else:
+            await self.queue.put(response)
 
 
 class Client:

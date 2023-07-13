@@ -305,7 +305,7 @@ class ProcessData:
         logger.debug(f"   validate: {len(self.data)}")
         b = a.unravel(date_span_start, date_span_end)
         logger.debug(f"   unravel: {len(self.unraveled)}")
-        c= b.cull_to_span(date_span_start, date_span_end)
+        c = b.cull_to_span(date_span_start, date_span_end)
         logger.debug(f"   cull_to_span: {len(self.unraveled)}")
         return c
 
@@ -413,7 +413,7 @@ class ProcessSales(ProcessData):
             "_id": str,
         }
         return super()._ensure_columns(columns)
-    
+
     def unravel(
         self,
         date_span_start: datetime,
@@ -434,7 +434,7 @@ class ProcessUsers(ProcessData):
             "user": str,
             "first_name": str,
             "last_name": str,
-            "id": CategoricalDtype(categories=["daily_hours", "hour_cost"]),
+            "id": CategoricalDtype(categories=["maximum", "hour_cost"]),
             "business_unit": str,
             "value": float,
             "start_date": "datetime64[ns, UTC]",
@@ -472,21 +472,22 @@ class ProcessUsers(ProcessData):
         # We might have start and end dates in wrong order in rare cases here
         self._ensure_value_order("start_date", "end_date")
 
-    def merge_to(self, other_data: pd.DataFrame) -> pd.DataFrame:
-        columns_to_merge = ["first_name", "last_name", "business_unit"]
-        key_columns = ["user"]
 
-        usernames = (
-            self.unraveled.copy()
-            .sort_values(["date"])
-            .groupby(key_columns)
-            .last()
-            .reset_index()[key_columns + columns_to_merge]
-        )
-        
-        return other_data.drop(columns_to_merge, axis=1).merge(
-            usernames, how="left", on=key_columns
-        )
+def merge_user_info_to(
+    user_info: pd.DataFrame, other_data: pd.DataFrame
+) -> pd.DataFrame:
+    columns_to_merge = ["first_name", "last_name", "business_unit"]
+    key_columns = ["user"]
+
+    usernames = (
+        user_info.groupby(key_columns)
+        .last()
+        .reset_index()[key_columns + columns_to_merge]
+    )
+
+    return other_data.drop(columns_to_merge, axis=1).merge(
+        usernames, how="left", on=key_columns
+    )
 
 
 def concat(*data) -> pd.DataFrame:
@@ -508,7 +509,6 @@ def concat(*data) -> pd.DataFrame:
 
         left = result
 
-
     return left
 
 
@@ -520,14 +520,24 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
 
     forecasts_from_database = forecasts_from_database and bool(span_future)
 
+    logger.debug(f"{span_severa=}")
+
+    logger.debug(f"{span_future=}")
+
+    logger.debug(f"{forecasts_from_database=}")
+
     async with src.logic.severa.client.Client() as client:
         async with asyncio.TaskGroup() as tg:
-            user_info = tg.create_task(client.fetch_all_user_information())
+            logger.debug("Creating fetch tasks.")
+            user_info_task = tg.create_task(client.fetch_all_user_information())
+            all_users_task = tg.create_task(client.fetch_all_users())
+
             if span_severa:
                 billing_p = tg.create_task(client.fetch_billing(span_severa))
                 hours_p = tg.create_task(client.fetch_hours(span_severa))
                 sales_p = tg.create_task(client.fetch_sales(span_severa))
 
+            logger.debug("Fetching from db.")
             if forecasts_from_database:
                 base = Base("kpi-dev-02", "billing")
                 latest_date = base.find_max_value("forecast_date")
@@ -539,9 +549,12 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
                 base = Base("kpi-dev-02", "sales")
                 sales_f_task = base.find({"forecast_date": latest_date})
 
-    users = ProcessUsers(user_info.result()).process(
-        span.start.datetime, span.end.datetime
-    )
+            logger.debug("Fetching from db done.")
+
+    rel_user_info = user_info_task.result()
+    all_users_info = all_users_task.result()
+
+    users = ProcessUsers(rel_user_info).process(span.start.datetime, span.end.datetime)
 
     dfs = [users]
     if span_severa:
@@ -574,4 +587,4 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         )
         dfs += [billing_f, hours_f, sales_f]
 
-    return users.merge_to(concat(*dfs))
+    return merge_user_info_to(all_users_info, concat(*dfs))

@@ -1,12 +1,14 @@
-from contextlib import asynccontextmanager
 import random
 import string
+import sys
+import time
+from contextlib import asynccontextmanager
 
 import anyio
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
-import sys
+from loguru import logger
 
 import src.config  # noqa: F401
 from src.logic.slack.client import (
@@ -44,8 +46,6 @@ async def lifespan(app: FastAPI):
             scope.cancel()
 
 
-from loguru import logger
-
 logger.remove()
 logger.add(
     sys.stderr,
@@ -58,19 +58,25 @@ logger.configure(extra={"source": "root"})
 
 
 app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
-import time
+
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+    idem = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
     start_time = time.monotonic()
 
     with logger.contextualize(source=idem):
-        logger.info(f"Incoming request {request.method} {request.url.path} from {request.client.host}:{request.client.port}.")
+        logger.info(
+            f"Incoming request {request.method} {request.url.path} (query: {request.query_params}) from {request.client.host}:{request.client.port}."
+        )
         response = await call_next(request)
-        logger.info(f"Request {request.method} {request.url.path}: {response.status_code} in {time.monotonic() - start_time:.2f}s.")
-        
+        logger.info(
+            f"Request {request.method} {request.url.path}: {response.status_code} in {time.monotonic() - start_time:.2f}s."
+        )
+
     return response
+
 
 app.include_router(routes.default_router)
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
