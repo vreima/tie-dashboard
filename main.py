@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
+import random
+import string
 
 import anyio
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
+import sys
 
 import src.config  # noqa: F401
 from src.logic.slack.client import (
@@ -23,7 +26,11 @@ async def lifespan(app: FastAPI):
             for params in [
                 (routes.save_sparse, "0 2 * * *", "database-save"),
                 (send_weekly_slack_update, "0 5 * * MON", "weekly-slack-msg"),
-                (send_weekly_slack_update_debug, "10 5/3 * * MON-FRI", "debug-slack-msg"),
+                (
+                    send_weekly_slack_update_debug,
+                    "10 5/3 * * MON-FRI",
+                    "debug-slack-msg",
+                ),
             ]
         ]
     )
@@ -37,8 +44,33 @@ async def lifespan(app: FastAPI):
             scope.cancel()
 
 
+from loguru import logger
+
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> [{extra[source]}] - <level>{message}</level>",
+    level="TRACE",
+)
+logger.configure(extra={"source": "root"})
+
+
 app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
+import time
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+    start_time = time.monotonic()
+
+    with logger.contextualize(source=idem):
+        logger.info(f"Incoming request {request.method} {request.url.path} from {request.client.host}:{request.client.port}.")
+        response = await call_next(request)
+        logger.info(f"Request {request.method} {request.url.path}: {response.status_code} in {time.monotonic() - start_time:.2f}s.")
+        
+    return response
 
 app.include_router(routes.default_router)
-
 app.mount("/static", StaticFiles(directory="src/static"), name="static")

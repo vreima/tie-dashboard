@@ -284,7 +284,7 @@ class CronjobManager:
 
         async with anyio.create_task_group() as tg:
             for cj in self.jobs:
-                logger.debug(f"[{cj.name}] Starting {cj.endpoint}.")
+                logger.debug(f"Starting cronjob '{cj.name}' running {cj.endpoint}.")
                 tg.start_soon(run_cronjob, cj, app, name=cj.endpoint)
 
 
@@ -293,39 +293,40 @@ def get_cronjobs(manager: CronjobManager = CronjobManager()):  # noqa: B008
 
 
 async def run_cronjob(timing: Cronjob, app: FastAPI):
-    while True:
-        timing.advance()
-        delay = timing.time_to_next().seconds
+    with logger.contextualize(source=timing.name):
+        while True:
+            timing.advance()
+            delay = timing.time_to_next().seconds
 
-        logger.debug(
-            f"[{timing.name}] Cronjob sleeping for "
-            f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
-        )
+            logger.debug(
+                f"Cronjob sleeping for "
+                f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
+            )
 
-        await anyio.sleep(delay)
+            await anyio.sleep(delay)
 
-        logger.debug(f"[{timing.name}] Cronjob task is called.")
+            logger.debug(f"Cronjob task is called.")
 
-        if isinstance(timing.endpoint, str):
-            async with httpx.AsyncClient(
-                app=app,
-                base_url=settings.railway_static_url,
-                http2=True,
-                follow_redirects=True,
-            ) as client:
-                try:
-                    response = await client.get(timing.endpoint)
-                    logger.debug(
-                        f"[{timing.name}] {timing.endpoint}: response {response.status_code}."
-                    )
-                except (httpx.HTTPStatusError, httpx.HTTPError) as e:
-                    logger.exception(e)
-                except Exception as e:
-                    logger.exception(e)
-        else:
-            await timing.endpoint()
+            if isinstance(timing.endpoint, str):
+                async with httpx.AsyncClient(
+                    app=app,
+                    base_url=settings.railway_static_url,
+                    http2=True,
+                    follow_redirects=True,
+                ) as client:
+                    try:
+                        response = await client.get(timing.endpoint)
+                        logger.debug(
+                            f"{timing.endpoint}: response {response.status_code}."
+                        )
+                    except (httpx.HTTPStatusError, httpx.HTTPError) as e:
+                        logger.exception(e)
+                    except Exception as e:
+                        logger.exception(e)
+            else:
+                await timing.endpoint()
 
-        logger.debug(f"[{timing.name}] Cronjob task is done.")
+            logger.debug(f"Cronjob task is done.")
 
 
 @default_router.get("/status")
