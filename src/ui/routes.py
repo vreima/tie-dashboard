@@ -248,7 +248,7 @@ class Cronjob:
 
         self.next_run: arrow.Arrow = arrow.Arrow(1900, 1, 1)
 
-    def advance(self) -> arrow.Arrow:
+    def try_advance(self) -> arrow.Arrow:
         previous_run = self.next_run
         self.next_run = arrow.get(self.croniter.get_next(float))
 
@@ -294,14 +294,14 @@ def get_cronjobs(manager: CronjobManager = CronjobManager()):  # noqa: B008
 async def run_cronjob(timing: Cronjob, app: FastAPI):
     with logger.contextualize(source=timing.name):
         while True:
-            timing.advance()
-            delay = timing.time_to_next().seconds
+            timing.try_advance()
+            delay = timing.time_to_next().total_seconds()
 
             logger.debug(
                 f"Cronjob sleeping for " f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
             )
 
-            await anyio.sleep(delay)
+            await anyio.sleep(max(delay, 0))
 
             logger.debug("Cronjob task is called.")
 

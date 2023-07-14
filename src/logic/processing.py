@@ -48,7 +48,12 @@ class ProcessData:
             elif pd.Series(None, dtype=dtype).dtype == pd.DatetimeTZDtype(tz="UTC"):
                 self.data[column] = pd.to_datetime(self.data[column], utc=True)
             else:
+                a = self.data[column].isna().sum()
                 self.data[column] = self.data[column].astype(dtype)
+                b = self.data[column].isna().sum()
+
+                if a < b:
+                    logger.critical(f"{self} {column} {a} != {b}")
 
             if column not in self.unraveled.columns:
                 self.unraveled[column] = pd.Series(dtype=dtype)
@@ -299,14 +304,9 @@ class ProcessData:
         return self
 
     def process(self, date_span_start: datetime, date_span_end: datetime) -> Self:
-        logger.debug(f"{self}: {len(self.data)}")
         a = self.validate_data()
-
-        logger.debug(f"   validate: {len(self.data)}")
         b = a.unravel(date_span_start, date_span_end)
-        logger.debug(f"   unravel: {len(self.unraveled)}")
         c = b.cull_to_span(date_span_start, date_span_end)
-        logger.debug(f"   cull_to_span: {len(self.unraveled)}")
         return c
 
 
@@ -455,7 +455,7 @@ class ProcessUsers(ProcessData):
         return super()._unravel(
             date_span_start,
             date_span_end,
-            set_to_zero_if_on_holiday_mask=self.data.id == "daily_hours",
+            set_to_zero_if_on_holiday_mask=self.data.id == "maximum",
             scale_with_number_of_days=False,
             scale_with_number_of_workdays=False,
         )
@@ -535,7 +535,7 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
             if span_severa:
                 billing_p = tg.create_task(client.fetch_billing(span_severa))
                 hours_p = tg.create_task(client.fetch_hours(span_severa))
-                sales_p = tg.create_task(client.fetch_sales(span_severa))
+                sales_p = tg.create_task(client.fetch_salesvalue(span_severa))
 
             logger.debug("Fetching from db.")
             if forecasts_from_database:
@@ -588,3 +588,35 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         dfs += [billing_f, hours_f, sales_f]
 
     return merge_user_info_to(all_users_info, concat(*dfs))
+
+
+async def load_merge_pivot(span: DateRange, window:int=30) -> pd.DataFrame:
+    data_raw = await load_and_merge(span)
+
+    prod_work = data_raw[(data_raw.id == "workhours") & data_raw.productive].copy()
+    prod_work["id"] = "workhours_productive"
+    unprod_work = data_raw[(data_raw.id == "workhours") & ~data_raw.productive].copy()
+    unprod_work["id"] = "workhours_unproductive"
+
+    data_concat = pd.concat([data_raw, prod_work, unprod_work], ignore_index=True)
+
+    data_pivoted = data_concat.pivot_table(
+        values=["value"],
+        index=["date", "first_name"],
+        columns=["id"],
+        aggfunc="sum",
+        fill_value=0,
+    )
+    data_pivoted.columns = data_pivoted.columns.droplevel(0)
+    data_pivoted["total_hours"] = data_pivoted["absences"] + data_pivoted["workhours"]
+    data_pivoted["cost"] = data_pivoted["total_hours"] * data_pivoted["hour_cost"]
+    data_pivoted["margin"] = data_pivoted["billing"] - data_pivoted["cost"]
+    data_windowed = data_pivoted.groupby(["date"]).sum().rolling(window=window).sum()
+    data_windowed["margin%"] = data_windowed["margin"] / data_windowed["billing"]
+    data_windowed["billing_rate"] = (
+        data_windowed["workhours_productive"] / data_windowed["workhours"]
+    )
+    data_windowed["uncounted_hours"] = (
+        data_windowed["maximum"] - data_windowed["total_hours"]
+    )
+    return data_windowed

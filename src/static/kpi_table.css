@@ -1,26 +1,68 @@
-body, input, button {
-    font-family: monospace;
+body,
+input,
+button {
+  font-family: monospace;
 }
 
 div {
-    padding: 0.1em;
+  padding: 0.1em;
 }
 
-div#stats, div#info {
-    color: gray;
+div#stats,
+div#info {
+  color: gray;
 }
 
 div#info {
-    font-size: 0.7em;
+  font-size: 0.7em;
 }
 
 table {
-    border-collapse: collapse;
-    margin-top: 1em;
-    padding: 0.1em;
+  border-collapse: collapse;
+  margin-top: 1em;
+  padding: 0.1em;
 }
 
-td, th, input, button {
-    padding: 0.1em 1em;
-    border: 1px solid lightgray;
+td,
+th,
+input,
+button {
+  padding: 0.1em 1em;
+  border: 1px solid lightgray;
+}
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #222;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #222 transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

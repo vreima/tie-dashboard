@@ -25,6 +25,7 @@
     <div id="content"></div>
 
     <script>
+      const spinner_html = '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>';
       let global_data = null;
 
       async function init() {
@@ -40,6 +41,7 @@
       }
 
       async function load_data() {
+        document.getElementById("content").innerHTML = spinner_html;
         const start = document.getElementById("start-date").value;
         const end = document.getElementById("end-date").value;
 

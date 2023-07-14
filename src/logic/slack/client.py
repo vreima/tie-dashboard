@@ -14,11 +14,13 @@ from pydantic import BaseModel
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
+from src.logic.processing import load_merge_pivot
 
 import src.logic.slack.models
 from src.config import settings
 from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa.client import fetch_invalid_salescases
+from src.util.daterange import DateRange
 from src.util.process import search_string_for_datetime
 
 
@@ -337,6 +339,109 @@ async def format_salescases_as_slack_block():
     }
 
 
+async def format_kpi_totals_as_slack_block():
+    """
+    Fetch rolling KPI totals for the last n (default=30) days and format them as a block.
+    """
+    # We need 30 days to get an accurate windowed sum for current day,
+    # 7 days more to get another estimate for the last week (to show difference),
+    # so 37 days. Let's make that 40 just to be sure.
+    span = DateRange(-40)
+    windowed_data = await load_merge_pivot(span)
+    windowed_data = windowed_data.reset_index().iloc[[-7, -1]]
+    current_weeks_data = windowed_data.iloc[-1]
+    diff_from_last_week = windowed_data.diff().iloc[-1]
+
+    # date                      6 days 00:00:00
+    # absences                             25.0
+    # billing                           -1125.0
+    # hour_cost                             0.0
+    # maximum                               0.0
+    # salesvalue                        -7075.0
+    # workhours                           -66.5
+    # workhours_productive                -34.0
+    # workhours_unproductive              -32.5
+    # total_hours                         -41.5
+    # cost                              -1989.0
+    # margin                              864.0
+    # margin%                         -5.382964
+    # laskutusaste
+
+    # Hack for nice-aligning percentage formatting...
+    current_weeks_data["margin%"] *= 100.0
+    current_weeks_data["billing_rate"] *= 100.0
+    diff_from_last_week["margin%"] *= 100.0
+    diff_from_last_week["billing_rate"] *= 100.0
+
+    kpi_totals_list = []
+    kpi_diff_list = []
+
+    PADDING = 10
+
+    cols = [
+        "billing",
+        "cost",
+        "margin",
+        "margin%",
+        "billing_rate",
+        "salesvalue",
+        "uncounted_hours",
+    ]
+    kpi_names = [
+        "Laskutus",
+        "Kulut",
+        "Kate",
+        "Kate-%",
+        "Laskutusaste",
+        "Tilaukset",
+        "Tuntikirjauksia hukassa",
+    ]
+    formats = [
+        "{: >{PADDING}_.2f} €",
+        "{: >{PADDING}_.2f} €",
+        "{: >{PADDING}_.2f} €",
+        "{: >{PADDING}_.2f} %",
+        "{: >{PADDING}_.2f} %",
+        "{: >{PADDING}_.2f} €",
+        "{: >{PADDING}_.1f} h",
+    ]
+    diff_formats = [
+        "{: >+{PADDING}_.2f} €",
+        "{: >+{PADDING}_.2f} €",
+        "{: >+{PADDING}_.2f} €",
+        "{: >+{PADDING}_.2f} %",
+        "{: >+{PADDING}_.2f} %",
+        "{: >+{PADDING}_.2f} €",
+        "{: >+{PADDING}_.1f} h",
+    ]
+
+    max_len = max(len(name) for name in kpi_names) + 4
+
+    for col, kpi_name, format, diff_format in zip(
+        cols, kpi_names, formats, diff_formats, strict=True
+    ):
+        difference = diff_from_last_week[col]
+        difference_text = ("▲   " if difference >= 0 else "▼   ") + diff_format.format(
+            difference, PADDING=PADDING
+        )
+        kpi_totals_list += [
+            f"{kpi_name + ':': <{max_len}} "
+            + format.format(current_weeks_data[col], PADDING=PADDING).replace("_", " ") + " "*12 + f"{difference_text}".replace("_", " ")
+        ]
+
+    header1 = "30 vrk keskiarvo"
+    header2 = "vrt viime viikoon"
+    header = f"{header1: >{max_len + PADDING + 3}}{header2: >{PADDING + 18}}"
+
+    return {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": f":bar_chart: Tunnuslukuja:\n```{header}\n" + "\n".join(kpi_totals_list) + "```",
+        },
+    }
+
+
 async def format_offers_as_slack_block(slack: Client):
     """
     Get unmarked/open offers from Slack channel and format them as a block.
@@ -433,6 +538,8 @@ async def send_weekly_slack_update(channel: str | None = None):
         await format_salescases_as_slack_block(),
         {"type": "divider"},
         await format_pressure_as_slack_block(),
+        {"type": "divider"},
+        await format_kpi_totals_as_slack_block(),
     ]
 
     slack.post_message(
