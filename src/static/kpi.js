@@ -6,6 +6,14 @@ luxon = window.luxon;
 
 const HEIGHT = 350;
 
+const CONFIG = {
+  titleFontSize: 14,
+  titleFontWeight: "normal",
+  titleFontStyle: "normal",
+  titleColor: "#333",
+  titlePadding: 30
+};
+
 const embedOpt = {
   mode: "vega-lite",
   actions: false,
@@ -107,7 +115,7 @@ async function refresh_sales_vega(
         ],
         groupby: ["datevalue"],
       },
-      
+
       { calculate: `${target_billing} / ${span}`, as: "target" },
       {
         window: [
@@ -167,7 +175,14 @@ async function refresh_sales_vega(
                 field: "w_value",
                 type: "quantitative",
                 aggregate: "sum",
-                axis: { title: "Myynti" },
+                axis: {
+                  title: "Myynti, kumuloituva",
+                  titleFontSize: CONFIG.titleFontSize,
+                  titleFontWeight: CONFIG.titleFontWeight,
+                  titleFontStyle: CONFIG.titleFontStyle,
+                  titleColor: CONFIG.titleColor,
+                  titlePadding: CONFIG.titlePadding
+                },
                 format: "$.2f",
               },
               color: { value: "#4c78a8" },
@@ -198,8 +213,6 @@ async function refresh_sales_vega(
             },
           },
 
-          
-
           {
             height: HEIGHT,
             mark: { type: "line", strokeDash: [8, 4] },
@@ -226,7 +239,7 @@ async function refresh_sales_vega(
               color: {
                 value: "#e45756",
               },
-              opacity: {value: 0.8}
+              opacity: { value: 0.8 },
             },
           },
 
@@ -238,9 +251,9 @@ async function refresh_sales_vega(
               x: { field: "datevalue", type: "temporal" },
               y: { field: "w_neg_diff", type: "quantitative" },
               color: {
-                value:  "#4c78a8",
+                value: "#4c78a8",
               },
-              opacity: {value: 0.9}
+              opacity: { value: 0.8 },
             },
           },
 
@@ -248,19 +261,19 @@ async function refresh_sales_vega(
             height: HEIGHT,
             mark: { type: "bar" },
             data: { values: data, format: { type: "json" } },
-            transform: [ {
-              filter: {
-                field: "id",
-                oneOf: [
-                  "salesvalue",
-                ],
+            transform: [
+              {
+                filter: {
+                  field: "id",
+                  oneOf: ["salesvalue"],
+                },
               },
-            }],
+            ],
             encoding: {
               x: { field: "date", type: "temporal" },
               y: { field: "value", type: "quantitative" },
               color: {
-                value: "#4c78a8",
+                value: "#3C5F85",
               },
               tooltip: [
                 {
@@ -279,7 +292,7 @@ async function refresh_sales_vega(
                   type: "nominal",
                   title: "Myyjä",
                 },
-              ]
+              ],
             },
           },
 
@@ -332,7 +345,10 @@ async function refresh_salesmargin_vega(
     background: "rgba(0,0,0,0%)",
     data: { values: data, format: { type: "json" } },
     config: {
-      view: { fill: "white", width: 1300 },
+      view: {
+        fill: "white",
+        width: 1300,
+      },
     },
 
     transform: [
@@ -381,6 +397,20 @@ async function refresh_salesmargin_vega(
         groupby: ["first_name"],
         frame: [span, 0],
       },
+      {
+        window: [
+          { op: "sum", field: "billing", as: "cum_billing" },
+          { op: "sum", field: "cost", as: "cum_cost" },
+          { op: "sum", field: "maximum", as: "cum_maximum" },
+          { op: "sum", field: "workhours", as: "cum_workhours" },
+          { op: "sum", field: "absences", as: "cum_absences" },
+          { op: "sum", field: "saleswork", as: "cum_saleswork" },
+        ],
+        sort: [{ field: "datevalue", order: "ascending" }],
+        ignorePeers: false,
+        groupby: ["first_name"],
+        frame: [null, 0],
+      },
       { extent: "w_billing", param: "w_billing_extent" },
     ],
 
@@ -427,7 +457,14 @@ async function refresh_salesmargin_vega(
                 field: "billing",
                 type: "quantitative",
                 aggregate: "sum",
-                axis: { title: "Kate" },
+                axis: {
+                  title: "Kate, per kk",
+                  titleFontSize: CONFIG.titleFontSize,
+                  titleFontWeight: CONFIG.titleFontWeight,
+                  titleFontStyle: CONFIG.titleFontStyle,
+                  titleColor: CONFIG.titleColor,
+                  titlePadding: CONFIG.titlePadding
+                },
                 format: "$.2f",
               },
               //color: {field: "first_name", type: "ordinal"},
@@ -640,7 +677,14 @@ async function refresh_salesmargin_vega(
                 field: "w_billing",
                 type: "quantitative",
                 aggregate: "sum",
-                axis: { title: "Kate" },
+                axis: {
+                  title: `Kate, juokseva ${span+1} vrk`,
+                  titleFontSize: CONFIG.titleFontSize,
+                  titleFontWeight: CONFIG.titleFontWeight,
+                  titleFontStyle: CONFIG.titleFontStyle,
+                  titleColor: CONFIG.titleColor,
+                  titlePadding: CONFIG.titlePadding
+                },
               },
               color: { value: "#4c78a8" },
               opacity: { value: 0.3 },
@@ -846,6 +890,197 @@ async function refresh_salesmargin_vega(
           },
         ],
       },
+
+      {
+        // TÄMÄ
+        layer: [
+          {
+            height: HEIGHT,
+            transform: [
+              {
+                aggregate: [
+                  {
+                    op: "sum",
+                    field: "cum_billing",
+                    as: "cum_billing",
+                  },
+                  {
+                    op: "sum",
+                    field: "cum_cost",
+                    as: "cum_cost",
+                  },
+                ],
+                groupby: ["datevalue"],
+              },
+              {
+                calculate: "max(datum.cum_billing - datum.cum_cost, 0)",
+                as: "cum_salesmargin_p",
+              },
+            ],
+            mark: { type: "area" },
+            encoding: {
+              x: {
+                field: "datevalue",
+                type: "temporal",
+                axis: {
+                  title: null,
+                  grid: true,
+                  labelAlign: "left",
+                  labelExpr:
+                    "[timeFormat(datum.value, '%d') == '01' ? timeFormat(datum.value, '%b') : '', timeFormat(datum.value, '%u') == '1' ? 'v' + timeFormat(datum.value, '%V') : '']",
+                  tickSize: 13,
+                  tickCount: "date",
+                  labelOffset: 3,
+                  labelPadding: -11,
+                  labelBound: true,
+                  labelOverlap: false,
+                  gridDash: {
+                    condition: {
+                      test: { field: "value", timeUnit: "date", equal: 1 },
+                      value: [],
+                    },
+                    value: [2, 6],
+                  },
+                  gridOpacity: {
+                    condition: {
+                      test: {
+                        or: [
+                          { field: "value", timeUnit: "day", equal: "Monday" },
+                          { field: "value", timeUnit: "date", equal: 1 },
+                        ],
+                      },
+                      value: 1,
+                    },
+                    value: 0,
+                  },
+                  tickDash: {
+                    condition: {
+                      test: { field: "value", timeUnit: "date", equal: 1 },
+                      value: [],
+                    },
+                    value: [2, 6],
+                  },
+                  tickOpacity: {
+                    condition: {
+                      test: {
+                        or: [{ field: "value", timeUnit: "date", equal: 1 }],
+                      },
+                      value: 1,
+                    },
+                    value: 0,
+                  },
+                },
+              },
+
+              y: {
+                field: "cum_salesmargin_p",
+                type: "quantitative",
+                aggregate: "sum",
+                axis: {
+                  title: "Kate, kumuloituva",
+                  titleFontSize: CONFIG.titleFontSize,
+                  titleFontWeight: CONFIG.titleFontWeight,
+                  titleFontStyle: CONFIG.titleFontStyle,
+                  titleColor: CONFIG.titleColor,
+                  titlePadding: CONFIG.titlePadding
+                },
+              },
+              color: { value: "#4c78a8" },
+              // opacity: { value: 0.3 },
+              tooltip: [
+                {
+                  field: "datevalue",
+                  type: "temporal",
+                  title: "Jakson päätöspäivä",
+                  format: "%d.%m.%Y",
+                  aggregate: "max",
+                },
+                {
+                  field: "cum_salesmargin_p",
+                  type: "quantitative",
+                  title: "Kumuloituva kate",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+              ],
+            },
+          },
+
+          {
+            transform: [
+              {
+                aggregate: [
+                  {
+                    op: "sum",
+                    field: "cum_billing",
+                    as: "cum_billing",
+                  },
+                  {
+                    op: "sum",
+                    field: "cum_cost",
+                    as: "cum_cost",
+                  },
+                ],
+                groupby: ["datevalue"],
+              },
+              {
+                calculate: "min(datum.cum_billing  - datum.cum_cost, 0)",
+                as: "cum_salesmargin_n",
+              },
+            ],
+
+            mark: { type: "area" },
+
+            encoding: {
+              x: { field: "datevalue", type: "temporal" },
+              y: {
+                field: "cum_salesmargin_n",
+                type: "quantitative",
+                aggregate: "sum",
+              },
+              color: { value: "#e45756" },
+              tooltip: [
+                {
+                  field: "datevalue",
+                  type: "temporal",
+                  title: "Jakson päätöspäivä",
+                  format: "%d.%m.%Y",
+                  aggregate: "max",
+                },
+                {
+                  field: "cum_salesmargin_n",
+                  type: "quantitative",
+                  title: "Kumuloituva kate",
+                  format: "+$.2f",
+                  aggregate: "sum",
+                },
+              ],
+            },
+          },
+
+          {
+            height: HEIGHT,
+            data: { values: { dummy: "dummy" } },
+            transform: [
+              {
+                calculate: "now()",
+                as: "current_time",
+              },
+            ],
+            mark: { type: "rule", strokeDash: [5, 5] },
+
+            encoding: {
+              x: { field: "current_time", type: "temporal" },
+              color: {
+                value: "#F3AA60",
+              },
+              size: {
+                value: 3,
+              },
+            },
+          },
+        ],
+      },
     ],
   };
 
@@ -1020,7 +1255,14 @@ async function refresh_hours_vega(
                 field: "value",
                 type: "quantitative",
                 aggregate: "sum",
-                title: "Tuntikirjauksia",
+                title: "Tuntikirjaukset, per kk",
+                axis: {
+                  titleFontSize: CONFIG.titleFontSize,
+                  titleFontWeight: CONFIG.titleFontWeight,
+                  titleFontStyle: CONFIG.titleFontStyle,
+                  titleColor: CONFIG.titleColor,
+                  titlePadding: CONFIG.titlePadding
+                },
               },
               color: { field: "id", type: "nominal" },
               // opacity: { field: "is_productive", sort: "ascending" },
@@ -1316,7 +1558,14 @@ async function refresh_hours_vega(
                 field: "w_value",
                 type: "quantitative",
                 aggregate: "sum",
-                title: "Tuntikirjauksia",
+                title: `Tuntikirjaukset, liukuva ${span+1} vrk`,
+                axis: {
+                  titleFontSize: CONFIG.titleFontSize,
+                  titleFontWeight: CONFIG.titleFontWeight,
+                  titleFontStyle: CONFIG.titleFontStyle,
+                  titleColor: CONFIG.titleColor,
+                  titlePadding: CONFIG.titlePadding
+                },
               },
               color: {
                 field: "id",
@@ -1524,11 +1773,6 @@ export async function main() {
     { data: json, div: "#sales", refresh_func: refresh_sales_vega },
   ];
 
-  document.getElementById("info").innerHTML = `${json.length} riviä dataa, ${(
-    (t1 - t0) /
-    1000.0
-  ).toFixed(2)}s`;
-
   document.querySelectorAll("input").forEach((input) => {
     input.replaceWith(input.cloneNode(true));
   });
@@ -1546,6 +1790,17 @@ export async function main() {
   const button = document.getElementById("reload");
   button.replaceWith(button.cloneNode(true));
   document.getElementById("reload").onclick = main;
+
+  const t2 = new Date().getTime();
+  const delta1 = (t1 - t0) / 1000.0;
+  const delta2 = (t2 - t1) / 1000.0;
+  const delta_total = (t2 - t0) / 1000.0;
+
+  document.getElementById("info").innerHTML = `${
+    json.length
+  } riviä dataa, haku ${delta1.toFixed(2)}s, käsittely ${delta2.toFixed(
+    2
+  )}s, yhteensä ${delta_total.toFixed(2)}s`;
 }
 
 // Initialization
