@@ -18,14 +18,17 @@
       <input type="date" id="end-date" value="2023-09-30" />
       <input type="text" id="id_filter" value="" />
       <input type="text" id="groupby" value="user, first_name, id" />
-      <button type="button"onclick="load_data()">Lataa aineisto uudelleen</button>
+      <button type="button" onclick="load_data()">
+        Lataa aineisto uudelleen
+      </button>
     </div>
     <div id="stats"></div>
     <div id="info"></div>
     <div id="content"></div>
 
     <script>
-      const spinner_html = '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>';
+      const spinner_html =
+        '<div class="lds-ring"><div></div><div></div><div></div><div></div></div>';
       let global_data = null;
 
       async function init() {
@@ -45,16 +48,14 @@
         const start = document.getElementById("start-date").value;
         const end = document.getElementById("end-date").value;
 
-        const response = await fetch(
-          `/kpi/totals?start=${start}&end=${end}`
-        );
+        const response = await fetch(`/kpi/totals?start=${start}&end=${end}`);
 
         global_data = await response.json();
 
         await update_table();
       }
 
-      async function filter_data(json_data) {
+      function filter_data(json_data) {
         // Inputs
         const start = luxon.DateTime.fromISO(
           document.getElementById("start-date").value
@@ -79,7 +80,9 @@
         df.addColumn("month", df["date"].dt.month(), { inplace: true });
         df.addColumn("day", df["date"].dt.dayOfMonth(), { inplace: true });
 
-        dates = df["date"].values.map((date_str) => luxon.DateTime.fromISO(date_str));
+        dates = df["date"].values.map((date_str) =>
+          luxon.DateTime.fromISO(date_str)
+        );
         df.addColumn(
           "week",
           dates.map((date) => date.weekNumber),
@@ -113,13 +116,19 @@
         );
         const shape_date_filtered = date_filtered.shape;
 
+        console.log(id_filter);
+        console.log(date_filtered);
+
         // ID filtering
+        const mask = date_filtered["id"].map((id_str) =>
+          id_filter.includes(id_str)
+        );
+        console.log(mask);
+        const is_empty_str = id_filter[0] == "";
         const id_filtered =
-          !Array.isArray(id_filter) || !id_filter.length || id_filter[0] == ""
+          !Array.isArray(id_filter) || !id_filter.length || is_empty_str
             ? date_filtered
-            : date_filtered.query(
-                df["id"].map((id_str) => id_filter.includes(id_str))
-              );
+            : date_filtered.query(mask);
         const shape_id_filtered = id_filtered.shape;
 
         console.log("****");
@@ -144,7 +153,7 @@
       }
 
       async function update_table() {
-        const [data, groupings] = await filter_data(global_data);
+        const [data, groupings] = filter_data(global_data);
 
         console.log(data);
         console.log(groupings);

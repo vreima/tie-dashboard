@@ -105,94 +105,10 @@ async def save_sparse():
         inv_collection.upsert(client.get_invalid_sales())
 
 
-async def save_user_workcontract_information(
-    user, work_contract: src.logic.severa.models.WorkContractOutputModel
-):
-    return {
-        "user": user.guid,
-        "first_name": user.firstName,
-        "last_name": user.lastName,
-        "business_unit": user.businessUnit.guid,
-        "daily_hours": work_contract.dailyHours,
-        "hour_cost": work_contract.hourCost.amount,
-        "start_date": work_contract.startDate,
-        "end_date": work_contract.endDate,
-        "_id": src.util.stable_hash.get_hash(
-            (
-                user.guid,
-                work_contract.dailyHours,
-                work_contract.hourCost.amount,
-                work_contract.guid,
-            )
-        ),
-    }
-
-
-async def save_user_information():
-    arrow.utcnow().date().isoformat()
-
-    async with SeveraClient() as client:
-        users = await client.users()
-
-        print(
-            pd.DataFrame(
-                [
-                    await save_user_workcontract_information(
-                        user,
-                        src.logic.severa.models.WorkContractOutputModel(
-                            **work_contract_json
-                        ),
-                    )
-                    for user in users
-                    for work_contract_json in await client._client.get_all(
-                        f"users/{user.guid}/workcontracts"
-                    )
-                ]
-            )
-        )
-
-    # for user in users:
-    #     print(
-    #         user.firstName,
-    #         user.lastName,
-    #         user.title,
-    #         user.workContract.dailyHours,
-    #         f"{user.workContract.workWeek}",
-    #         user.workContract.hourCost.amount,
-    #         user.workContract.endDate,
-    #     )
-    #     items = [
-    #         {
-    #             "user": user.guid,
-    #             "first_name": user.firstName,
-    #             "last_name": user.lastName,
-    #             "business_unit": user.businessUnit.guid,
-    #             "daily_hours": user.workContract.dailyHours,
-    #             "hour_cost": user.workContract.hourCost,
-    #             "valid_until": today_string,
-    #             "_id": src.util.stable_hash.get_hash(
-    #                 (
-    #                     user.guid,
-    #                     user.workContract.dailyHours,
-    #                     user.workContract.hourCost.amount,
-    #                     user.workContract.guid,
-    #                 )
-    #             ),
-    #         }
-    #     ]
-    # print(items)
-
-    # max hours
-
-    # hourly cost
-
-    # slack name
-
-
 async def save_only_invalid_salescase_info() -> pd.DataFrame:
     async with SeveraClient() as client:
         try:
-            sales = await client.fetch_sales(force_refresh=True)  # noqa: F841
+            await client.fetch_sales(force_refresh=True)
         except Exception as e:
             logger.exception(e)
 
@@ -206,7 +122,7 @@ async def save_only_invalid_salescase_info() -> pd.DataFrame:
 @default_router.get("/save_sparse")
 async def read_save_sparse(
     request: Request,
-    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+    username: Annotated[str, Depends(get_current_username)],
 ) -> None:
     logger.debug(f"/save_sparse request from {request.client.host}")
     await save_sparse()
@@ -217,7 +133,7 @@ async def read_load(
     request: Request,
     base: str,
     collection: str,
-    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+    username: Annotated[str, Depends(get_current_username)],
 ):
     return pre(
         Base(base, collection).find(ids=True).to_string(show_dimensions=True), request
@@ -228,7 +144,7 @@ async def read_load(
 async def read(
     endpoint: str,
     request: Request,
-    username: Annotated[str, Depends(get_current_username)],  # noqa: ARG001
+    username: Annotated[str, Depends(get_current_username)],
 ):
     async with base_client.Client() as client:
         return await client.get_all(
@@ -298,7 +214,7 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
             delay = timing.time_to_next().total_seconds()
 
             logger.debug(
-                f"Cronjob sleeping for " f"{delay}s (={delay / 60 / 60 / 24:.1f} days)."
+                f"Cronjob sleeping for {delay}s (={delay / 60 / 60 / 24:.3f} days)."
             )
 
             await anyio.sleep(max(delay, 0))
@@ -589,7 +505,7 @@ class Datespan:
 DatespanDep = Annotated[Datespan, Depends()]
 
 
-@kpi_router.get("/salesmargin")
+@kpi_router.get("/")
 async def get_salesmargin(request: Request):
     return templates.TemplateResponse(
         "kpi_template.html",
@@ -599,16 +515,6 @@ async def get_salesmargin(request: Request):
 
 @kpi_router.get("/totals")
 async def dbg(span: DatespanDep):
-    # salesmargin = await kpi.sales_margin_totals(span.start, span.end)
-    # hours = await kpi.hours_totals(span.start, span.end)
-
-    # logger.debug("\n" + str(salesmargin))
-    # logger.debug("\n" + str(hours))
-
-    # data = salesmargin.merge(hours, how="outer", on="username")
-    # data["margin"] = data["billing"] - data["cost"]
-    # data["margin_percent"] = data["margin"] / data["billing"]
-    # logger.debug("\n" + str(data))
     logger.debug(f"/totals: {DateRange(span.start, span.end)}")
     data = await src.logic.processing.load_and_merge(
         DateRange(span.start, span.end), forecasts_from_database=True

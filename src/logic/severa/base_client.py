@@ -167,6 +167,8 @@ class Client:
         retries = 0
 
         while retries < Client.MAX_RETRIES:
+            headers.update(await self.auth())
+
             request = Request(endpoint, params, headers)
             await self._request_queue.put(request)
             response = await request.response()
@@ -176,14 +178,16 @@ class Client:
             except httpx.HTTPStatusError as exc:
                 logger.error(f"{exc}\n{exc.response.text}")
 
-                if exc.response.status_code == Client.HTTP_ERROR_429:
-                    # Too Many Requests, shouldn't happen though
-
-                    logger.warning("Got 429, sleeping 2s.")
-                    await anyio.sleep(2.0)
-                    logger.warning("Sleeping done.")
-                else:
-                    raise
+                match exc.response.status_code:
+                    case httpx.codes.UNAUTHORIZED:
+                        await self._authenticate()
+                    case httpx.codes.TOO_MANY_REQUESTS:
+                        # Too Many Requests, shouldn't happen though
+                        logger.warning("Got 429, sleeping 2s.")
+                        await anyio.sleep(2.0)
+                        logger.warning("Sleeping done.")
+                    case _:
+                        raise
 
             except (httpx.RequestError, httpx.HTTPError) as exc:
                 logger.exception(exc)
@@ -210,8 +214,6 @@ class Client:
         params.update(**kwargs)
 
         while next_page_available:
-            headers.update(await self.auth())
-
             response = await self.get_with_retries(endpoint, params, headers)
 
             yield response.json()

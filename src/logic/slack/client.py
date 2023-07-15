@@ -14,11 +14,11 @@ from pydantic import BaseModel
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import SlackResponse
-from src.logic.processing import load_merge_pivot
 
 import src.logic.slack.models
 from src.config import settings
 from src.logic.pressure.pressure import fetch_pressure
+from src.logic.processing import load_merge_pivot
 from src.logic.severa.client import fetch_invalid_salescases
 from src.util.daterange import DateRange
 from src.util.process import search_string_for_datetime
@@ -284,14 +284,10 @@ async def format_pressure_as_slack_block():
     weekly = readings.groupby([pd.Grouper(key="date", freq="W")])[["x", "y"]].mean()
     diff = weekly.diff()
 
-    logger.debug(weekly)
-
     def f(val, val_diff):
         return (
             f"*{val:.1%}*\t(" + ("▲" if val_diff >= 0 else "▼") + f" {val_diff:+.1%})"
         )
-
-    print(readings.dtypes)
 
     pressure_titles = (
         ":hammer_and_pick: Edellisen viikon kiireen määrä:\n:bomb: Edellisen viikon kiireen tuntu:\n"
@@ -374,7 +370,6 @@ async def format_kpi_totals_as_slack_block():
     diff_from_last_week["billing_rate"] *= 100.0
 
     kpi_totals_list = []
-    kpi_diff_list = []
 
     PADDING = 10
 
@@ -417,7 +412,7 @@ async def format_kpi_totals_as_slack_block():
 
     max_len = max(len(name) for name in kpi_names) + 4
 
-    for col, kpi_name, format, diff_format in zip(
+    for col, kpi_name, this_week_format, diff_format in zip(
         cols, kpi_names, formats, diff_formats, strict=True
     ):
         difference = diff_from_last_week[col]
@@ -426,7 +421,11 @@ async def format_kpi_totals_as_slack_block():
         )
         kpi_totals_list += [
             f"{kpi_name + ':': <{max_len}} "
-            + format.format(current_weeks_data[col], PADDING=PADDING).replace("_", " ") + " "*12 + f"{difference_text}".replace("_", " ")
+            + this_week_format.format(current_weeks_data[col], PADDING=PADDING).replace(
+                "_", " "
+            )
+            + " " * 12
+            + f"{difference_text}".replace("_", " ")
         ]
 
     header1 = "30 vrk keskiarvo"
@@ -437,7 +436,9 @@ async def format_kpi_totals_as_slack_block():
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f":bar_chart: Tunnuslukuja:\n```{header}\n" + "\n".join(kpi_totals_list) + "```",
+            "text": f":bar_chart: Tunnuslukuja:\n```{header}\n"
+            + "\n".join(kpi_totals_list)
+            + "```",
         },
     }
 

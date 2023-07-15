@@ -590,7 +590,7 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
     return merge_user_info_to(all_users_info, concat(*dfs))
 
 
-async def load_merge_pivot(span: DateRange, window:int=30) -> pd.DataFrame:
+async def load_merge_pivot(span: DateRange, window: int = 30) -> pd.DataFrame:
     data_raw = await load_and_merge(span)
 
     prod_work = data_raw[(data_raw.id == "workhours") & data_raw.productive].copy()

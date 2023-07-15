@@ -112,7 +112,7 @@ def unravel_and_cull(  # noqa: PLR0913
     """
     Helper function.
     """
-    culling_date = culling_date or arrow.utcnow.floor("day")
+    culling_date = culling_date or arrow.utcnow().floor("day")
     groupby = groupby or ["user", "id", "date"]
 
     return (
