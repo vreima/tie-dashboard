@@ -456,8 +456,8 @@ export async function main() {
   const start = document.getElementById("start").value;
   const end = document.getElementById("end").value;
 
-  //   const data_url = `/kpi/billing_history?start=${start}&end=${end}`;
-  const forecast_data_url = "/static/temp_history.json";
+  const forecast_data_url = `/kpi/billing_history?start=${start}&end=${end}`;
+  //   const forecast_data_url = "/static/temp_history.json";
   const realized_data_url = "/kpi/billing";
 
   const [response_forecasts, response_realized] = await Promise.all([

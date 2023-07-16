@@ -1,11 +1,12 @@
 import operator
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Sequence
 
 import arrow
 import pandas as pd
 import pandera as pa
-from pandera.typing import DataFrame, Series
+from loguru import logger
+from pandera.typing import Category, DataFrame, Index, Series
 from workalendar.europe import Finland
 
 from src.util.daterange import DateRange
@@ -227,6 +228,41 @@ def calculate_forecast_length(
 
 @pa.check_types(lazy=True)
 def process_billing_forecasts(
+    df: DataFrame[BillingInputModel],
+) -> DataFrame[BillingOutputModel]:
+    span_min = df["start_date"].min()
+    span_max = df["end_date"].max()
+
+    expanded = expand_start_and_end(df, DateRange(span_min, span_max))
+    unravaled = unravel(expanded)
+    unraveled_with_stats = calculate_weekday_statistics(unravaled)
+    recalculated = recalculate_values(
+        unraveled_with_stats,
+        ValueRecalculationMethod.SCALE_VALUE_TO_NUMBER_OF_WORKDAYS,
+        set_holidays_to_zero=True,
+    )
+    recalculated_with_span = calculate_forecast_length(recalculated)
+
+    return recalculated_with_span.drop(
+        [
+            "_date",
+            "_is_workday",
+            "_num_all_days",
+            "_num_work_days",
+            "start_date",
+            "end_date",
+            "internal_guid",
+            "billing",
+            "revenue",
+            "expense",
+            "labor_expense",
+        ],
+        axis=1,
+    )
+
+
+@pa.check_types(lazy=True)
+def process_billing(
     df: DataFrame[BillingInputModel],
 ) -> DataFrame[BillingOutputModel]:
     span_min = df["start_date"].min()
