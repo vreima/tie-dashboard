@@ -509,16 +509,38 @@ DatespanDep = Annotated[Datespan, Depends()]
 async def get_salesmargin(request: Request):
     return templates.TemplateResponse(
         "kpi_template.html",
-        {"request": request, "base_url": request.base_url, "kpi": "salesmargin"},
+        {"request": request},
+    )
+
+
+@kpi_router.get("/history")
+async def get_history(request: Request):
+    return templates.TemplateResponse(
+        "billing_history.html",
+        {"request": request},
     )
 
 
 @kpi_router.get("/totals")
-async def dbg(span: DatespanDep):
+async def totals(span: DatespanDep):
     logger.debug(f"/totals: {DateRange(span.start, span.end)}")
     data = await src.logic.processing.load_and_merge(
         DateRange(span.start, span.end), forecasts_from_database=True
     )
+    return data.to_dict(orient="records")
+
+
+@kpi_router.get("/billing_history")
+async def billing_history(span: DatespanDep):
+    logger.debug(f"/billing_history: {DateRange(span.start, span.end)}")
+    data = await src.logic.processing.load_merge_billing_forecast_history()
+    return data.to_dict(orient="records")
+
+
+@kpi_router.get("/billing")
+async def billing(span: DatespanDep):
+    logger.debug(f"/billing: {DateRange(span.start, span.end)}")
+    data = await src.logic.processing.load_merge_billing()
     return data.to_dict(orient="records")
 
 

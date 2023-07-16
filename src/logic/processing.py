@@ -10,6 +10,7 @@ from loguru import logger
 from pandas.api.types import CategoricalDtype
 from workalendar.europe import Finland
 
+import src.logic.processing_pandera
 import src.logic.severa.client
 from src.database.database import Base
 from src.util.daterange import DateRange
@@ -620,3 +621,48 @@ async def load_merge_pivot(span: DateRange, window: int = 30) -> pd.DataFrame:
         data_windowed["maximum"] - data_windowed["total_hours"]
     )
     return data_windowed
+
+
+async def load_merge_billing_forecast_history():
+    billing_forecast_history_raw = Base("kpi-dev-02", "billing").find({})
+
+    billing_forecast_history = src.logic.processing_pandera.process_billing_forecasts(
+        billing_forecast_history_raw
+    )
+
+    async with src.logic.severa.client.Client() as client:
+        async with asyncio.TaskGroup() as tg:
+            all_users_task = tg.create_task(client.fetch_all_users())
+
+    result = billing_forecast_history.merge(
+        all_users_task.result(), how="left", on="user"
+    )
+    return result[result["value"] > 0]
+
+
+async def load_merge_billing():
+    start = arrow.get("2023-06-21")
+    end = arrow.utcnow().floor("day")
+
+    async with src.logic.severa.client.Client() as client:
+        async with asyncio.TaskGroup() as tg:
+            billing_task = tg.create_task(client.fetch_billing(DateRange(start, end)))
+            all_users_task = tg.create_task(client.fetch_all_users())
+
+    # Validation
+    billings = billing_task.result()  # .drop(
+    #     [
+    #         "start_date",
+    #         "end_date",
+    #         "internal_guid",
+    #         "billing",
+    #         "revenue",
+    #         "expense",
+    #         "labor_expense",
+    #     ],
+    #     axis=1,
+    # )
+
+    result = billings.merge(all_users_task.result(), how="left", on="user")
+
+    return result[result["value"] > 0]

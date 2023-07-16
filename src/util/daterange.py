@@ -1,36 +1,71 @@
+from datetime import date
+
 import arrow
+from multimethod import multimethod
 
 
 class DateRange:
-    def __init__(
-        self,
-        start: arrow.Arrow | int | None = None,
-        end: arrow.Arrow | int | None = None,
-    ):
-        if start is None:
-            # Empty range
-            self._start = None
-            self._end = None
-        else:
-            if end is None:
-                if isinstance(start, int):
-                    self._start = arrow.utcnow().floor("day")
-                    self._end = self._start.shift(days=start)
-                else:
-                    self._start = start
-                    self._end = start
-            elif isinstance(end, int) and isinstance(start, arrow.Arrow):
-                self._start = start
-                self._end = self._start.shift(days=end)
-            else:
-                assert isinstance(start, arrow.Arrow)  # Keeps mypy happy
-                assert isinstance(end, arrow.Arrow)
-                self._start = start
-                self._end = end
+    @multimethod
+    def __init__(self, start: arrow.Arrow, end: arrow.Arrow):
+        self._start = start
+        self._end = end
 
-            # Sort the range
-            if self._end < self._start:
-                self._start, self._end = self._end, self._start
+        # Sort the range
+        if self._end < self._start:
+            self._start, self._end = self._end, self._start
+
+    @multimethod
+    def __init__(self, start: date, end: date):
+        self.__init__(arrow.get(start), arrow.get(end))
+
+    @multimethod
+    def __init__(self, start: arrow.Arrow, span: int):
+        self.__init__(start, start.shift(days=span))
+
+    @multimethod
+    def __init__(self, start: date, span: int):
+        self.__init__(arrow.get(start), span)
+
+    @multimethod
+    def __init__(self, span: int):
+        start = arrow.utcnow().floor("day")
+        self.__init__(start, span)
+
+    @multimethod
+    def __init__(self):
+        self._start = None
+        self._end = None
+
+    # @multimethod
+    # def __init__(
+    #     self,
+    #     start: arrow.Arrow | int | None = None,
+    #     end: arrow.Arrow | int | None = None,
+    # ):
+    #     if start is None:
+    #         # Empty range
+    #         self._start = None
+    #         self._end = None
+    #     else:
+    #         if end is None:
+    #             if isinstance(start, int):
+    #                 self._start = arrow.utcnow().floor("day")
+    #                 self._end = self._start.shift(days=start)
+    #             else:
+    #                 self._start = start
+    #                 self._end = start
+    #         elif isinstance(end, int) and isinstance(start, arrow.Arrow):
+    #             self._start = start
+    #             self._end = self._start.shift(days=end)
+    #         else:
+    #             assert isinstance(start, arrow.Arrow)  # Keeps mypy happy
+    #             assert isinstance(end, arrow.Arrow)
+    #             self._start = start
+    #             self._end = end
+
+    #         # Sort the range
+    #         if self._end < self._start:
+    #             self._start, self._end = self._end, self._start
 
     @property
     def start(self) -> arrow.Arrow:

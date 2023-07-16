@@ -7,7 +7,7 @@ luxon = window.luxon;
 const HEIGHT = 350;
 
 const CONFIG = {
-  titleFontSize: 14,
+  titleFontSize: 17,
   titleFontWeight: "normal",
   titleFontStyle: "normal",
   titleColor: "#333",

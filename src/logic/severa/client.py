@@ -78,7 +78,7 @@ class Client:
 
         return list(self._users.values())
 
-    async def fetch_all_users(self) -> list[models.UserOutputModel]:
+    async def fetch_all_users(self) -> pd.DataFrame:
         return pd.DataFrame(
             [
                 {
@@ -86,6 +86,7 @@ class Client:
                     "first_name": user_json["firstName"],
                     "last_name": user_json["lastName"],
                     "business_unit": user_json["businessUnit"]["guid"],
+                    "business_unit_name": user_json["businessUnit"]["name"],
                 }
                 for user_json in await self._client.get_all(
                     "users",

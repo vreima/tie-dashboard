@@ -14,16 +14,9 @@
 </head>
 <html>
   <body>
-    <!--</body> onload="init('{{ kpi }}')">-->
-    <!--<body onload="init('http://127.0.0.1:8000/')"> -->
+    <div class="right" id="main"></div>
 
-      
-      <div class="right" id="main">
-        
-      </div>
-
-      <div id="info"></div>
-
+    <div id="info"></div>
 
     <div class="footer">
       <div class="inputs">
@@ -45,29 +38,18 @@
           max="200000"
           value="75000"
         />
-        <label for="billing_target"
-          >Laskutustavoite suhteessa ikkunan leveyteen</label
-        >
+        <label for="billing_target">
+          Laskutustavoite suhteessa ikkunan leveyteen
+        </label>
         <input
           type="number"
           id="billing_target_span"
           name="billing_target_span"
-          
           value="75000"
           disabled
         />
-        <input
-          type="date"
-          id="start"
-          name="start"
-          value="2023-05-01"
-        />
-        <input
-          type="date"
-          id="end"
-          name="end"
-          value="2023-07-30"
-        />
+        <input type="date" id="start" name="start" value="2023-05-01" />
+        <input type="date" id="end" name="end" value="2023-07-30" />
         <button id="reload">⟳</button>
       </div>
     </div>
