@@ -477,7 +477,7 @@ class ProcessUsers(ProcessData):
 def merge_user_info_to(
     user_info: pd.DataFrame, other_data: pd.DataFrame
 ) -> pd.DataFrame:
-    columns_to_merge = ["first_name", "last_name", "business_unit"]
+    columns_to_merge = ["first_name", "last_name", "business_unit_name"]
     key_columns = ["user"]
 
     usernames = (
@@ -486,8 +486,16 @@ def merge_user_info_to(
         .reset_index()[key_columns + columns_to_merge]
     )
 
-    return other_data.drop(columns_to_merge, axis=1).merge(
-        usernames, how="left", on=key_columns
+    return (
+        other_data.drop(columns_to_merge, axis=1, errors="ignore")
+        .merge(usernames, how="left", on=key_columns)
+        .merge(
+            usernames,
+            how="left",
+            left_on="sold_by",
+            right_on="user",
+            suffixes=(None, "_sold_by"),
+        )
     )
 
 
@@ -532,6 +540,7 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
             logger.debug("Creating fetch tasks.")
             user_info_task = tg.create_task(client.fetch_all_user_information())
             all_users_task = tg.create_task(client.fetch_all_users())
+            all_projects_task = tg.create_task(client.fetch_projects_and_sales())
 
             if span_severa:
                 billing_p = tg.create_task(client.fetch_billing(span_severa))
@@ -554,6 +563,7 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
 
     rel_user_info = user_info_task.result()
     all_users_info = all_users_task.result()
+    all_projects_info = all_projects_task.result()
 
     users = ProcessUsers(rel_user_info).process(span.start.datetime, span.end.datetime)
 
@@ -588,7 +598,9 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         )
         dfs += [billing_f, hours_f, sales_f]
 
-    return merge_user_info_to(all_users_info, concat(*dfs))
+    return merge_user_info_to(all_users_info, concat(*dfs)).merge(
+        all_projects_info, how="left", left_on="project", right_on="project"
+    )
 
 
 async def load_merge_pivot(span: DateRange, window: int = 30) -> pd.DataFrame:

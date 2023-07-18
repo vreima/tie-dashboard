@@ -342,7 +342,9 @@ default_router.include_router(slack_router)
 severa_router = APIRouter(prefix="/severa", tags=["severa"])
 
 
-@severa_router.get("/salescases.json")
+@severa_router.get(
+    "/salescases.json",
+)
 async def get_salescases_json():
     """
     Fetch invalid salescases from Visma Severa.

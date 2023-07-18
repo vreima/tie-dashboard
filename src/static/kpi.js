@@ -227,6 +227,7 @@ async function refresh_sales_vega(
                 value: 2,
               },
             },
+           
           },
 
           {
@@ -240,6 +241,36 @@ async function refresh_sales_vega(
                 value: "#e45756",
               },
               opacity: { value: 0.8 },
+              tooltip: [
+                {
+                  field: "datevalue",
+                  type: "temporal",
+                  title: "Päiväys",
+                  format: "%d.%m.%Y",
+                  aggregate: "max",
+                },
+                {
+                  field: "w_target",
+                  type: "quantitative",
+                  title: "Kumuloituva tavoite",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+                {
+                  field: "w_value",
+                  type: "quantitative",
+                  title: "Kumuloituva myynti",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+                {
+                  field: "w_pos_diff",
+                  type: "quantitative",
+                  title: "Kumuloituva erotus",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+              ],
             },
           },
 
@@ -254,6 +285,36 @@ async function refresh_sales_vega(
                 value: "#4c78a8",
               },
               opacity: { value: 0.8 },
+              tooltip: [
+                {
+                  field: "datevalue",
+                  type: "temporal",
+                  title: "Päiväys",
+                  format: "%d.%m.%Y",
+                  aggregate: "max",
+                },
+                {
+                  field: "w_target",
+                  type: "quantitative",
+                  title: "Kumuloituva tavoite",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+                {
+                  field: "w_value",
+                  type: "quantitative",
+                  title: "Kumuloituva myynti",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+                {
+                  field: "w_pos_diff",
+                  type: "quantitative",
+                  title: "Kumuloituva erotus",
+                  format: "$.2f",
+                  aggregate: "sum",
+                },
+              ],
             },
           },
 
@@ -273,24 +334,52 @@ async function refresh_sales_vega(
               x: { field: "date", type: "temporal" },
               y: { field: "value", type: "quantitative" },
               color: {
-                value: "#3C5F85",
+                // value: "#3C5F85",
+                field: "project_name", type: "ordinal", legend: null
               },
               tooltip: [
                 {
-                  field: "value",
-                  type: "quantitative",
-                  title: "Myyntityön arvo",
-                  format: "$.2f",
-                },
-                {
-                  field: "project",
+                  field: "project_name",
                   type: "nominal",
                   title: "Myyntityö",
                 },
                 {
-                  field: "sold_by",
+                  field: "value",
+                  type: "quantitative",
+                  title: "Myyntityön odotusarvo",
+                  format: "$.2f",
+                },
+                {
+                  field: "project_value",
+                  type: "quantitative",
+                  format: "$.2f",
+                  title: "Myyntityön kokonaisarvo",
+                },
+                {
+                  field: "project_probability",
+                  type: "quantitative",
+                  format: ".0f",
+                  title: "Myynnin tödennäköisyys",
+                },
+                {
+                  field: "first_name_sold_by",
                   type: "nominal",
                   title: "Myyjä",
+                },
+                {
+                  field: "first_name",
+                  type: "nominal",
+                  title: "Projektipäällikkö",
+                },
+                {
+                  field: "project_business_unit",
+                  type: "nominal",
+                  title: "Yksikkö (projekti)",
+                },
+                {
+                  field: "business_unit_name",
+                  type: "nominal",
+                  title: "Yksikkö (projektipäällikkö)",
                 },
               ],
             },
@@ -1149,11 +1238,13 @@ async function refresh_hours_vega(
         calculate: "if(datum.id == 'maximum', datum.value, 0)",
         as: "maximum",
       },
+      
       {
         calculate:
           "if(datum.id == 'workhours', if(datum.productive, 'workhours_productive', 'workhours_unproductive'), datum.id)",
         as: "id",
       },
+      
       {
         window: [
           { op: "sum", field: "value", as: "w_value" },
@@ -1172,6 +1263,7 @@ async function refresh_hours_vega(
         groupby: ["user", "id"],
         frame: [span, 0],
       },
+      
     ],
 
     vconcat: [
@@ -1214,6 +1306,14 @@ async function refresh_hours_vega(
                   },
                 ],
                 groupby: ["monthvalue"],
+              },
+              {
+                calculate: "datum.total_productive_workhours / datum.total_workhours",
+                as: "total_billing_rate",
+              },
+              {
+                calculate: "datum.total_absences / datum.total_hours",
+                as: "total_absence_rate",
               },
               { filter: "datum.id != 'maximum'" },
             ],
@@ -1303,6 +1403,13 @@ async function refresh_hours_vega(
                   aggregate: "max",
                 },
                 {
+                  field: "total_billing_rate",
+                  type: "quantitative",
+                  title: "Laskutusaste",
+                  format: ".2%",
+                  aggregate: "max",
+                },
+                {
                   field: "total_saleswork",
                   type: "quantitative",
                   title: "Tarjottua työtä",
@@ -1316,6 +1423,15 @@ async function refresh_hours_vega(
                   format: ".1f",
                   aggregate: "max",
                 },
+                {
+                  field: "total_absence_rate",
+                  type: "quantitative",
+                  title: "Poissaoloaste",
+                  format: ".2%",
+                  aggregate: "max",
+                },
+                
+                
               ],
             },
           },
@@ -1495,6 +1611,14 @@ async function refresh_hours_vega(
                 frame: [span, 0],
                 groupby: ["id"],
               },
+              {
+                calculate: "datum.w_productive_workhours / datum.w_workhours",
+                as: "w_billing_rate",
+              },
+              {
+                calculate: "datum.w_absences / datum.w_hours",
+                as: "w_absence_rate",
+              },
             ],
             mark: {
               type: "area",
@@ -1623,6 +1747,13 @@ async function refresh_hours_vega(
                   aggregate: "max",
                 },
                 {
+                  field: "w_billing_rate",
+                  type: "quantitative",
+                  title: "Laskutusaste",
+                  format: ".2%",
+                  aggregate: "max",
+                },
+                {
                   field: "w_saleswork",
                   type: "quantitative",
                   title: "Tarjottua työtä",
@@ -1634,6 +1765,13 @@ async function refresh_hours_vega(
                   type: "quantitative",
                   title: "Poissaoloja",
                   format: ".1f",
+                  aggregate: "max",
+                },
+                {
+                  field: "w_absence_rate",
+                  type: "quantitative",
+                  title: "Poissaoloaste",
+                  format: ".2%",
                   aggregate: "max",
                 },
               ],

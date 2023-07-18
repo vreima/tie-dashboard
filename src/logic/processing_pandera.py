@@ -1,12 +1,11 @@
 import operator
 from enum import Enum
-from typing import Annotated, Sequence
+from typing import Annotated
 
 import arrow
 import pandas as pd
 import pandera as pa
-from loguru import logger
-from pandera.typing import Category, DataFrame, Index, Series
+from pandera.typing import DataFrame, Series
 from workalendar.europe import Finland
 
 from src.util.daterange import DateRange

@@ -885,6 +885,31 @@ class Client:
 
         return self._projects_cache
 
+    async def fetch_projects_and_sales(self) -> pd.DataFrame:
+        projects_json = await self._client.get_all(
+            "projects",
+            {
+                "businessUnitGuids": self.businessunits,
+            },
+        )
+
+        projects_df = pd.DataFrame(
+            {
+                "project": project["guid"],
+                "project_name": project["name"],
+                "project_value": project["expectedValue"].get("amount", 0)
+                if "expectedValue" in project
+                else None,
+                "project_probability": project["probability"],
+                "project_business_unit": project["businessUnit"].get("name", None)
+                if "businessUnit" in project
+                else None,
+            }
+            for project in projects_json
+        )
+
+        return projects_df
+
     ###########################
     # Utility                 #
     ###########################
