@@ -238,7 +238,11 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
                     except Exception as e:
                         logger.exception(e)
             else:
-                await timing.endpoint()
+                try:
+                    await timing.endpoint()
+                except Exception as e:
+                    logger.error("Cronjob failed with exception:")
+                    logger.exception(e)
 
             logger.debug("Cronjob task is done.")
 
