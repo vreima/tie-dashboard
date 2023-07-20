@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_api_org: str
     admin_password: str
-    railway_static_url: AnyUrl
+    railway_static_url: str
     debug_mode: bool = False
     admin_password: str
     channel_yks_tietomallintaminen: str
