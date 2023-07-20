@@ -456,13 +456,13 @@ async def format_offers_as_slack_block(slack: Client):
     if unmarked_offers:
         newline = "\n"
         fi = "fi"
-        granularity = ["month", "day", "hour"]
+        #granularity = ["month", "day", "hour"]
         formatted_strs = (
             f"📣 Kanavan #tie_tarjouspyynnöt <https://{settings.railway_static_url}/slack/offers|käsittelemättömät viestit>:\n"
             + "\n".join(
                 (
                     f"> *<{offer.url}|{arrow.get(float(offer.timestamp)).format('DD.MM.YYYY')}>* | "
-                    f"{f'*DL _{arrow.get(offer.deadline).humanize(locale=fi,  granularity=granularity)}_* |' if offer.deadline else ''} {offer.message.split(newline)[0]}"
+                    f"{f'*DL _{arrow.get(offer.deadline).humanize(locale=fi)}_* |' if offer.deadline else ''} {offer.message.split(newline)[0]}"
                 )
                 for offer in unmarked_offers
             )
