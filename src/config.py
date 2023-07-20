@@ -28,12 +28,16 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_api_org: str
     admin_password: str
-    railway_static_url: AnyHttpUrl
+    railway_static_url: str # not full url, just domain
     debug_mode: bool = False
     admin_password: str
     channel_yks_tietomallintaminen: str
     channel_tie_tarjouspyynnot: str
     channel_tie_testaus: str
+
+    railway_git_author: str = ""
+    railway_git_branch: str = ""
+    railway_git_commit_message: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="allow"
