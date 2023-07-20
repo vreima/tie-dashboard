@@ -1,5 +1,5 @@
 import arrow.locales
-from pydantic import AnyHttpUrl, MongoDsn
+from pydantic import AnyUrl, AnyHttpUrl, MongoDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # This is a hack to monkey patch Arrow humanization to work with Finnish
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_api_org: str
     admin_password: str
-    railway_static_url: str # not full url, just domain
+    railway_static_url: AnyUrl
     debug_mode: bool = False
     admin_password: str
     channel_yks_tietomallintaminen: str

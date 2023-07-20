@@ -224,7 +224,7 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
             if isinstance(timing.endpoint, str):
                 async with httpx.AsyncClient(
                     app=app,
-                    base_url=settings.railway_static_url,
+                    base_url=str(settings.railway_static_url),
                     http2=True,
                     follow_redirects=True,
                 ) as client:

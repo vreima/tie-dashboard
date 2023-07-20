@@ -24,7 +24,7 @@ class Base:
     """
 
     def __init__(self, base: str, collection: str):
-        self._client: MongoClient = MongoClient(settings.mongo_url)
+        self._client: MongoClient = MongoClient(str(settings.mongo_url))
         self._coll = self._client[base][collection]
 
     def create_index(self, expiration: float):
