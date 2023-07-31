@@ -269,48 +269,60 @@ async def format_pressure_as_slack_block():
     now = arrow.utcnow().to("Europe/Helsinki")
 
     last_week_start = now.shift(weeks=-1).floor("week")
-    readings = pd.DataFrame(
-        [
-            dict(model)
-            for model in await fetch_pressure(
-                now.shift(weeks=-2).floor("week"),
-                now.shift(weeks=-1).ceil("week"),
-                None,
+
+    try:
+        readings = pd.DataFrame(
+            [
+                dict(model)
+                for model in await fetch_pressure(
+                    now.shift(weeks=-2).floor("week"),
+                    now.shift(weeks=-1).ceil("week"),
+                    None,
+                )
+            ]
+        )
+        readings["date"] = pd.to_datetime(readings.loc[:, "date"], utc=True)
+
+        weekly = readings.groupby([pd.Grouper(key="date", freq="W")])[["x", "y"]].mean()
+        diff = weekly.diff()
+
+        def f(val, val_diff):
+            return (
+                f"*{val:.1%}*\t(" + ("▲" if val_diff >= 0 else "▼") + f" {val_diff:+.1%})"
             )
-        ]
-    )
-    readings["date"] = pd.to_datetime(readings.loc[:, "date"], utc=True)
 
-    weekly = readings.groupby([pd.Grouper(key="date", freq="W")])[["x", "y"]].mean()
-    diff = weekly.diff()
-
-    def f(val, val_diff):
-        return (
-            f"*{val:.1%}*\t(" + ("▲" if val_diff >= 0 else "▼") + f" {val_diff:+.1%})"
+        pressure_titles = (
+            ":hammer_and_pick: Edellisen viikon kiireen määrä:\n:bomb: Edellisen viikon kiireen tuntu:\n"
+            f"        ⤷ perustuu {len(readings[readings.date > pd.Timestamp(last_week_start.datetime)])} <https://tie.up.railway.app/kiire/|kyselyvastaukseen>"
+        )
+        pressure_text = (
+            f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"
+            f"{f(weekly.y.iloc[1], diff.y.iloc[1])}\n"
         )
 
-    pressure_titles = (
-        ":hammer_and_pick: Edellisen viikon kiireen määrä:\n:bomb: Edellisen viikon kiireen tuntu:\n"
-        f"        ⤷ perustuu {len(readings[readings.date > pd.Timestamp(last_week_start.datetime)])} <https://tie.up.railway.app/kiire/|kyselyvastaukseen>"
-    )
-    pressure_text = (
-        f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"
-        f"{f(weekly.y.iloc[1], diff.y.iloc[1])}\n"
-    )
-
-    return {
-        "type": "section",
-        "fields": [
-            {
-                "type": "mrkdwn",
-                "text": pressure_titles,
-            },
-            {
-                "type": "mrkdwn",
-                "text": pressure_text,
-            },
-        ],
-    }
+        return {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": pressure_titles,
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": pressure_text,
+                },
+            ],
+        }
+    except IndexError:
+        return {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": f":hammer_and_pick: Edelliseltä viikolta ei <https://tie.up.railway.app/kiire/|kiirekyselyvastauksia>.",
+                },
+            ],
+        }
 
 
 async def format_salescases_as_slack_block():

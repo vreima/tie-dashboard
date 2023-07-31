@@ -28,7 +28,7 @@ from src.logic.pressure.pressure import fetch_pressure
 from src.logic.severa import base_client
 from src.logic.severa.client import Client as SeveraClient
 from src.logic.slack.client import Client as SlackClient
-from src.logic.slack.client import send_weekly_slack_update_debug
+from src.logic.slack.client import send_weekly_slack_update_debug, send_weekly_slack_update
 from src.security import get_current_username
 from src.util.daterange import DateRange
 
@@ -313,10 +313,18 @@ async def get_offers(
 @slack_router.get("/send_debug_message")
 async def send_debug_message():
     """
-    Send weekly Viikkopalaveri msg mor often and to a debug channel.
+    Send weekly Viikkopalaveri msg more often and to a debug channel.
     """
     logger.debug("/send_debug_message")
     await send_weekly_slack_update_debug()
+
+@slack_router.get("/send_weekly_message")
+async def send_weekly_message():
+    """
+    Send weekly Viikkopalaveri msg.
+    """
+    logger.debug("/send_weekly_message")
+    await send_weekly_slack_update(settings.channel_yks_tietomallintaminen)
 
 
 @slack_router.post("/event")
