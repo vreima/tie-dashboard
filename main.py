@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
                 (send_weekly_slack_update, "0 5 * * MON", "weekly-slack-msg"),
                 (
                     send_weekly_slack_update_debug,
-                    "10 5/3 * * MON-FRI",
+                    "20 4 * * MON-FRI",
                     "debug-slack-msg",
                 ),
             ]
