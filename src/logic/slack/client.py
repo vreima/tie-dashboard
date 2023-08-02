@@ -243,7 +243,7 @@ class Client:
                 "Tietomallinnus-yksikön yleishyödyllinen keskustelubotti, joka toimii Slackissä. "
                 "Tietoa Finland Oy on Helsinkiläinen rakennusalan ja tietomallintamisen konsulttiyhtiö. "
                 "Pyri käyttämään rentoa puhekieltä. "
-                "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat. ",
+                "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat, mutta käytä sitä vain tarvittaessa. ",
             },
             *self.fetch_replies(channel, ts),
         ]
