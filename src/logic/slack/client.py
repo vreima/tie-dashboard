@@ -234,7 +234,14 @@ class Client:
         Respond to chat mentions with OpenAI.
         """
         ts = event.event.ts
+        
+        
         channel = event.event.channel
+        replies = list(self.fetch_replies(channel, ts))
+
+        logger.warning(event.event)
+        logger.debug(f"{len(replies)=}")
+        logger.debug(replies)
 
         chat = [
             {
@@ -245,7 +252,7 @@ class Client:
                 "Pyri käyttämään rentoa puhekieltä. "
                 "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat, mutta käytä sitä vain tarvittaessa. ",
             },
-            *self.fetch_replies(channel, ts),
+            *replies,
         ]
 
         logger.debug(chat)
