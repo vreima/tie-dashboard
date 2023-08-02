@@ -220,8 +220,15 @@ class Client:
         """
         batches = self._client.conversations_replies(channel=channel, ts=ts)
 
-        for batch in batches:
-            for reply in batch["messages"]:
+        messages = [message for batch in batches for message in batch["messages"]]
+
+        logger.debug(f"{len(messages)=}")
+
+        if len(messages) == 1 and "thread_ts" in messages[0]:
+            message = messages[0]
+            yield from self.fetch_replies(channel, ts=message["thread_ts"])
+        else:
+            for reply in messages:
                 user = self.user_by_id(reply["user"])
                 message = self.user_ids_to_names(self.unformat(reply["text"]))
 
@@ -237,6 +244,7 @@ class Client:
         
         
         channel = event.event.channel
+
         replies = list(self.fetch_replies(channel, ts))
 
         logger.warning(event.event)
