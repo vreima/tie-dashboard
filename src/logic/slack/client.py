@@ -222,8 +222,6 @@ class Client:
 
         messages = [message for batch in batches for message in batch["messages"]]
 
-        logger.debug(f"{len(messages)=}")
-
         if len(messages) == 1 and "thread_ts" in messages[0]:
             message = messages[0]
             yield from self.fetch_replies(channel, ts=message["thread_ts"])
@@ -242,22 +240,17 @@ class Client:
         """
         ts = event.event.ts
         
-        
         channel = event.event.channel
 
         replies = list(self.fetch_replies(channel, ts))
-
-        logger.warning(event.event)
-        logger.debug(f"{len(replies)=}")
-        logger.debug(replies)
 
         chat = [
             {
                 "role": "system",
                 "content": "Olet @tie_botti, yrityksen Tietoa Finland Oy "
-                "Tietomallinnus-yksikön yleishyödyllinen keskustelubotti, joka toimii Slackissä. "
+                "Tietomallinnus-yksikön sarkastinen keskustelubotti, joka toimii Slackissä. "
                 "Tietoa Finland Oy on Helsinkiläinen rakennusalan ja tietomallintamisen konsulttiyhtiö. "
-                "Pyri käyttämään rentoa puhekieltä. "
+                "Pyri käyttämään rentoa puhekieltä ja ironiaa. "
                 "Voit viitata kaikkiin yksikön työntekijöihin tägillä @timpat, mutta käytä sitä vain tarvittaessa. ",
             },
             *replies,
