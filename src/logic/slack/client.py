@@ -457,7 +457,7 @@ async def format_kpi_totals_as_slack_block():
             + f"{difference_text}".replace("_", " ")
         ]
 
-    header1 = "30 vrk keskiarvo"
+    header1 = "30 vrk liukuva summa"
     header2 = "vrt viime viikoon"
     header = f"{header1: >{max_len + PADDING + 3}}{header2: >{PADDING + 18}}"
 
