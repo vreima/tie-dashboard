@@ -198,7 +198,7 @@ class Client:
             if msg.get("type") == "message":
                 if msg.get("subtype", "") == "tombstone":
                     continue
-                
+
                 dt = search_string_for_datetime(msg.get("text"))
                 ts = msg.get("ts").replace(".", "")
 
@@ -239,7 +239,7 @@ class Client:
         Respond to chat mentions with OpenAI.
         """
         ts = event.event.ts
-        
+
         channel = event.event.channel
 
         replies = list(self.fetch_replies(channel, ts))
@@ -250,7 +250,7 @@ class Client:
                 "content": "Olet @tie_botti, yrityksen Tietoa Finland Oy "
                 "Tietomallinnus-yksikön hieman sarkastinen keskustelubotti, joka toimii Slackissä. "
                 "Tietoa Finland Oy on Helsinkiläinen rakennusalan ja tietomallintamisen konsulttiyhtiö. "
-                "Pyri käyttämään rentoa puhekieltä ja kevyttä ironiaa. "
+                "Pyri käyttämään rentoa puhekieltä ja kevyttä ironiaa. ",
             },
             *replies,
         ]
@@ -291,6 +291,7 @@ async def format_pressure_as_slack_block():
                 )
             ]
         )
+
         readings["date"] = pd.to_datetime(readings.loc[:, "date"], utc=True)
 
         weekly = readings.groupby([pd.Grouper(key="date", freq="W")])[["x", "y"]].mean()
@@ -298,7 +299,9 @@ async def format_pressure_as_slack_block():
 
         def f(val, val_diff):
             return (
-                f"*{val:.1%}*\t(" + ("▲" if val_diff >= 0 else "▼") + f" {val_diff:+.1%})"
+                f"*{val:.1%}*\t("
+                + ("▲" if val_diff >= 0 else "▼")
+                + f" {val_diff:+.1%})"
             )
 
         pressure_titles = (
@@ -306,8 +309,12 @@ async def format_pressure_as_slack_block():
             f"        ⤷ perustuu {len(readings[readings.date > pd.Timestamp(last_week_start.datetime)])} <https://tie.up.railway.app/kiire/|kyselyvastaukseen>"
         )
         pressure_text = (
-            f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"
-            f"{f(weekly.y.iloc[1], diff.y.iloc[1])}\n"
+            (
+                f"{f(weekly.x.iloc[1], diff.x.iloc[1])}\n"
+                f"{f(weekly.y.iloc[1], diff.y.iloc[1])}\n"
+            )
+            if len(weekly) > 1
+            else (f"{weekly.x.iloc[0]:.1%}\n{weekly.y.iloc[0]:.1%}\n")
         )
 
         return {
@@ -329,7 +336,7 @@ async def format_pressure_as_slack_block():
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": f":hammer_and_pick: Edelliseltä viikolta ei <https://tie.up.railway.app/kiire/|kiirekyselyvastauksia>.",
+                    "text": ":hammer_and_pick: Edelliseltä viikolta ei <https://tie.up.railway.app/kiire/|kiirekyselyvastauksia>.",
                 },
             ],
         }
@@ -478,7 +485,7 @@ async def format_offers_as_slack_block(slack: Client):
     if unmarked_offers:
         newline = "\n"
         fi = "fi"
-        #granularity = ["month", "day", "hour"]
+        # granularity = ["month", "day", "hour"]
         formatted_strs = (
             f"📣 Kanavan #tie_tarjouspyynnöt <https://{settings.railway_static_url}/slack/offers|käsittelemättömät viestit>:\n"
             + "\n".join(
