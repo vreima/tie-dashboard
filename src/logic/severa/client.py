@@ -169,8 +169,6 @@ class Client:
         ]
 
     async def fetch_single_user_information(self, user: models.UserOutputModel):
-        logger.debug(f"Fetching info for {user.firstName}.")
-
         work_contracts_json = await self._client.get_all(
             f"users/{user.guid}/workcontracts"
         )

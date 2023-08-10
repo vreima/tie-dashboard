@@ -529,12 +529,6 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
 
     forecasts_from_database = forecasts_from_database and bool(span_future)
 
-    logger.debug(f"{span_severa=}")
-
-    logger.debug(f"{span_future=}")
-
-    logger.debug(f"{forecasts_from_database=}")
-
     async with src.logic.severa.client.Client() as client:
         async with asyncio.TaskGroup() as tg:
             logger.debug("Creating fetch tasks.")
@@ -569,10 +563,6 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
 
     dfs = [users]
     if span_severa:
-        logger.debug(f"{len(hours_p.result())=}")
-        logger.debug(f"{len(billing_p.result())=}")
-        logger.debug(f"{len(sales_p.result())=}")
-
         hours = ProcessHours(hours_p.result()).process(
             span.start.datetime, span.end.datetime
         )

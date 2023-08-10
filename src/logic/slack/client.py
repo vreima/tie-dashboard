@@ -196,7 +196,10 @@ class Client:
 
         for msg in response:
             if msg.get("type") == "message":
-                if msg.get("subtype", "") == "tombstone":
+                # if msg.get("subtype", "") == "tombstone":
+                #     continue
+
+                if "subtype" in msg:
                     continue
 
                 dt = search_string_for_datetime(msg.get("text"))
