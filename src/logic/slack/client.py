@@ -230,6 +230,10 @@ class Client:
             yield from self.fetch_replies(channel, ts=message["thread_ts"])
         else:
             for reply in messages:
+                if "user" not in reply:
+                    logger.warning(f"Reply without 'user': {reply}")
+                    continue
+
                 user = self.user_by_id(reply["user"])
                 message = self.user_ids_to_names(self.unformat(reply["text"]))
 
