@@ -252,9 +252,7 @@ async function refresh_data(event) {
 
     await refresh_vega(global_data);
   } catch (error) {
-    document.getElementById(
-      "vis"
-    ).innerText = `${error}`;
+    document.getElementById("vis").innerText = `${error}`;
     return;
   }
 }
@@ -468,13 +466,13 @@ async function refresh_vega(data) {
                 {
                   field: "x",
                   type: "quantitative",
-                  title: "Kiireen tuntu",
+                  title: "Kiireen määrä",
                   format: ".0%",
                 },
                 {
                   field: "y",
                   type: "quantitative",
-                  title: "Kiireen määrä",
+                  title: "Kiireen tuntu",
                   format: ".0%",
                 },
                 {
