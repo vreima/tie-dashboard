@@ -81,8 +81,10 @@ async function refresh_history_vega(
   const datetimes = data_forecast.map((elem) =>
     luxon.DateTime.fromISO(elem.forecast_date)
   );
-  const min_ts = luxon.DateTime.min(...datetimes);
-  const max_ts = luxon.DateTime.max(...datetimes);
+
+  // Too many values for min(...datetimes) spreading
+  const min_ts = datetimes.reduce((min, val) => (val < min ? val : min)); // luxon.DateTime.min(...datetimes);
+  const max_ts = datetimes.reduce((min, val) => (val < min ? val : min)); // luxon.DateTime.max(...datetimes);
 
   const dur = luxon.Duration.fromObject({ days: 1 });
 
