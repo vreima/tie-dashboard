@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import Sequence
 from datetime import datetime
 from functools import partial
-from typing import Any, Self
+from typing import Any, Iterable, Self
 
 import arrow
 import pandas as pd
@@ -593,7 +593,9 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
     )
 
 
-async def load_merge_pivot(span: DateRange, window: int = 30) -> pd.DataFrame:
+async def load_merge_pivot(
+    span: DateRange, window: int = 30, contractor_user_ids: Iterable[str] = tuple()
+) -> pd.DataFrame:
     data_raw = await load_and_merge(span)
 
     prod_work = data_raw[(data_raw.id == "workhours") & data_raw.productive].copy()
@@ -603,6 +605,16 @@ async def load_merge_pivot(span: DateRange, window: int = 30) -> pd.DataFrame:
 
     data_concat = pd.concat([data_raw, prod_work, unprod_work], ignore_index=True)
 
+    # Set the maximum (hours) of subcontractor users to 0; this is to not count them
+    # in uncounted_hours.
+    mask = data_concat["user"].isin(contractor_user_ids)
+    logger.warning(f"{mask.sum()} max vals delled")
+    if mask.any():
+        logger.warning(
+            f'{data_concat.loc[mask & (data_concat["id"] == "maximum"), "value"].sum()} hours delled',
+        )
+    data_concat.loc[mask & (data_concat["id"] == "maximum"), "value"] = 0
+
     data_pivoted = data_concat.pivot_table(
         values=["value"],
         index=["date", "first_name"],
@@ -610,6 +622,7 @@ async def load_merge_pivot(span: DateRange, window: int = 30) -> pd.DataFrame:
         aggfunc="sum",
         fill_value=0,
     )
+
     data_pivoted.columns = data_pivoted.columns.droplevel(0)
     data_pivoted["total_hours"] = data_pivoted["absences"] + data_pivoted["workhours"]
     data_pivoted["cost"] = data_pivoted["total_hours"] * data_pivoted["hour_cost"]

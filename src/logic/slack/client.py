@@ -373,14 +373,16 @@ async def format_salescases_as_slack_block():
 
 async def format_kpi_totals_as_slack_block():
     """
-    Fetch rolling KPI totals for the last n (default=30) days and format them as a block.
+    Fetch rolling KPI totals for the last 4 weeks and format them as a block.
     """
-    # We need 30 days to get an accurate windowed sum for current day,
-    # 7 days more to get another estimate for the last week (to show difference),
-    # so 37 days. Let's make that 40 just to be sure.
-    span = DateRange(-40)
-    windowed_data = await load_merge_pivot(span)
-    windowed_data = windowed_data.reset_index().iloc[[-7, -1]]
+    last_sunday = arrow.utcnow().shift(weeks=-1).ceil("weeks")
+    span = DateRange(last_sunday.shift(weeks=-5), last_sunday)
+
+    # We skip Panu
+    windowed_data = await load_merge_pivot(
+        span, window=28, contractor_user_ids=["5cd93092-3385-3e89-003a-9fe6d03a424d"]
+    )
+    windowed_data = windowed_data.reset_index().iloc[[-8, -1]]
     current_weeks_data = windowed_data.iloc[-1]
     diff_from_last_week = windowed_data.diff().iloc[-1]
 
@@ -464,7 +466,7 @@ async def format_kpi_totals_as_slack_block():
             + f"{difference_text}".replace("_", " ")
         ]
 
-    header1 = "30 vrk liukuva summa"
+    header1 = "28 vrk liukuva summa"
     header2 = "vrt viime viikoon"
     header = f"{header1: >{max_len + PADDING + 3}}{header2: >{PADDING + 18}}"
 
