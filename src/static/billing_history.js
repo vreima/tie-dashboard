@@ -83,8 +83,8 @@ async function refresh_history_vega(
   );
 
   // Too many values for min(...datetimes) spreading
-  const min_ts = datetimes.reduce((min, val) => (val < min ? val : min)); // luxon.DateTime.min(...datetimes);
-  const max_ts = datetimes.reduce((min, val) => (val < min ? val : min)); // luxon.DateTime.max(...datetimes);
+  const min_ts = datetimes.reduce((min, val) => luxon.DateTime.min(min, val)); // luxon.DateTime.min(...datetimes);
+  const max_ts = datetimes.reduce((max, val) => luxon.DateTime.max(max, val)); // luxon.DateTime.max(...datetimes);
 
   const dur = luxon.Duration.fromObject({ days: 1 });
 
