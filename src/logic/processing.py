@@ -579,6 +579,8 @@ async def load_and_merge(span: DateRange, forecasts_from_database: bool = True):
         billing_f = ProcessBilling(billing_f_task).process(
             span.start.datetime, span.end.datetime
         )
+
+        logger.warning(hours_f_task)
         hours_f = ProcessHours(
             hours_f_task[hours_f_task.id != "maximum"].copy()
         ).process(span.start.datetime, span.end.datetime)

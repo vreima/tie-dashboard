@@ -461,6 +461,7 @@ class Client:
             "Deadline puuttuu": [],
             "Työmääräarvio puuttuu": [],
             "Vaiheen työmääräarvio puuttuu": [],
+            "Vaiheen deadline puuttuu": [],
             "Vaihe puuttuu": [],
             "Avainsanat puuttuvat": [],
             "Arvioitu tilauspäivä on menneisyydessä": [],
@@ -565,8 +566,11 @@ class Client:
             )
         else:
             for phase in phases:
-                if (phase.workHoursEstimate is not None) and (
-                    phase.workHoursEstimate > 0
+                if (
+                    (phase.workHoursEstimate is not None)
+                    and (phase.workHoursEstimate > 0)
+                    and (phase.startDate is not None)
+                    and (phase.deadline is not None)
                 ):
                     expected_workhours.append(
                         {
@@ -585,17 +589,29 @@ class Client:
 
                 elif not phase.hasChildren:
                     # only report problems in leaf phases
-                    self._invalid_sales["Vaiheen työmääräarvio puuttuu"].append(
-                        {
-                            "name": sale.name,
-                            "phase": phase.name,
-                            "soldby": sale.salesPerson.firstName,
-                            "owner": sale.projectOwner.firstName,
-                            "guid": sale.guid,
-                        }
-                    )
+                    if not phase.deadline:
+                        self._invalid_sales["Vaiheen deadline puuttuu"].append(
+                            {
+                                "name": sale.name,
+                                "phase": phase.name,
+                                "soldby": sale.salesPerson.firstName,
+                                "owner": sale.projectOwner.firstName,
+                                "guid": sale.guid,
+                            }
+                        )
 
-        MINIMUM_SUM_EPSILON = 0.5
+                    if phase.workHoursEstimate is None or phase.workHoursEstimate <= 0:
+                        self._invalid_sales["Vaiheen työmääräarvio puuttuu"].append(
+                            {
+                                "name": sale.name,
+                                "phase": phase.name,
+                                "soldby": sale.salesPerson.firstName,
+                                "owner": sale.projectOwner.firstName,
+                                "guid": sale.guid,
+                            }
+                        )
+
+            MINIMUM_SUM_EPSILON = 0.5
         if sum(exp["value"] for exp in expected_workhours) < MINIMUM_SUM_EPSILON:
             self._invalid_sales["Työmääräarvio puuttuu"].append(
                 {
