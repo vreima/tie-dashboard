@@ -362,6 +362,10 @@ async def format_salescases_as_slack_block():
             for _row_num, row in group.iterrows():
                 salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if not pd.isna(row.phase) else ''} (@{row.soldby})\n"
 
+    if len(salescases_text) > 2990:
+        logger.warning(f"Salescase listing too long for for Slack\n{salescases_text}")
+        salescases_text = f"{salescases_text[:2990]}..."
+
     return {
         "type": "section",
         "text": {
