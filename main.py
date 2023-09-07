@@ -60,6 +60,7 @@ logger.configure(extra={"source": "root"})
 app = FastAPI(lifespan=lifespan, default_response_class=ORJSONResponse)
 
 
+# a
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     idem = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
