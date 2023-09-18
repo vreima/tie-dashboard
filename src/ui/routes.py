@@ -217,12 +217,12 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
             delay = timing.time_to_next().total_seconds()
 
             logger.debug(
-                f"Cronjob sleeping for {delay}s (={delay / 60 / 60 / 24:.3f} days)."
+                f"Cronjob '{timing.name}' sleeping for {delay}s (={delay / 60 / 60 / 24:.3f} days)."
             )
 
             await anyio.sleep(max(delay, 0))
 
-            logger.debug("Cronjob task is called.")
+            logger.debug(f"Cronjob '{timing.name}' task is called.")
 
             if isinstance(timing.endpoint, str):
                 async with httpx.AsyncClient(
@@ -244,10 +244,10 @@ async def run_cronjob(timing: Cronjob, app: FastAPI):
                 try:
                     await timing.endpoint()
                 except Exception as e:
-                    logger.error("Cronjob failed with exception:")
+                    logger.critical(f"Cronjob '{timing.name}' failed with exception:")
                     logger.exception(e)
 
-            logger.debug("Cronjob task is done.")
+            logger.debug(f"Cronjob '{timing.name}' task is done.")
 
 
 @default_router.get("/status")
