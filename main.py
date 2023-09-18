@@ -15,6 +15,7 @@ from src.logic.slack.client import (
     send_weekly_slack_update,
     send_weekly_slack_update_debug,
 )
+from src.logic.slack.logger import slack_logger
 from src.ui import routes
 
 
@@ -54,6 +55,7 @@ logger.add(
     "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> [{extra[source]}] - <level>{message}</level>",
     level="TRACE",
 )
+logger.add(slack_logger, level="ERROR")
 logger.configure(extra={"source": "root"})
 
 

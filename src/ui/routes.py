@@ -29,8 +29,8 @@ from src.logic.severa import base_client
 from src.logic.severa.client import Client as SeveraClient
 from src.logic.slack.client import Client as SlackClient
 from src.logic.slack.client import (
-    send_weekly_slack_update_debug,
     send_weekly_slack_update,
+    send_weekly_slack_update_debug,
 )
 from src.security import get_current_username
 from src.util.daterange import DateRange
@@ -311,6 +311,16 @@ async def get_offers(
         params["startDate"] = startDate.isoformat()
 
     return templates.TemplateResponse("offers.html", params)
+
+
+@slack_router.get("/err")
+async def send_debug_message():
+    logger.error("Testi-error")
+
+
+@slack_router.get("/crit")
+async def send_debug_message():
+    logger.critical("Testi-critical")
 
 
 @slack_router.get("/send_debug_message")
