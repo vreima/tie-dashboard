@@ -515,8 +515,19 @@ class Client:
             )
             can_calculate_value = False
 
-        if sale.expectedValue is None:
+        if sale.expectedValue is None or sale.expectedValue.amount is None:
             self._invalid_sales["Myynnin arvo puuttuu"].append(
+                {
+                    "name": sale.name,
+                    "soldby": sale.salesPerson.firstName,
+                    "owner": sale.projectOwner.firstName,
+                    "guid": sale.guid,
+                }
+            )
+            can_calculate_value = False
+
+        if sale.probability is None:
+            self._invalid_sales["Myynnin todennäköisyys puuttuu"].append(
                 {
                     "name": sale.name,
                     "soldby": sale.salesPerson.firstName,
