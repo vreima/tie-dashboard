@@ -111,7 +111,10 @@ async def save_sparse():
 async def save_only_invalid_salescase_info() -> pd.DataFrame:
     async with SeveraClient() as client:
         try:
-            await client.fetch_sales(force_refresh=True)
+            await client.fetch_sales(
+                force_refresh=True,
+                filtered_keywords=["Tie_Puitesopimus", "Tie_Pois_raportoinnista"],
+            )
         except Exception as e:
             logger.exception(e)
 

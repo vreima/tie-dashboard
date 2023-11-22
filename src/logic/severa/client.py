@@ -441,7 +441,9 @@ class Client:
     # Fetching sales          #
     ###########################
 
-    async def fetch_sales(self, force_refresh=False) -> pd.DataFrame:
+    async def fetch_sales(
+        self, force_refresh=False, filtered_keywords: list[str] | None = None
+    ) -> pd.DataFrame:
         """
         Return future sales values (€) and work (hours).
         """
@@ -467,12 +469,14 @@ class Client:
             "Arvioitu tilauspäivä on menneisyydessä": [],
         }
 
-        self._sales_cache = await self.force_fetch_all_sales()
+        self._sales_cache = await self.force_fetch_all_sales(filtered_keywords)
         self._sales_cache_refresh_time = time.monotonic()
 
         return self._sales_cache
 
-    async def force_fetch_all_sales(self) -> pd.DataFrame:
+    async def force_fetch_all_sales(
+        self, filtered_keywords: list[str] | None = None
+    ) -> pd.DataFrame:
         sales = await self._client.get_all(
             "salescases",
             {
@@ -484,14 +488,27 @@ class Client:
 
         sales_dataframes = await gather(
             (
-                (self.fetch_single_sale, models.ProjectOutputModel(**sale))
+                (
+                    self.fetch_single_sale,
+                    models.ProjectOutputModel(**sale),
+                    filtered_keywords,
+                )
                 for sale in sales
             ),
         )
 
         return pd.concat(sales_dataframes, ignore_index=True).convert_dtypes()
 
-    async def fetch_single_sale(self, sale: models.ProjectOutputModel) -> pd.DataFrame:
+    async def fetch_single_sale(
+        self,
+        sale: models.ProjectOutputModel,
+        filtered_keywords: list[str] | None = None,
+    ) -> pd.DataFrame:
+        if filtered_keywords:
+            if any(kw in [x.name for x in sale.keywords] for kw in filtered_keywords):
+                logger.trace(f"Filtered {sale.name} out because of keywords.")
+                return pd.DataFrame()
+
         can_calculate_value = True
 
         if sale.expectedOrderDate is None:
