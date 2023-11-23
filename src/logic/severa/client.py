@@ -969,7 +969,10 @@ async def fetch_invalid_salescases() -> pd.DataFrame:
     """
     async with Client() as client:
         try:
-            sales = await client.fetch_sales(force_refresh=True)  # noqa: F841
+            sales = await client.fetch_sales(
+                force_refresh=True,
+                filtered_keywords=["Tie_Puitesopimus", "Tie_Pois_raportoinnista"],
+            )  # noqa: F841
         except Exception as e:
             logger.exception(e)
 
