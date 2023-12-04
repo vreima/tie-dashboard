@@ -505,7 +505,7 @@ class Client:
         filtered_keywords: list[str] | None = None,
     ) -> pd.DataFrame:
         if filtered_keywords:
-            if any(
+            if sale.keywords and any(
                 kw in [x.name for x in sale.keywords if x is not None]
                 for kw in filtered_keywords
             ):
