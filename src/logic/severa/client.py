@@ -22,6 +22,7 @@ PROJECTS_CACHE_REFRESH_AFTER_SECONDS = 60 * 60  # Save projects for 1h
 
 class SalesStatus(Enum):
     TARJOUS = "04a8c06b-bddb-ed4f-586a-0a2098587633"
+    OPTIO = "faced04e-534c-1817-357f-75f3db6fd8a0"
     TILAUS = "fb1b8ca5-2026-4e0f-3169-500d1ad7603e"
     HYLATTY = "baaa8b0a-b77a-b10a-8372-7760a4b99d77"
 
@@ -482,7 +483,10 @@ class Client:
             {
                 "businessUnitGuids": self.businessunits,
                 "isClosed": False,
-                "salesStatusTypeGuids": SalesStatus.TARJOUS.value,
+                "salesStatusTypeGuids": [
+                    SalesStatus.TARJOUS.value,
+                    SalesStatus.OPTIO.value,
+                ],
             },
         )
 
