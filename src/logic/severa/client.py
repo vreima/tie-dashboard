@@ -522,6 +522,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
             can_calculate_value = False
@@ -532,6 +533,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
             can_calculate_value = False
@@ -543,6 +545,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
             can_calculate_value = False
@@ -554,6 +557,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
             can_calculate_value = False
@@ -565,6 +569,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
 
@@ -575,6 +580,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
 
@@ -594,6 +600,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
         else:
@@ -651,6 +658,7 @@ class Client:
                     "soldby": sale.salesPerson.firstName,
                     "owner": sale.projectOwner.firstName,
                     "guid": sale.guid,
+                    "phase": "",
                 }
             )
 
@@ -690,6 +698,7 @@ class Client:
         result = pd.DataFrame(
             [{**v, "id": k} for k, lst in self._invalid_sales.items() for v in lst]
         )
+
         result["_id"] = result.apply(
             lambda x: get_hash((x["id"], x["guid"], x["phase"])), axis=1
         )
