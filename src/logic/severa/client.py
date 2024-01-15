@@ -699,9 +699,11 @@ class Client:
             [{**v, "id": k} for k, lst in self._invalid_sales.items() for v in lst]
         )
 
-        result["_id"] = result.apply(
+        id_col = result.apply(
             lambda x: get_hash((x["id"], x["guid"], x["phase"])), axis=1
         )
+
+        result["_id"] = id_col if not id_col.empty else pd.Series()
         result["inserted"] = pd.Timestamp(arrow.utcnow().datetime)
         return result.convert_dtypes()
 

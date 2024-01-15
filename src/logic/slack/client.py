@@ -337,7 +337,7 @@ async def format_pressure_as_slack_block():
                 },
             ],
         }
-    except IndexError:
+    except (IndexError, KeyError):
         return {
             "type": "section",
             "fields": [
@@ -356,15 +356,21 @@ async def format_salescases_as_slack_block():
     salescases_df = await fetch_invalid_salescases()
 
     salescases_text = ":sparkles: Sisällä olevien <https://tie.up.railway.app/severa/salescases|tarjousten suolauslista>:\n"
-    for key, group in salescases_df.groupby("id"):
-        if not group.empty:
-            salescases_text += f"*{key}*:\n"
-            for _row_num, row in group.iterrows():
-                salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if (not pd.isna(row.phase) and row.phase) else ''} (@{row.soldby})\n"
 
-    if len(salescases_text) > 2990:
-        logger.warning(f"Salescase listing too long for for Slack\n{salescases_text}")
-        salescases_text = f"{salescases_text[:2990]}..."
+    if salescases_df.empty:
+        salescases_text += "> ...on tyhjä!"
+    else:
+        for key, group in salescases_df.groupby("id"):
+            if not group.empty:
+                salescases_text += f"*{key}*:\n"
+                for _row_num, row in group.iterrows():
+                    salescases_text += f"> <https://severa.visma.com/project/{row.guid}|{row['name']}>{' vaihe _' + row.phase + '_' if (not pd.isna(row.phase) and row.phase) else ''} (@{row.soldby})\n"
+
+        if len(salescases_text) > 2990:
+            logger.warning(
+                f"Salescase listing too long for for Slack\n{salescases_text}"
+            )
+            salescases_text = f"{salescases_text[:2990]}..."
 
     return {
         "type": "section",
