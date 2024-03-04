@@ -573,9 +573,7 @@ async def send_weekly_slack_update(channel: str | None = None):
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "<https://docs.google.com/document/d/"
-                    "1uRIynIL0bU0SHZZJtyNYSV-7Iub6m3Gy-cjo4GkrKXY/"
-                    "edit?usp=sharing|📋 Asialista>",
+                    "text": "<https://tietoa.slite.com/app/docs/HrdK-QBAbfYUuA#dad0113c|📋 Asialista>",
                 },
             ],
         },
