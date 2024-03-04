@@ -22,7 +22,7 @@ pandas==2.0.3
 altair==5.0.1
 altair-transform==0.2.0
 croniter==1.4.1
-python-multipart==0.0.6
+python-multipart==0.0.9
 sortedcontainers==2.4.0
 slack_sdk==3.21.3
 openai_async==0.0.3
