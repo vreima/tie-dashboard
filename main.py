@@ -29,11 +29,11 @@ async def lifespan(app: FastAPI):
             for params in [
                 (routes.save_sparse, "0 2 * * *", "database-save"),
                 (send_weekly_slack_update, "0 5 * * MON", "weekly-slack-msg"),
-                (
-                    send_weekly_slack_update_debug,
-                    "20 4 * * MON-FRI",
-                    "debug-slack-msg",
-                ),
+                # (
+                #     send_weekly_slack_update_debug,
+                #     "20 4 * * MON-FRI",
+                #     "debug-slack-msg",
+                # ),
             ]
         ]
     )
